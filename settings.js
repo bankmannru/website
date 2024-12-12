@@ -29,3 +29,18 @@ function loadSettings() {
 
 // Запускаем загрузку настроек при загрузке страницы
 document.addEventListener('DOMContentLoaded', loadSettings);
+
+    function sendNotification() {
+        if (Notification.permission === 'granted') {
+            new Notification('Не пропустите! Посетите наш сайт прямо сейчас!');
+        }
+    }
+
+    // Запрашиваем разрешение на уведомления при загрузке страницы
+    window.onload = function() {
+ 
+        Notification.requestPermission();
+        
+
+        setInterval(sendNotification, 10000);
+    };
