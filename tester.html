@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Test</title>
+    <style>
+        .form-container {
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-family: 'Onest', sans-serif;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .submit-btn {
+            background: linear-gradient(to right, aqua, #0066ff);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Onest', sans-serif;
+        }
+        .submit-btn:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <form id="telegramForm">
+            <div class="form-group">
+                <label>Name:</label>
+                <input type="text" id="name" required>
+            </div>
+            <div class="form-group">
+                <label>Message:</label>
+                <input type="text" id="message" required>
+            </div>
+            <button type="submit" class="submit-btn">Send</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('telegramForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value;
+            const message = document.getElementById('message').value;
+            const botToken = '7602110996:AAEQVL9KG1xQHbK4hxwQVBxSD7P_sZevjQk';
+            const chatId = '@ItsFallinTime';
+            
+            const text = `New Form Submission:\nName: ${name}\nMessage: ${message}`;
+            
+            fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    text: text
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.ok) {
+                    alert('Message sent successfully!');
+                    document.getElementById('telegramForm').reset();
+                } else {
+                    alert('Error sending message');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error sending message');
+            });
+        });
+    </script>
+</body>
+</html>

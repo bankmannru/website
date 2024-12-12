@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <div class='header'>Мы набираем работников для банк Маннру. <a class='outlinebtn' href="https://forms.gle/GJFTNofAoNCuxMT37">Подать заявку</a></div>
+    <nav class="navbar">
+        <div style="margin-left: auto;">
+            <a href="index.html" class="nav-link" style="border: none; text-shadow: 0 0 0px;" onclick="animateClick(this)">Главная</a>
+            <a href="market.html" class="nav-link" style="border: none; text-shadow: 0 0 0px;" onclick="animateClick(this)">Маркет</a>
+            <a href="sitehistory.html" class="nav-link" style="border: none; text-shadow: 0 0 0px;" onclick="animateClick(this)">История сайта</a>
+            <a href="contacts.html" class="nav-link" style="border: none; text-shadow: 0 0 0px;" onclick="animateClick(this)">Контакты</a>
+        </div>
+        <button class="menu-btn" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
+    </nav>
+    <title>Настройки - Банк Маннру</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+<body>
+    <div class="settings-container">
+        <div class="settings-section">
+            <h2 class="general-text"><i class="fas fa-paint-brush"></i> Внешний вид</h2>
+            <div class="setting-item">
+                <label for="theme"><i class="fas fa-adjust"></i> Тема:</label>
+                <select id="theme" onchange="changeTheme()">
+                    <option value="default">По умолчанию</option>
+                    <option value="dark">Темная</option>
+                    <option value="light">Светлая</option>
+                </select>
+            </div>
+            
+            <h2 class="general-text"><i class="fas fa-language"></i> Язык</h2>
+            <div class="setting-item">
+                <label for="language"><i class="fas fa-globe"></i> Выберите язык:</label>
+                <select id="language" onchange="changeLanguage()">
+                    <option value="ru">Русский</option>
+                    <option value="en">English</option>
+                </select>
+            </div>
+
+            <h2 class="general-text"><i class="fas fa-bell"></i> Уведомления</h2>
+            <div class="setting-item">
+                <label>
+                    <input type="checkbox" id="notifications" onchange="toggleNotifications()">
+                    <i class="fas fa-bell"></i> Включить уведомления
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        @media screen and (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                padding: 0.5rem;
+            }
+
+            .navbar div {
+                margin: 0;
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .nav-link {
+                width: 100%;
+                text-align: center;
+                margin: 5px 0;
+            }
+
+            .header {
+                padding: 20px 10px;
+                font-size: 0.9em;
+                text-align: center;
+            }
+
+            .settings-container {
+                padding: 20px 10px;
+            }
+
+            .settings-section {
+                padding: 20px;
+            }
+
+            .setting-item {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 15px;
+            }
+
+            .setting-item label {
+                margin-bottom: 10px;
+                margin-right: 0;
+            }
+
+            select, input[type="checkbox"] {
+                width: 100%;
+                margin-top: 10px;
+            }
+        }
+
+        .settings-container {
+            width: 100%;
+            min-height: 100vh;
+            padding: 40px;
+            box-sizing: border-box;
+        }
+
+        .settings-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px;
+            transition: all 0.3s ease;
+        }
+
+        .setting-item {
+            margin: 30px 0;
+            padding: 20px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .setting-item label {
+            font-family: 'Onest';
+            font-size: 1.2em;
+            margin-right: 20px;
+            transition: color 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .setting-item label i {
+            margin-right: 12px;
+            font-size: 1.3em;
+        }
+
+        select, input[type="checkbox"] {
+            padding: 10px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-size: 1.1em;
+        }
+
+        /* Theme-specific styles */
+        [data-theme="dark"] {
+            --bg-gradient: linear-gradient(45deg, #1a1a1a, #2d2d2d);
+            --header-bg: #2d2d2d;
+            --text-color: #ffffff;
+            --section-bg: transparent;
+            --item-bg: rgba(255, 255, 255, 0.05);
+            --select-bg: rgba(255, 255, 255, 0.2);
+            --border-color: rgba(255, 255, 255, 0.3);
+            --button-bg: #2d2d2d;
+            --button-hover: #3d3d3d;
+            --nav-text-color: #ffffff;
+            --nav-bg: #2d2d2d;
+            --nav-link-bg: #2d2d2d;
+        }
+
+        [data-theme="light"] {
+            --bg-gradient: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+            --header-bg: #ffffff;
+            --text-color: #000000;
+            --section-bg: transparent;
+            --item-bg: rgba(0, 0, 0, 0.05);
+            --select-bg: #ffffff;
+            --border-color: rgba(0, 0, 0, 0.2);
+            --button-bg: #d6d6d6;
+            --button-hover: #f0f0f0;
+            --nav-text-color: #ffffff;
+            --nav-bg: #d6d6d6;
+            --nav-link-bg: #d6d6d6;
+        }
+
+        [data-theme="default"] {
+            --bg-gradient: linear-gradient(45deg, #2d2d2d, #1a1a1a);
+            --header-bg: #2d2d2d;
+            --text-color: #ffffff;
+            --section-bg: transparent;
+            --item-bg: rgba(255, 255, 255, 0.05);
+            --select-bg: rgba(255, 255, 255, 0.2);
+            --border-color: rgba(255, 255, 255, 0.3);
+            --button-bg: #2d2d2d;
+            --button-hover: #3d3d3d;
+            --nav-text-color: #ffffff;
+            --nav-bg: #2d2d2d;
+        }
+
+        /* Great animation for navbar buttons in dark mode */
+        [data-theme="dark"] .nav-link:hover {
+            background-color: #3d3d3d;
+            color: #ffffff !important;
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        /* Great animation for navbar buttons in light mode */
+        [data-theme="light"] .nav-link:hover {
+            background-color: #f0f0f0;
+            color: #000000 !important;
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .menu-btn {
+            display: none;
+        }
+
+        @media screen and (max-width: 768px) {
+            .menu-btn {
+                display: block;
+            }
+
+            .navbar div {
+                display: none;
+            }
+
+            .navbar div.show {
+                display: flex;
+                flex-direction: column;
+            }
+        }
+
+        /* Animation for click effect */
+        .nav-link:active {
+            transform: scale(0.95);
+            transition: transform 0.1s ease;
+        }
+    </style>
+    <script src="settings.js"></script>
+    <script>
+        function changeTheme() {
+            const theme = document.getElementById('theme').value;
+            localStorage.setItem('theme', theme);
+            applyTheme(theme);
+        }
+
+        function changeLanguage() {
+            const language = document.getElementById('language').value;
+            localStorage.setItem('language', language);
+            // В реальном приложении здесь был бы код для изменения языка
+        }
+
+        function toggleNotifications() {
+            const enabled = document.getElementById('notifications').checked;
+            localStorage.setItem('notifications', enabled);
+            if (enabled) {
+                Notification.requestPermission();
+            }
+        }
+
+        function applyTheme(theme) {
+            // Set theme attribute on document root
+            document.documentElement.setAttribute('data-theme', theme);
+
+            // Apply CSS variables
+            document.body.style.background = 'var(--bg-gradient)';
+            
+            // Apply styles to elements
+            const elements = {
+                '.header, .navbar': {
+                    background: 'var(--nav-bg)',
+                    color: 'var(--text-color)'
+                },
+                '.outlinebtn': {
+                    color: 'var(--text-color)',
+                    background: 'var(--button-bg)',
+                    border: '1px solid var(--border-color)'
+                },
+                '.settings-section': {
+                    background: 'var(--section-bg)',
+                    color: 'var(--text-color)'
+                },
+                '.setting-item': {
+                    background: 'var(--item-bg)',
+                    color: 'var(--text-color)'
+                },
+                'label, .head, h1, h2': {
+                    color: 'var(--text-color)'
+                },
+                '.nav-link': {
+                    color: 'var(--nav-text-color)',
+                    background: theme === 'dark' ? 'var(--nav-link-bg)' : (theme === 'light' ? 'var(--nav-link-bg)' : '')
+                },
+                'select': {
+                    color: 'var(--text-color)',
+                    background: 'var(--select-bg)',
+                    border: '1px solid var(--border-color)'
+                },
+                'button': {
+                    color: 'var(--text-color)',
+                    background: 'var(--button-bg)',
+                    border: '1px solid var(--border-color)'
+                }
+            };
+
+            // Apply styles to all matching elements
+            for (const [selector, styles] of Object.entries(elements)) {
+                document.querySelectorAll(selector).forEach(element => {
+                    Object.assign(element.style, styles);
+                });
+            }
+
+            // Add hover effects
+            const buttons = document.querySelectorAll('button, .outlinebtn');
+            buttons.forEach(button => {
+                button.addEventListener('mouseover', () => {
+                    button.style.background = 'var(--button-hover)';
+                });
+                button.addEventListener('mouseout', () => {
+                    button.style.background = 'var(--button-bg)';
+                });
+            });
+        }
+
+        function toggleMenu() {
+            const menu = document.querySelector('.navbar div');
+            menu.classList.toggle('show');
+        }
+
+        // Load saved settings on page load
+        window.onload = function() {
+            const savedTheme = localStorage.getItem('theme') || 'default';
+            const savedLanguage = localStorage.getItem('language');
+            const savedNotifications = localStorage.getItem('notifications') === 'true';
+
+            document.getElementById('theme').value = savedTheme;
+            applyTheme(savedTheme);
+            
+            if (savedLanguage) {
+                document.getElementById('language').value = savedLanguage;
+            }
+            document.getElementById('notifications').checked = savedNotifications;
+        };
+
+        // Function to animate click
+        function animateClick(element) {
+            element.classList.add('active');
+            setTimeout(() => {
+                element.classList.remove('active');
+            }, 100);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <div class='header'>Мы набираем работников для банк Маннру. <a class='outlinebtn' href="https://forms.gle/GJFTNofAoNCuxMT37">Подать заявку</a></div>
+    <style>
+        .navbar {
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 1rem 2rem;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'Onest', sans-serif;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: #333;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: #333;
+            text-decoration: none;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #007bff;
+        }
+
+        .navbar-toggle {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .toggle-bar {
+            width: 25px;
+            height: 3px;
+            background-color: #333;
+            transition: all 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .navbar-toggle {
+                display: flex;
+            }
+
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background-color: #ffffff;
+                flex-direction: column;
+                padding: 1rem;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+
+            .nav-links.active {
+                display: flex;
+            }
+
+            .navbar-toggle.active .toggle-bar:nth-child(1) {
+                transform: rotate(45deg) translate(5px, 5px);
+            }
+
+            .navbar-toggle.active .toggle-bar:nth-child(2) {
+                opacity: 0;
+            }
+
+            .navbar-toggle.active .toggle-bar:nth-child(3) {
+                transform: rotate(-45deg) translate(5px, -5px);
+            }
+        }
+    </style>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">Маннру Банк</a>
+            <div class="navbar-toggle" onclick="toggleMenu()">
+                <span class="toggle-bar"></span>
+                <span class="toggle-bar"></span>
+                <span class="toggle-bar"></span>
+            </div>
+            <div class="nav-links">
+                <a href="/">Главная</a>
+                <a href="/services">Услуги</a>
+                <a href="/about">О нас</a>
+                <a href="/contact">Контакты</a>
+                <a href="https://forms.gle/GJFTNofAoNCuxMT37" class="outlinebtn">Подать заявку</a>
+            </div>
+        </div>
+    </nav>
+    <script>
+        function toggleMenu() {
+            const navLinks = document.querySelector('.nav-links');
+            const navToggle = document.querySelector('.navbar-toggle');
+            navLinks.classList.toggle('active');
+            navToggle.classList.toggle('active');
+        }
+    </script>
+    <title>404 - Страница не найдена</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Nunito:ital,wght@0,200;1,200&family=Onest:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+</body>
+</html>

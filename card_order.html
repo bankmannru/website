@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <div class='header'>Мы набираем работников для банк Маннру. <a class='outlinebtn' href="https://forms.gle/GJFTNofAoNCuxMT37">Подать заявку</a></div>
+    <nav class="navbar">
+        <div style="margin-left: auto;">
+            <a href="index.html" class="nav-link active" style="border: none; color: #333; text-shadow: 0 0 0px;">Главная</a>
+            <a href="market.html" class="nav-link" style="border: none; color: white; text-shadow: 0 0 0px;">Маркет</a>
+            <a href="sitehistory.html" class="nav-link" style="border: none; color: white; text-shadow: 0 0 0px;">История сайта</a>
+            <a href="contacts.html" class="nav-link" style="border: none; color: white; text-shadow: 0 0 0px;">Контакты</a>
+        </div>
+    </nav>
+    <title>Купить вторую карту</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Nunito:ital,wght@0,200;1,200&family=Onest:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class='goodsdiv' style="position: relative;">
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <img class='goodsimg' style="width: 100%; max-width: 300px; height: auto;" src="Маркет/testcard.png">
+            <div style="display: flex; flex-direction: column; margin-top: 20px; width: 100%; max-width: 300px;">
+                <p class='goodstext' style="text-align: center; font-size: 1.5rem;">Вторая карта</p>
+                <p style="text-align: center; font-size: 1.2rem;" class='goodsdesc'>Взять себе вторую карту, если надо. <br>(возврат невозможен.)</p>
+                <p class='goodsprice' style="text-align: center; font-size: 1.3rem;">1000₽</p>
+            </div>
+        </div>
+    </div>
+
+        <div class="form-container" style="float: left; margin-left: 20px;">
+            <form action="https://api.web3forms.com/submit" method="POST">
+
+                <input type="hidden" name="access_key" value="fb0d4113-1b06-4f87-b1ca-7a2e4fccd8f8">
+
+                <div class="form-group">
+                    <label for="securityCode">Код безопасности карты: (оставьте пустым, если вы заказываете первую карту)</label>
+                    <input type="password" id="securityCode" name="securityCode" maxlength="3" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="firstName">Имя:</label>
+                    <input type="text" id="firstName" name="firstName" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="lastName">Фамилия:</label>
+                    <input type="text" id="lastName" name="lastName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone">Номер телефона:</label>
+                    <input type="tel" id="phone" name="phone" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="cardColor">Цвет карты:</label>
+                    <select id="cardColor" name="cardColor" required>
+                        <option value="">Выберите цвет</option>
+                        <option value="black">Чёрный</option>
+                        <option value="gold">Золотой</option>
+                        <option value="silver">Серебряный</option>
+                        <option value="blue">Синий</option>
+                        <option value="red">Красный</option>
+                        <option value="green">Зелёный</option>
+                        <option value="purple">Фиолетовый</option>
+                        <option value="pink">Розовый</option>
+                        <option value="orange">Оранжевый</option>
+                        <option value="yellow">Жёлтый</option>
+                        <option value="brown">Коричневый</option>
+                        <option value="white">Белый</option>
+                        <option value="gray">Серый</option>
+                        <option value="black">Чёрный</option>
+                        <option value="cyan">Голубой</option>
+                        <option value="magenta">Пурпурный</option>
+                        <option value="lime">Лаймовый</option>
+                        <option value="teal">Бирюзовый</option>
+                        <option value="indigo">Индиго</option>
+                        <option value="maroon">Бордовый</option>
+                        <option value="navy">Темно-синий</option>
+                        <option value="olive">Оливковый</option>
+                        <option value="coral">Коралловый</option>
+                        <option value="turquoise">Бирюзовый</option>
+                        <option value="violet">Фиолетовый</option>
+                        <option value="crimson">Малиновый</option>
+                        <option value="aqua">Аква</option>
+                        <option value="azure">Лазурный</option>
+                        <option value="beige">Бежевый</option>
+                        <option value="bronze">Бронзовый</option>
+                        <option value="burgundy">Бургундский</option>
+                        <option value="caramel">Карамельный</option>
+                        <option value="cerulean">Лазурно-голубой</option>
+                        <option value="champagne">Шампань</option>
+                        <option value="charcoal">Угольный</option>
+                        <option value="chocolate">Шоколадный</option>
+                        <option value="cobalt">Кобальтовый</option>
+                        <option value="copper">Медный</option>
+                        <option value="cream">Кремовый</option>
+                        <option value="emerald">Изумрудный</option>
+                        <option value="fuchsia">Фуксия</option>
+                        <option value="garnet">Гранатовый</option>
+                        <option value="grape">Виноградный</option>
+                        <option value="graphite">Графитовый</option>
+                        <option value="honeydew">Медовый</option>
+                        <option value="ivory">Слоновая кость</option>
+                        <option value="jade">Нефритовый</option>
+                        <option value="khaki">Хаки</option>
+                        <option value="lavender">Лавандовый</option>
+                        <option value="lemon">Лимонный</option>
+                        <option value="lilac">Сиреневый</option>
+                        <option value="mauve">Розовато-лиловый</option>
+                        <option value="mint">Мятный</option>
+                        <option value="mustard">Горчичный</option>
+                        <option value="ochre">Охра</option>
+                        <option value="onyx">Ониксовый</option>
+                        <option value="orchid">Орхидейный</option>
+                        <option value="peach">Персиковый</option>
+                        <option value="pearl">Жемчужный</option>
+                        <option value="periwinkle">Барвинковый</option>
+                        <option value="pewter">Оловянный</option>
+                        <option value="platinum">Платиновый</option>
+                        <option value="plum">Сливовый</option>
+                        <option value="puce">Красновато-коричневый</option>
+                        <option value="raspberry">Малиновый</option>
+                        <option value="rose">Розовый</option>
+                        <option value="ruby">Рубиновый</option>
+                        <option value="rust">Ржавый</option>
+                        <option value="saffron">Шафрановый</option>
+                        <option value="sage">Шалфейный</option>
+                        <option value="salmon">Лососевый</option>
+                        <option value="sapphire">Сапфировый</option>
+                        <option value="scarlet">Алый</option>
+                        <option value="seagreen">Морской зелёный</option>
+                        <option value="sienna">Сиена</option>
+                        <option value="slate">Грифельный</option>
+                        <option value="steel">Стальной</option>
+                        <option value="tan">Загар</option>
+                        <option value="tangerine">Мандариновый</option>
+                        <option value="taupe">Серо-коричневый</option>
+                        <option value="terracotta">Терракотовый</option>
+                        <option value="thistle">Чертополоховый</option>
+                        <option value="titanium">Титановый</option>
+                        <option value="topaz">Топазовый</option>
+                        <option value="ultramarine">Ультрамариновый</option>
+                        <option value="umber">Умбра</option>
+                        <option value="vanilla">Ванильный</option>
+                        <option value="vermilion">Киноварь</option>
+                        <option value="wine">Винный</option>
+                        <option value="wisteria">Глициниевый</option>
+                        <option value="zinc">Цинковый</option>
+                        <option value="alabaster">Алебастровый</option>
+                        <option value="amethyst">Аметистовый</option>
+                        <option value="apricot">Абрикосовый</option>
+                        <option value="ash">Пепельный</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="accessories">Дополнительные аксессуары (необязательно):</label>
+                    <textarea id="accessories" name="accessories" rows="3" placeholder="Укажите желаемые аксессуары"></textarea>
+                </div>
+
+                <input type="submit" class="submit-btn" name="send">
+            </form>
+        </div>
+    </div>
+</body>
+</html>
