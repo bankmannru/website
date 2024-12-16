@@ -139,6 +139,19 @@
 
             return false;
         }
+
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            // Примените дополнительные стили в зависимости от темы
+        }
+
+        window.onload = function() {
+            const savedTheme = localStorage.getItem('theme') || 'default';
+            const savedLanguage = localStorage.getItem('language') || 'ru';
+
+            applyTheme(savedTheme);
+            // Здесь можно добавить код для изменения языка на странице
+        };
     </script>
 </head>
 <body onload="checkPassword()">
