@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <script type="importmap">
+      {
+        "imports": {
+          "@material/web/": "https://esm.run/@material/web/"
+        }
+      }
+    </script>
+    <script type="module">
+      import '@material/web/all.js';
+      import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
+  
+      document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+    </script>
+    <!-- Note the lack of position: relative parent. -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div style="margin: 16px;">
+        <md-filled-button id="usage-popover-anchor">Навигация</md-filled-button>
+        </div>
+      
+      <!-- popover menus do not require a common ancestor with the anchor. -->
+        <md-menu positioning="popover" id="usage-popover" anchor="usage-popover-anchor">
+        <md-menu-item>
+          <div slot="headline" onclick="window.location.href='index.html'">Главная</div>
+        </md-menu-item>
+        <md-menu-item>
+          <div slot="headline" onclick="window.location.href='market.html'">Маркет</div>
+        </md-menu-item>
+        <md-menu-item>
+          <div slot="headline" onclick="window.location.href='sitehistory.html'">История сайта</div>
+        </md-menu-item>
+        <md-menu-item>
+            <div slot="headline" onclick="window.location.href='contacts.html'">Контакты</div>
+          </md-menu-item>
+      </md-menu>
+      
+      <script type="module">
+        const anchorEl = document.body.querySelector('#usage-popover-anchor');
+        const menuEl = document.body.querySelector('#usage-popover');
+      
+        anchorEl.addEventListener('click', () => { menuEl.open = !menuEl.open; });
+      </script>
+</body>
+</html>

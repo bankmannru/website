@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@7.12.15/dist/sweetalert2.all.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <script type="importmap">
+      {
+        "imports": {
+          "@material/web/": "https://esm.run/@material/web/"
+        }
+      }
+    </script>
+    <script type="module">
+      import '@material/web/all.js';
+      import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
+  
+      document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <div class='header'>Мы набираем работников для банк Маннру. <a class='outlinebtn' href="https://forms.gle/GJFTNofAoNCuxMT37">Подать заявку</a></div>
+    <nav class="navbar">
+        <div style="margin-left: auto;">
+            <a href="index.html" class="nav-link active" style="border: none; color: #333; text-shadow: 0 0 0px;">Главная</a>
+            <a href="market.html" class="nav-link" style="border: none; color: white; text-shadow: 0 0 0px;">Маркет</a>
+            <a href="sitehistory.html" class="nav-link" style="border: none; color: white; text-shadow: 0 0 0px;">История сайта</a>
+            <a href="contacts.html" class="nav-link" style="border: none; color: white; text-shadow: 0 0 0px;">Контакты</a>
+        </div>
+    </nav>
+    <title>Купить вторую карту</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Nunito:ital,wght@0,200;1,200&family=Onest:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class='goodsdiv' style="display: flex; flex-direction: column; align-items: center; position: relative;">
+        <img class='goodsimg' style="width: 100%; max-width: 300px; height: auto;" src="Маркет/testcard.png">
+        <div style="display: flex; flex-direction: column; margin-top: 20px; width: 100%; max-width: 300px; text-align: center;">
+            <p class='goodstext' style="font-size: 1.5rem;">Вторая карта</p>
+            <p style="font-size: 1.2rem;" class='goodsdesc'>Взять себе вторую карту, если надо. <br>(возврат невозможен.)</p>
+            <p class='goodsprice' style="font-size: 1.3rem;">1000₽</p>
+        </div>
+    </div>
+    <style>
+        @media (min-width: 768px) {
+            .goodsdiv {
+                flex-direction: row;
+                align-items: center;
+            }
+            .goodsimg {
+                margin-right: 20px;
+            }
+            .goodsdiv > div {
+                text-align: left;
+            }
+        }
+    </style>
+
+        <div class="form-container" style="float: left; margin-left: 20px;">
+            <form action="https://formspree.io/f/xvggvekq" method=post id="card_order">
+
+                <div>
+                    <md-outlined-text-field label="Код безопасности карты" type="password" id="securityCode" name="securityCode" maxlength="3" style="color: white;">
+                    </md-outlined-text-field>
+                </div>
+                
+                <div class="form-group">
+                    <md-outlined-text-field label="Имя" type="text" id="firstName" name="firstName" required>
+                    </md-outlined-text-field>
+                </div>
+
+                <div class="form-group">
+                    <md-outlined-text-field label="Фамилия" type="text" id="lastName" name="lastName" required>
+                    </md-outlined-text-field>
+                </div>
+                
+                <div class="form-group">
+                    <md-outlined-text-field label="Номер телефона" type="tel" id="phone" name="phone" required>
+                    </md-outlined-text-field>
+                </div>
+
+                <div class="form-group">
+                    <md-outlined-text-field label="Цвет карты" type="text" id="cardColor" name="cardColor" required>
+                    </md-outlined-text-field>
+                </div>
+
+                <div class="resizable-input">
+                    <md-outlined-text-field label="Укажите аксессуары" type="textarea" id="accessories" name="accessories" rows="3" style="resize: vertical;">
+                    </md-outlined-text-field>
+                </div>
+                <md-filled-tonal-button type="submit" name="send" style="margin-top: 10px; width: 100%;">
+                    Send
+                    <svg slot="icon" viewBox="0 0 48 48"><path d="M6 40V8l38 16Zm3-4.65L36.2 24 9 12.5v8.4L21.1 24 9 27Zm0 0V12.5 27Z"/></svg>
+                  </md-filled-tonal-button>
+            </form>
+        </div>
+        <script>
+            const scriptURL =                       
+            "https://script.google.com/macros/s/AKfycbw0JwtqlZcI0-zIjzT9C-hR9_FxYkPxtd8QCE-h-3yBAW4cO-8ixcBS2FDgimVIWIyUDg/exec";
+            const form = document.forms["submit-to-google-sheet"];
+            form.addEventListener("submit", (e) => {
+              e.preventDefault();
+              var formData = new FormData(form);
+              var ex = document.getElementById("ex").checked;
+              var age = document.getElementById("age").checked;
+      
+              if (age) {
+                formData.append("age", "Yes");
+              } else {
+                formData.append("age", "No");
+              }
+              if (ex) {
+                formData.append("ex", "Yes");
+              } else {
+                formData.append("ex", "No");
+              }
+      
+              fetch(scriptURL, { method: "POST", body: formData })
+                .then((response) => {
+                  swal("Done", "Submitted Successfully.", "success");
+                })
+                .catch((error) => {
+                  swal("Error", "Something went wrong. please try again!", "error");
+                });
+            });
+          </script>
+</body>
+</html>
