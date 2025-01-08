@@ -25,15 +25,14 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <div class='header'>Мы набираем работников для банк Маннру. <a class='outlinebtn' href="https://forms.gle/GJFTNofAoNCuxMT37">Подать заявку</a></div>
-    <nav class="navbar">
-        <div style="margin-left: auto;">
-            <a href="index.html" class="nav-link active" style="border: none; color: #333; text-shadow: 0 0 0px;">Главная</a>
-            <a href="market.html" class="nav-link" style="border: none; color: white; text-shadow: 0 0 0px;">Маркет</a>
-            <a href="sitehistory.html" class="nav-link" style="border: none; color: white; text-shadow: 0 0 0px;">История сайта</a>
-            <a href="contacts.html" class="nav-link" style="border: none; color: white; text-shadow: 0 0 0px;">Контакты</a>
-        </div>
-    </nav>
+    <div class='header' style="display: flex; align-items: center; justify-content: center;">Мы набираем работников для банк Маннру. 
+      <a href="https://forms.gle/GJFTNofAoNCuxMT37" style="margin-left: 10px;">
+          <md-filled-tonal-button>
+              Подать заявку
+              <svg slot="icon" viewBox="0 0 48 48"><path d="M6 40V8l38 16Zm3-4.65L36.2 24 9 12.5v8.4L21.1 24 9 27Zm0 0V12.5 27Z"/></svg>
+            </md-filled-tonal-button>
+      </a>
+  </div>
     <title>Купить вторую карту</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -52,55 +51,41 @@
             <p class='goodsprice' style="font-size: 1.3rem;">1000₽</p>
         </div>
     </div>
-    <style>
-        @media (min-width: 768px) {
-            .goodsdiv {
-                flex-direction: row;
-                align-items: center;
-            }
-            .goodsimg {
-                margin-right: 20px;
-            }
-            .goodsdiv > div {
-                text-align: left;
-            }
-        }
-    </style>
 
-        <div class="form-container" style="float: left; margin-left: 20px;">
+        <div class="form-container" style="float: left; margin-left: 20px; width: 100%;">
             <form action="https://formspree.io/f/xvggvekq" method=post id="card_order">
 
                 <div>
-                    <md-outlined-text-field label="Код безопасности карты" type="password" id="securityCode" name="securityCode" maxlength="3" style="color: white;">
+                    <md-outlined-text-field label="Код безопасности карты" type="password" id="securityCode" name="securityCode" maxlength="3" style="color: white; width: 100%;">
                     </md-outlined-text-field>
                 </div>
                 
                 <div class="form-group">
-                    <md-outlined-text-field label="Имя" type="text" id="firstName" name="firstName" required>
+                    <md-outlined-text-field label="Имя" type="text" id="firstName" name="firstName" required style="width: 100%;">
                     </md-outlined-text-field>
                 </div>
 
                 <div class="form-group">
-                    <md-outlined-text-field label="Фамилия" type="text" id="lastName" name="lastName" required>
+                    <md-outlined-text-field label="Фамилия" type="text" id="lastName" name="lastName" required style="width: 100%;">
                     </md-outlined-text-field>
                 </div>
                 
                 <div class="form-group">
-                    <md-outlined-text-field label="Номер телефона" type="tel" id="phone" name="phone" required>
+                    <md-outlined-text-field label="Номер телефона" type="tel" id="phone" name="phone" required style="width: 100%;">
                     </md-outlined-text-field>
                 </div>
 
                 <div class="form-group">
-                    <md-outlined-text-field label="Цвет карты" type="text" id="cardColor" name="cardColor" required>
+                    <md-outlined-text-field label="Цвет карты" type="text" id="cardColor" name="cardColor" required style="width: 100%;">
                     </md-outlined-text-field>
                 </div>
 
                 <div class="resizable-input">
-                    <md-outlined-text-field label="Укажите аксессуары" type="textarea" id="accessories" name="accessories" rows="3" style="resize: vertical;">
+                    <md-outlined-text-field label="Укажите аксессуары" type="textarea" id="accessories" name="accessories" rows="3" style="resize: vertical; width: 100%;">
                     </md-outlined-text-field>
                 </div>
                 <md-filled-tonal-button type="submit" name="send" style="margin-top: 10px; width: 100%;">
-                    Send
+                    Заказ
                     <svg slot="icon" viewBox="0 0 48 48"><path d="M6 40V8l38 16Zm3-4.65L36.2 24 9 12.5v8.4L21.1 24 9 27Zm0 0V12.5 27Z"/></svg>
                   </md-filled-tonal-button>
             </form>
