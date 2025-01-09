@@ -1,15 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <script type="importmap">
+      {
+        "imports": {
+          "@material/web/": "https://esm.run/@material/web/"
+        }
+      }
+    </script>
+    <script type="module">
+      import '@material/web/all.js';
+      import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
+  
+      document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+    </script>
     <div class='header'>Мы набираем работников для банк Маннру. <a class='outlinebtn' href="https://forms.gle/GJFTNofAoNCuxMT37">Подать заявку</a></div>
-    <nav class="navbar">
-        <div style="margin-left: auto;">
-            <a href="index.html" class="nav-link" style="border: none; color: white; text-shadow: 0 0 0px;">Главная</a>
-            <a href="market.html" class="nav-link" style="border: none; color: white; text-shadow: 0 0 0px;">Маркет</a>
-            <a href="sitehistory.html" class="nav-link" style="border: none; color: white; text-shadow: 0 0 0px;">История сайта</a>
-            <a href="contacts.html" class="nav-link" style="border: none; color: white; text-shadow: 0 0 0px;">Контакты</a>
-        </div>
-    </nav>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=, initial-scale=1.0">
     <title>Document</title>

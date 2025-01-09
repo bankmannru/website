@@ -751,71 +751,63 @@ bottom: 0%;
 
 }
 
-.goodstext {
-    font-size: 20px;
-    font-family: 'Product Sans';
-    margin-top: 10px;
-    text-align: center;
-    color: white;
-}
-
 .goodsdiv {
-    background: linear-gradient(to bottom, rgba(35, 139, 139, 0.6), rgba(7, 89, 182, 0.6));
-    border-radius: 15px;
-    border: 2px solid black;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
     padding: 20px;
-    margin: 15px;
+}
+
+.product-container {
+    background: #ccd8e8;
+    border-radius: 12px;
+    padding: 24px;
     display: flex;
-    align-items: top;
-    box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-    backdrop-filter: blur(5px);
-    transition: transform 0.3s ease;
-    cursor: pointer;
+    align-items: flex-start;
+    gap: 30px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(8px);
 }
-
-.goodsdiv:hover {
-    transform: scale(1.02);
-    transition: transform 0.3s ease;
-}
-
-.goodsdiv:active {
-    transform: scale(0.95);
-    transition: transform 0.1s ease;
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
-}
-
 
 .goodsimg {
-    width: 100%;
+    width: 300px;
     height: auto;
     display: block;
-    margin: 20px 0 20px 0;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease;
+    border-radius: 8px;
 }
 
-.goodsimg:hover {
-    transform: scale(1.1) rotate(2deg);
-    box-shadow: 0 0 30px rgba(0, 255, 255, 0.8);
-    filter: brightness(1.2) contrast(1.1);
-    animation: fancy-glow 2s infinite;
+.goods-info {
+    flex: 1;
+    padding: 0 20px;
 }
 
-.goodsprice {
+.goodstext {
+    font-size: 32px;
     font-family: 'Product Sans';
-    font-size: 24px;
-    color: #FF6B00;
-    text-shadow: 0 0 10px rgba(255, 107, 0, 0.7);
-    align-self: center;
+    margin: 0 0 15px 0;
+    color: #1D1B20;
 }
 
 .goodsdesc {
-    font-family: 'Product Sans';
-    color: white;
-    text-align: center;
+    font-family: 'Product Sans', sans-serif;
+    color: #49454F;
+    font-size: 18px;
+    margin: 0 0 20px 0;
+    line-height: 1.5;
+}
+
+.goodsprice {
+    font-family: 'Product Sans', sans-serif;
+    font-size: 28px;
+    color: #FF6B00;
+    text-shadow: 0 1px 3px rgba(255, 107, 0, 0.3);
+    margin: 0;
 }
 
 .form-container {
     width: 100%;
+    max-width: 600px;
     margin: 20px auto;
     padding: 20px;
     background: rgba(253, 253, 253, 0.7);
@@ -837,7 +829,9 @@ bottom: 0%;
     color: white;
 }
 
-.form-group input, .form-group select, .form-group textarea {
+.form-group input,
+.form-group select,
+.form-group textarea {
     width: 100%;
     padding: 12px;
     background: rgba(255, 255, 255, 0.322);
@@ -849,11 +843,9 @@ bottom: 0%;
     transition: all 0.3s ease;
 }
 
-.form-group input, .form-group select, .form-group textarea:hover {
-    color: #303731;
-}
-
-.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
     outline: none;
     border-color: rgba(64, 255, 128, 0.712);
     box-shadow: 0 0 15px rgba(1, 151, 69, 0.575);
@@ -863,4 +855,6 @@ bottom: 0%;
 .resizable-input {
     resize: vertical;
 }
+
+
 
