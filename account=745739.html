@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+	<script type="importmap">
+	  {
+		"imports": {
+		  "@material/web/": "https://esm.run/@material/web/"
+		}
+	  }
+	</script>
+	<script type="module">
+	  import '@material/web/all.js';
+	  import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
+	  document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+	</script>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Карта @MuhammadAbusalamov</title>
+	<link rel="stylesheet" href="style.css">
+	<script>
+		function checkPassword() {
+			const password = document.getElementById('password').value;
+			if (password === '324') {
+				document.getElementById('password-container').style.display = 'none';
+				document.getElementById('card-container').style.display = 'block';
+			} else {
+				alert('Неверный пароль');
+			}
+		}
+	</script>
+</head>
+<body>
+	<div id="password-container" class="form-container" style="margin-top: 100px;">
+		<div class="form-group" style="text-align: center;">
+			<h2 class='general-text' style="color: black; margin-bottom: 20px;">Введите пароль для доступа</h2>
+			<md-outlined-text-field label="Пароль" type="password" id="password" style="width: 100%; margin-bottom: 20px;">
+			</md-outlined-text-field>
+			<md-filled-tonal-button onclick="checkPassword()">
+				Войти
+				<svg slot="icon" viewBox="0 0 48 48"><path d="M6 40V8l38 16Zm3-4.65L36.2 24 9 12.5v8.4L21.1 24 9 27Zm0 0V12.5 27Z"/></svg>
+			</md-filled-tonal-button>
+		</div>
+	</div>
+
+	<div id="card-container" class="goodsdiv" style="display: none;">
+		<div class="product-container">
+			<img class='goodsimg' src="@MuhammadAbusalamov.png" alt="Карта @MuhammadAbusalamov" />
+			<div class='goods-info'>
+				<p class='goodstext'>Мухаммад<br>Абусаламов</p>
+				<p class='goodsdesc'>Специальная карта для @MuhammadAbusalamov<br>Фильтры: Карты, Специальные</p>
+				<p class='goodsprice'>Баланс: 1000МР</p>
+			</div>
+		</div>
+	</div>
+
+	<div style="position: fixed; bottom: 20px; right: 20px; display: flex; gap: 10px;">
+		<md-filled-icon-button onclick="window.location.href='index.html';">
+			<md-icon><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Zm320-350Z"/></svg></md-icon>
+		</md-filled-icon-button>
+		<md-filled-icon-button onclick="window.location.href='market.html';">
+			<md-icon><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M160-720v-80h640v80H160Zm0 560v-240h-40v-80l40-200h640l40 200v80h-40v240h-80v-240H560v240H160Zm80-80h240v-160H240v160Zm-38-240h556-556Zm0 0h556l-24-120H226l-24 120Z"/></svg></md-icon>
+		</md-filled-icon-button>
+	</div>
+</body>
+</html>
