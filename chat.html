@@ -7,6 +7,18 @@
     <title>ManChat</title>
     <script src="sheets.js"></script>
     <script src="broadcast.js"></script>
+    <script>
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(registration => {
+                    console.log('ServiceWorker registration successful');
+                })
+                .catch(err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+        }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <script type="importmap">
     {
@@ -197,7 +209,7 @@
 <body>
     <div class="login-container" id="loginContainer">
         <h2>Welcome to ManChat</h2>
-        <md-filled-text-field  type="text" id="nameInput" label="Enter your name" style="width: 100%; margin-bottom: 20px;"></md-filled-text-field>
+        <md-filled-text-field  type="text" id="nameInput" label="Введите ваше имя" style="width: 100%; margin-bottom: 20px;"></md-filled-text-field>
         <md-filled-button id="joinButton">Join Chat</md-filled-button>
     </div>
 
@@ -206,7 +218,7 @@
         <img id="preview" class="image-preview">
         <div class="typing-indicator" id="typingIndicator"></div>
         <div class="input-container">
-            <md-outlined-text-field type="text" id="messageInput" label="Type a message..." style="--md-sys-color-primary: #00ff00;"></md-outlined-text-field>
+            <md-outlined-text-field type="text" id="messageInput" label="Отправьте сообщение..." style="--md-sys-color-primary: #00ff00;"></md-outlined-text-field>
             <input type="file" id="imageInput" accept="image/*">
             <md-icon-button class="upload-button" id="uploadButton">
                 <md-icon>settings</md-icon>
@@ -214,7 +226,7 @@
             <md-icon-button class="emoji-button" id="emojiButton">
                 <md-icon>sentiment_satisfied</md-icon>
             </md-icon-button>
-            <md-filled-button id="sendButton">Send</md-filled-button>
+            <md-filled-button id="sendButton">Отправить</md-filled-button>
         </div>
         <div class="emoji-picker" id="emojiPicker"></div>
     </div>
@@ -231,8 +243,10 @@
         let replyingTo = null;
         let typingTimeout = null;
         let onlineUsersInterval = null;
+        let lastMessageTimestamp = null;
+        let notificationPermission = false;
         const reactions = ['👍', '❤️', '😂', '😮', '😢', '🎉', '🔥', '👏'];
-        const emojis = ['😊', '😂', '🤣', '❤️', '😍', '🔥', '👍', '✨', '🎉', '🌟', '💯', '🙌', '👏', '🤔', '��', '🥺'];
+        const emojis = ['😊', '😂', '🤣', '❤️', '😍', '🔥', '👍', '✨', '🎉', '🌟', '💯', '🙌', '👏', '🤔', '😅', '🥺'];
         
         // Initialize elements after DOM is loaded
         document.addEventListener('DOMContentLoaded', () => {
@@ -243,6 +257,13 @@
             nameInput = document.getElementById('nameInput');
             emojiPicker = document.getElementById('emojiPicker');
             
+            // Request notification permission
+            if ('Notification' in window) {
+                Notification.requestPermission().then(permission => {
+                    notificationPermission = permission === 'granted';
+                });
+            }
+
             // Initialize emoji picker
             emojis.forEach(emoji => {
                 const btn = document.createElement('div');
@@ -303,6 +324,8 @@
                 window.addEventListener('beforeunload', () => updateOnlineStatus(false));
                 // Initial load of online users
                 loadOnlineUsers();
+                // Add visibility change handler
+                document.addEventListener('visibilitychange', handleVisibilityChange);
             }
         }
 
@@ -443,6 +466,20 @@
                     return cells;
                 });
 
+                // Check for new messages
+                if (rows.length > 0) {
+                    const latestMessage = rows[rows.length - 1];
+                    const [timestamp, user, message] = latestMessage;
+                    
+                    if (lastMessageTimestamp && 
+                        new Date(timestamp) > new Date(lastMessageTimestamp) && 
+                        user !== username) {
+                        showNotification(message, user);
+                    }
+                    
+                    lastMessageTimestamp = timestamp;
+                }
+
                 rows.forEach(([timestamp, user, message, image]) => {
                     
                     const messageDiv = document.createElement('div');
@@ -542,6 +579,31 @@
             } catch (error) {
                 console.error('Error updating typing status:', error);
             }
+        }
+
+        function handleVisibilityChange() {
+            if (!document.hidden) {
+                // Clear notifications when user returns to the tab
+                if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({ action: 'clearNotifications' });
+                }
+            }
+        }
+
+        function showNotification(message, user) {
+            if (!notificationPermission || document.visibilityState !== 'hidden') return;
+            
+            const notification = new Notification('New Message from ' + user, {
+                body: message,
+                icon: '/favicon.ico',
+                badge: '/favicon.ico',
+                tag: 'chat-message'
+            });
+
+            notification.onclick = function() {
+                window.focus();
+                notification.close();
+            };
         }
     </script>
 </body>
