@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Rounded" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ManChat</title>
+    <script src="sheets.js"></script>
+    <script src="broadcast.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <script type="importmap">
+    {
+      "imports": {
+        "@material/web/": "https://esm.run/@material/web/"
+      }
+    }
+    </script>
+    <script type="module">
+    import '@material/web/all.js';
+    import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
+
+    document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+    </script>
+    <style>
+        :root {
+            --md-icon-font: 'Material Symbols Rounded';
+        }
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Roboto', sans-serif;
+            background: #1e1e1e;
+            color: white;
+        }
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            text-align: center;
+        }
+        .chat-container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: none;
+        }
+        .messages {
+            height: calc(100vh - 200px);
+            overflow-y: auto;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #2d2d2d;
+        }
+        .message {
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+        .message.sent {
+            background: #004d40;
+            margin-left: auto;
+        }
+        .message.received {
+            background: #2d2d2d;
+            border: 1px solid #444;
+        }
+        .message .header {
+            font-size: 0.8em;
+            color: #888;
+            margin-bottom: 4px;
+        }
+        .input-container {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        md-outlined-text-field {
+            flex-grow: 1;
+            --md-sys-color-primary: #00ff00;
+            --md-sys-color-outline: #444;
+            --md-sys-color-on-surface: white;
+        }
+        md-filled-button {
+            --md-sys-color-primary: #00ff00;
+            --md-sys-color-on-primary: #1e1e1e;
+        }
+        .online-users {
+            position: fixed;
+            right: 20px;
+            top: 20px;
+            background: #2d2d2d;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            min-width: 150px;
+        }
+        .online-users h3 {
+            margin: 0 0 10px 0;
+        }
+        .user {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin: 5px 0;
+        }
+        .user::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #00ff00;
+            border-radius: 50%;
+        }
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            margin: 10px 0;
+            border-radius: 8px;
+            display: none;
+        }
+        .message img {
+            max-width: 100%;
+            border-radius: 4px;
+            margin-top: 8px;
+        }
+        .upload-button {
+            padding: 8px;
+            border-radius: 50%;
+            cursor: pointer;
+            color: #00ff00;
+        }
+        #imageInput {
+            display: none;
+        }
+        .message-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 4px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .message:hover .message-actions {
+            opacity: 1;
+        }
+        .emoji-picker {
+            position: absolute;
+            bottom: 100%;
+            right: 0;
+            background: #2d2d2d;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 10px;
+            display: none;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        .emoji-btn {
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .emoji-btn:hover {
+            background: #444;
+        }
+        .reactions {
+            display: flex;
+            gap: 4px;
+            margin-top: 4px;
+        }
+        .reaction {
+            background: #1e1e1e;
+            padding: 2px 6px;
+            border-radius: 12px;
+            font-size: 0.9em;
+            cursor: pointer;
+        }
+        .typing-indicator {
+            padding: 10px;
+            color: #888;
+            font-style: italic;
+        }
+        .reply-to {
+            background: #1e1e1e;
+            padding: 8px;
+            border-left: 3px solid #00ff00;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        [contenteditable] {
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container" id="loginContainer">
+        <h2>Welcome to ManChat</h2>
+        <md-filled-text-field  type="text" id="nameInput" label="Enter your name" style="width: 100%; margin-bottom: 20px;"></md-filled-text-field>
+        <md-filled-button id="joinButton">Join Chat</md-filled-button>
+    </div>
+
+    <div class="chat-container" id="chatContainer">
+        <div class="messages" id="messages"></div>
+        <img id="preview" class="image-preview">
+        <div class="typing-indicator" id="typingIndicator"></div>
+        <div class="input-container">
+            <md-outlined-text-field type="text" id="messageInput" label="Type a message..." style="--md-sys-color-primary: #00ff00;"></md-outlined-text-field>
+            <input type="file" id="imageInput" accept="image/*">
+            <md-icon-button class="upload-button" id="uploadButton">
+                <md-icon>settings</md-icon>
+            </md-icon-button>
+            <md-icon-button class="emoji-button" id="emojiButton">
+                <md-icon>sentiment_satisfied</md-icon>
+            </md-icon-button>
+            <md-filled-button id="sendButton">Send</md-filled-button>
+        </div>
+        <div class="emoji-picker" id="emojiPicker"></div>
+    </div>
+
+    <div class="online-users">
+        <h3>Online Users</h3>
+        <div id="usersList"></div>
+    </div>
+
+    <script>
+        let username = '';
+        let messageInput, messages, usersList, nameInput, emojiPicker;
+        let currentImage = null;
+        let replyingTo = null;
+        let typingTimeout = null;
+        let onlineUsersInterval = null;
+        const reactions = ['👍', '❤️', '😂', '😮', '😢', '🎉', '🔥', '👏'];
+        const emojis = ['😊', '😂', '🤣', '❤️', '😍', '🔥', '👍', '✨', '🎉', '🌟', '💯', '🙌', '👏', '🤔', '��', '🥺'];
+        
+        // Initialize elements after DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize DOM elements
+            messageInput = document.getElementById('messageInput');
+            messages = document.getElementById('messages');
+            usersList = document.getElementById('usersList');
+            nameInput = document.getElementById('nameInput');
+            emojiPicker = document.getElementById('emojiPicker');
+            
+            // Initialize emoji picker
+            emojis.forEach(emoji => {
+                const btn = document.createElement('div');
+                btn.className = 'emoji-btn';
+                btn.textContent = emoji;
+                btn.onclick = () => {
+                    messageInput.value += emoji;
+                    emojiPicker.style.display = 'none';
+                };
+                emojiPicker.appendChild(btn);
+            });
+
+            document.getElementById('emojiButton').onclick = (e) => {
+                e.stopPropagation();
+                emojiPicker.style.display = emojiPicker.style.display === 'grid' ? 'none' : 'grid';
+            };
+
+            document.addEventListener('click', () => {
+                emojiPicker.style.display = 'none';
+            });
+
+            // Add event listeners
+            document.getElementById('joinButton').addEventListener('click', joinChat);
+            document.getElementById('sendButton').addEventListener('click', sendMessage);
+            document.getElementById('uploadButton').addEventListener('click', () => {
+                document.getElementById('imageInput').click();
+            });
+            document.getElementById('imageInput').addEventListener('change', handleImageUpload);
+            messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendMessage();
+            });
+            nameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') joinChat();
+            });
+            // Add typing indicator
+            messageInput.addEventListener('input', () => {
+                if (username) {
+                    broadcastTyping(true);
+                    clearTimeout(typingTimeout);
+                    typingTimeout = setTimeout(() => broadcastTyping(false), 2000);
+                }
+            });
+            
+            // Start message refresh interval
+            setInterval(loadMessages, 5000);
+        });
+
+        function joinChat() {
+            username = document.getElementById('nameInput').value.trim();
+            if (username) {
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('chatContainer').style.display = 'block';
+                updateOnlineStatus(true);
+                loadMessages();
+                // Start checking online users
+                onlineUsersInterval = setInterval(loadOnlineUsers, 5000);
+                // Add window unload handler
+                window.addEventListener('beforeunload', () => updateOnlineStatus(false));
+                // Initial load of online users
+                loadOnlineUsers();
+            }
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    currentImage = e.target.result;
+                    const preview = document.getElementById('preview');
+                    preview.src = currentImage;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function compressImage(base64String) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Calculate new dimensions (max 800px width/height)
+                    let width = img.width;
+                    let height = img.height;
+                    const maxSize = 800;
+                    
+                    if (width > height && width > maxSize) {
+                        height = (height * maxSize) / width;
+                        width = maxSize;
+                    } else if (height > maxSize) {
+                        width = (width * maxSize) / height;
+                        height = maxSize;
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    // Draw and compress
+                    ctx.drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.7));
+                };
+                img.onerror = reject;
+                img.src = base64String;
+            });
+        }
+
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message && !currentImage) return;
+
+            // Compress image if needed
+            let processedImage = currentImage;
+            if (currentImage) {
+                try {
+                    processedImage = await compressImage(currentImage);
+                } catch (error) {
+                    console.error('Error compressing image:', error);
+                }
+            }
+
+            try {
+                const result = await new Promise((resolve, reject) => {
+                    const callbackName = 'jsonpCallback' + Date.now();
+                    
+                    window[callbackName] = function(data) {
+                        delete window[callbackName];
+                        script.remove();
+                        resolve(data);
+                    };
+
+                    const script = document.createElement('script');
+                    const requestBody = {
+                        action: 'sendMessage',
+                        username: username,
+                        message: message,
+                        image: processedImage,
+                        timestamp: new Date().toISOString(),
+                        replyTo: replyingTo ? JSON.stringify(replyingTo) : ''
+                    };
+                    
+                    script.src = `${GOOGLE_APPS_SCRIPT_URL}?callback=${callbackName}&data=${encodeURIComponent(JSON.stringify(requestBody))}`;
+                    document.body.appendChild(script);
+
+                    setTimeout(() => {
+                        delete window[callbackName];
+                        script.remove();
+                        reject(new Error('Operation timeout'));
+                    }, 5000);
+                });
+
+                if (result.success) {
+                    messageInput.value = '';
+                    currentImage = null;
+                    document.getElementById('preview').style.display = 'none';
+                    document.getElementById('imageInput').value = '';
+                    replyingTo = null;
+                    messageInput.placeholder = 'Type a message...';
+                    loadMessages();
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+            }
+        }
+
+        async function loadMessages() {
+            try {
+                const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=chatLogs`;
+                const response = await fetch(csvUrl);
+                const csvText = await response.text();
+                
+                messages.innerHTML = '';
+                // Parse CSV more carefully to handle base64 data
+                const rows = csvText.split('\n').slice(1).map(row => {
+                    const cells = [];
+                    let inQuotes = false;
+                    let currentCell = '';
+                    
+                    for (let i = 0; i < row.length; i++) {
+                        const char = row[i];
+                        if (char === '"') {
+                            if (inQuotes && row[i + 1] === '"') {
+                                currentCell += '"';
+                                i++;
+                            } else {
+                                inQuotes = !inQuotes;
+                            }
+                        } else if (char === ',' && !inQuotes) {
+                            cells.push(currentCell.replace(/^"|"$/g, ''));
+                            currentCell = '';
+                        } else {
+                            currentCell += char;
+                        }
+                    }
+                    cells.push(currentCell.replace(/^"|"$/g, ''));
+                    return cells;
+                });
+
+                rows.forEach(([timestamp, user, message, image]) => {
+                    
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = `message ${user === username ? 'sent' : 'received'}`;
+                    messageDiv.innerHTML = `
+                        <div class="header">${user} • ${new Date(timestamp).toLocaleString()}</div>
+                        <div class="content">
+                            ${message ? `<div>${message.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>` : ''}
+                            ${image ? `<img src="${image.replace(/\\"/g, '"')}" alt="Shared image">` : ''}
+                        </div>
+                    `;
+                    messages.appendChild(messageDiv);
+                });
+
+                messages.scrollTop = messages.scrollHeight;
+            } catch (error) {
+                console.error('Error loading messages:', error);
+            }
+        }
+
+        async function updateOnlineStatus(isOnline) {
+            try {
+                const result = await new Promise((resolve, reject) => {
+                    const callbackName = 'jsonpCallback' + Date.now();
+                    window[callbackName] = function(data) {
+                        delete window[callbackName];
+                        script.remove();
+                        resolve(data);
+                    };
+                    const script = document.createElement('script');
+                    const requestBody = {
+                        action: 'updateOnlineStatus',
+                        username: username,
+                        isOnline,
+                        timestamp: new Date().toISOString()
+                    };
+                    script.src = `${GOOGLE_APPS_SCRIPT_URL}?callback=${callbackName}&data=${encodeURIComponent(JSON.stringify(requestBody))}`;
+                    document.body.appendChild(script);
+                    // Add error handling for script loading
+                    script.onerror = () => reject(new Error('Failed to load script'));
+                });
+                if (result.success) {
+                    console.log('Online status updated:', isOnline);
+                }
+            } catch (error) {
+                console.error('Error updating online status:', error);
+            }
+        }
+
+        async function loadOnlineUsers() {
+            try {
+                const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=onlineUsers`;
+                const response = await fetch(csvUrl);
+                const csvText = await response.text();
+                
+                usersList.innerHTML = '';
+                const rows = csvText.split('\n').slice(1); // Skip header
+                
+                rows.forEach(row => {
+                    const [user, timestamp] = row.split(',').map(cell => 
+                        cell.trim().replace(/^["']|["']$/g, '')
+                    );
+                    
+                    // Check if user was active in the last 10 seconds
+                    const lastActive = new Date(timestamp);
+                    const now = new Date();
+                    if (now - lastActive < 10000) {
+                        const userDiv = document.createElement('div');
+                        userDiv.className = 'user';
+                        userDiv.textContent = user;
+                        usersList.appendChild(userDiv);
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading online users:', error);
+            }
+        }
+
+        async function broadcastTyping(isTyping) {
+            try {
+                const result = await new Promise((resolve, reject) => {
+                    const callbackName = 'jsonpCallback' + Date.now();
+                    window[callbackName] = function(data) {
+                        delete window[callbackName];
+                        script.remove();
+                        resolve(data);
+                    };
+                    const script = document.createElement('script');
+                    const requestBody = {
+                        action: 'updateTyping',
+                        username: username,
+                        isTyping
+                    };
+                    script.src = `${GOOGLE_APPS_SCRIPT_URL}?callback=${callbackName}&data=${encodeURIComponent(JSON.stringify(requestBody))}`;
+                    document.body.appendChild(script);
+                });
+            } catch (error) {
+                console.error('Error updating typing status:', error);
+            }
+        }
+    </script>
+</body>
+</html> 

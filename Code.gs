@@ -181,6 +181,117 @@ function handleRequest(e) {
         }) + ');');
       }
     }
+
+    // Handle chat messages
+    if (data.action === 'sendMessage') {
+      const chatSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('chatLogs');
+      if (!chatSheet) {
+        return output.setContent(callback + '(' + JSON.stringify({
+          success: false,
+          error: 'Chat sheet not found'
+        }) + ');');
+      }
+      
+      try {
+        chatSheet.appendRow([
+          data.timestamp,
+          data.username,
+          data.message || '',
+          data.image ? data.image.replace(/"/g, '""') : '',
+          '{}',  // reactions
+          data.replyTo || ''  // reply data
+        ]);
+        
+        return output.setContent(callback + '(' + JSON.stringify({
+          success: true
+        }) + ');');
+      } catch (err) {
+        console.error('Chat error:', err);
+        return output.setContent(callback + '(' + JSON.stringify({
+          success: false,
+          error: 'Failed to save message'
+        }) + ');');
+      }
+    }
+
+    // Handle reactions
+    if (data.action === 'toggleReaction') {
+      const chatSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('chatLogs');
+      if (!chatSheet) return output.setContent(callback + '(' + JSON.stringify({ success: false }));
+      
+      const values = chatSheet.getDataRange().getValues();
+      for (let i = 1; i < values.length; i++) {
+        if (values[i][0] === data.messageTimestamp) {
+          const reactions = JSON.parse(values[i][4] || '{}');
+          if (!reactions[data.emoji]) reactions[data.emoji] = [];
+          
+          const userIndex = reactions[data.emoji].indexOf(data.username);
+          if (userIndex === -1) {
+            reactions[data.emoji].push(data.username);
+          } else {
+            reactions[data.emoji].splice(userIndex, 1);
+            if (reactions[data.emoji].length === 0) delete reactions[data.emoji];
+          }
+          
+          chatSheet.getRange(i + 1, 5).setValue(JSON.stringify(reactions));
+          return output.setContent(callback + '(' + JSON.stringify({ success: true }) + ');');
+        }
+      }
+      return output.setContent(callback + '(' + JSON.stringify({ success: false }) + ');');
+    }
+
+    // Handle typing indicators
+    if (data.action === 'updateTyping') {
+      const typingSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('typing');
+      if (!typingSheet) return output.setContent(callback + '(' + JSON.stringify({ success: false }));
+      
+      const values = typingSheet.getDataRange().getValues();
+      let found = false;
+      
+      for (let i = 1; i < values.length; i++) {
+        if (values[i][0] === data.username) {
+          typingSheet.getRange(i + 1, 2).setValue(data.isTyping);
+          found = true;
+          break;
+        }
+      }
+      
+      if (!found && data.isTyping) {
+        typingSheet.appendRow([data.username, true]);
+      }
+      
+      return output.setContent(callback + '(' + JSON.stringify({ success: true }) + ');');
+    }
+
+    // Handle online status updates
+    if (data.action === 'updateOnlineStatus') {
+      const onlineSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('onlineUsers');
+      if (!onlineSheet) {
+        onlineSheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet('onlineUsers');
+        onlineSheet.appendRow(['username', 'lastActive']);
+      }
+      
+      const values = onlineSheet.getDataRange().getValues();
+      let found = false;
+      
+      for (let i = 1; i < values.length; i++) {
+        if (values[i][0] === data.username) {
+          if (data.isOnline) {
+            onlineSheet.getRange(i + 1, 2).setValue(data.timestamp);
+          } else {
+            onlineSheet.deleteRow(i + 1);
+          }
+          found = true;
+          break;
+        }
+      }
+      
+      if (!found && data.isOnline) {
+        onlineSheet.appendRow([data.username, data.timestamp]);
+      }
+      
+      return output.setContent(callback + '(' + JSON.stringify({ success: true }) + ');');
+    }
     
     return output.setContent(callback + '(' + JSON.stringify({
       success: false,
@@ -194,4 +305,4 @@ function handleRequest(e) {
       error: error.toString()
     }) + ');');
   }
-} 
+} '
