@@ -30,29 +30,38 @@ async function checkAndDisplayBroadcast() {
                     right: 0;
                     background-color: #ff0000;
                     color: white;
-                    padding: 10px;
+                    padding: 12px;
                     text-align: center;
                     z-index: 1000;
                     display: flex;
                     justify-content: center;
                     align-items: center;
-                    gap: 10px;
+                    gap: 12px;
+                    font-family: 'Roboto', sans-serif;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
                 `;
                 document.body.prepend(banner);
             }
 
             banner.innerHTML = `
-                <span>${broadcastMessage}</span>
-                ${broadcastUrl ? `<button onclick="window.location.href='${broadcastUrl}'" 
-                    style="background: white; color: red; border: none; padding: 5px 15px; cursor: pointer; border-radius: 4px;">
-                    Перейти
-                </button>` : ''}
+                <span style="font-size: 16px;">${broadcastMessage}</span>
+                ${broadcastUrl ? `
+                    <md-filled-button 
+                        onclick="window.location.href='${broadcastUrl}'"
+                        style="--md-sys-color-primary: white; --md-sys-color-on-primary: #ff0000; margin-left: 8px;">
+                        Перейти
+                    </md-filled-button>
+                ` : ''}
             `;
+
+            // Adjust body padding
+            document.body.style.paddingTop = (banner.offsetHeight + 8) + 'px';
         } else {
             // Remove banner if no broadcast message
             const banner = document.querySelector('.system-broadcast-banner');
             if (banner) {
                 banner.remove();
+                document.body.style.paddingTop = '0';
             }
         }
     } catch (error) {

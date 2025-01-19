@@ -4,63 +4,78 @@
     <script src="broadcast.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ManShell v1.0</title>
+    <title>ManShell v2.0</title>
     <script src="sheets.js"></script>
     <style>
         body {
-            background-color: black;
-            color: green;
-            font-family: monospace;
-            padding: 20px;
+            background-color: #1e1e1e;
+            color: #ffffff;
+            font-family: 'Consolas', monospace;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
         }
         .shell {
-            border: 1px solid green;
+            height: 100vh;
             padding: 10px;
-            margin: 20px auto;
-            width: 80%;
-            height: 400px;
+            box-sizing: border-box;
             overflow-y: auto;
+            background-color: #1e1e1e;
         }
         .input-line {
             display: flex;
+            align-items: center;
+            padding: 2px 0;
         }
         .prompt {
+            color: #00ff00;
             margin-right: 10px;
+            font-weight: bold;
         }
         .input {
             flex-grow: 1;
             background: none;
             border: none;
-            color: green;
+            color: #ffffff;
             outline: none;
-            font-family: monospace;
+            font-family: 'Consolas', monospace;
+            font-size: 16px;
         }
         .error {
-            color: red;
+            color: #ff4444;
         }
         .success {
-            color: lightgreen;
+            color: #44ff44;
         }
-        .output.broadcast {
-            color: #ff9800;
-            font-weight: bold;
+        .info {
+            color: #4444ff;
         }
-        .output.info {
-            color: #2196f3;
+        .warning {
+            color: #ffff44;
+        }
+        .output {
+            margin: 2px 0;
+            white-space: pre-wrap;
+            line-height: 1.2;
+        }
+        .command-output {
+            margin-left: 20px;
+        }
+        .timestamp {
+            color: #888888;
+        }
+        p {
+            margin: 0;
+            padding: 1px 0;
         }
     </style>
 </head>
 <body>
-    <div class="shell">
-        <div class="output">
-            <p>Welcome to ManShell v1.0</p>
-            <p>Available commands:</p>
-            <p>- help</p>
-            <p>- give [userId] [amount]</p>
-            <p>- take [userId] [amount]</p>
-            <p>- ban [userId] [reason]</p>
-            <p>- unban [userId]</p>
-            <p>- balance [userId]</p>
+    <div class="shell" id="shell">
+        <div class="output" id="output">
+            <p>Welcome to ManShell v2.0</p>
+            <p>Type 'help' for available commands</p>
         </div>
         <div class="input-line">
             <span class="prompt">$</span>
@@ -70,7 +85,7 @@
     <script>
         const input = document.querySelector('.input');
         const output = document.querySelector('.output');
-        const ADMIN_PASSWORD = '55300'; // Change this to your desired admin password
+        const ADMIN_PASSWORD = 'admun'; // Change this to your desired admin password
         let isAuthenticated = false;
 
         function appendOutput(text, className = '') {
@@ -78,7 +93,8 @@
             p.textContent = text;
             if (className) p.className = className;
             output.appendChild(p);
-            output.scrollTop = output.scrollHeight;
+            const shell = document.getElementById('shell');
+            shell.scrollTop = shell.scrollHeight;
         }
 
         async function executeCommand(command) {
@@ -114,12 +130,19 @@
                     appendOutput('- fine [userId] [amount]: Take money as fine');
                     appendOutput('- reset [userId]: Reset user balance to 0');
                     appendOutput('- transfer [fromId] [toId] [amount]: Transfer between users');
-                    appendOutput('- broadcast [message] [redirectUrl]: Send system message');
+                    appendOutput('- broadcast [message] [--url redirectUrl]: Send system message');
                     appendOutput('- clearbroadcast: Clear system broadcast');
                     appendOutput('- history [userId]: Show recent transactions');
                     appendOutput('- search [query]: Search for users');
                     appendOutput('- stats: Show system statistics');
                     appendOutput('- version: Show system version');
+                    appendOutput('- ping [userId]: Check if user exists');
+                    appendOutput('- timestamp: Show current time');
+                    appendOutput('- calc [expression]: Calculate mathematical expression');
+                    appendOutput('- echo [text]: Display text');
+                    appendOutput('- systeminfo: Show system information');
+                    appendOutput('- history [userId]: Show user transactions');
+                    appendOutput('- top: Show top 10 users by balance');
                     break;
 
                 case 'give':
@@ -309,15 +332,25 @@
 
                 case 'broadcast':
                     if (parts.length < 2) {
-                        appendOutput('Usage: broadcast [message] [redirectUrl]', 'error');
+                        appendOutput('Usage: broadcast [message] [--url redirectUrl]', 'error');
                         return;
                     }
                     
-                    // Extract message and optional redirect URL
-                    const redirectUrl = parts[parts.length - 1].startsWith('http') ? parts.pop() : null;
-                    const message = parts.slice(1).join(' ');
-                    
                     try {
+                        let message = '';
+                        let redirectUrl = '';
+                        
+                        // Parse command with URL option
+                        let i = 1;
+                        while (i < parts.length) {
+                            if (parts[i] === '--url') {
+                                redirectUrl = parts[++i];
+                            } else {
+                                message += (message ? ' ' : '') + parts[i];
+                            }
+                            i++;
+                        }
+
                         const result = await new Promise((resolve, reject) => {
                             const callbackName = 'jsonpCallback' + Date.now();
                             
@@ -331,7 +364,7 @@
                             const requestBody = {
                                 action: 'setBroadcast',
                                 message: message,
-                                redirectUrl: redirectUrl || ''
+                                redirectUrl: redirectUrl
                             };
                             
                             script.src = `${GOOGLE_APPS_SCRIPT_URL}?callback=${callbackName}&data=${encodeURIComponent(JSON.stringify(requestBody))}`;
@@ -345,7 +378,9 @@
                         });
 
                         if (result.success) {
-                            appendOutput(`Broadcast message set: "${message}"${redirectUrl ? ` with redirect to ${redirectUrl}` : ''}`, 'success');
+                            appendOutput('Broadcast set with:', 'success');
+                            appendOutput(`Message: ${message}`, 'info');
+                            if (redirectUrl) appendOutput(`URL: ${redirectUrl}`, 'info');
                         } else {
                             appendOutput('Failed to set broadcast message', 'error');
                         }
@@ -460,6 +495,113 @@
                     }
                     break;
 
+                case 'ping':
+                    if (parts.length !== 2) {
+                        appendOutput('Usage: ping [userId]', 'error');
+                        return;
+                    }
+                    try {
+                        const balance = await getBalance(parts[1]);
+                        if (balance !== null) {
+                            appendOutput(`User ${parts[1]} is online`, 'success');
+                        } else {
+                            appendOutput(`User ${parts[1]} is offline`, 'error');
+                        }
+                    } catch (error) {
+                        appendOutput('Error: ' + error.message, 'error');
+                    }
+                    break;
+
+                case 'timestamp':
+                    const now = new Date();
+                    appendOutput(now.toLocaleString(), 'info');
+                    break;
+
+                case 'calc':
+                    if (parts.length < 2) {
+                        appendOutput('Usage: calc [expression]', 'error');
+                        return;
+                    }
+                    try {
+                        const expr = parts.slice(1).join(' ');
+                        const result = eval(expr);
+                        appendOutput(`${expr} = ${result}`, 'success');
+                    } catch (error) {
+                        appendOutput('Invalid expression', 'error');
+                    }
+                    break;
+
+                case 'echo':
+                    appendOutput(parts.slice(1).join(' '), 'info');
+                    break;
+
+                case 'systeminfo':
+                    appendOutput('System Information:', 'info');
+                    appendOutput('ManShell Version: 2.0', 'info');
+                    appendOutput('Server: Google Apps Script', 'info');
+                    appendOutput('Database: Google Sheets', 'info');
+                    appendOutput('Last Updated: ' + new Date().toLocaleDateString(), 'info');
+                    break;
+
+                case 'history':
+                    if (parts.length !== 2) {
+                        appendOutput('Usage: history [userId]', 'error');
+                        return;
+                    }
+                    try {
+                        const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Transactions`;
+                        const response = await fetch(csvUrl);
+                        const csvText = await response.text();
+                        const rows = csvText.split('\n').slice(1); // Skip header
+                        
+                        let found = false;
+                        appendOutput(`Transaction history for user ${parts[1]}:`, 'info');
+                        rows.reverse().forEach(row => {
+                            const cells = row.split(',').map(cell => cell.trim().replace(/^["']|["']$/g, ''));
+                            if (cells[1] === parts[1] || cells[2] === parts[1]) {
+                                found = true;
+                                const date = new Date(cells[0]).toLocaleString();
+                                const type = cells[1] === parts[1] ? 'SENT' : 'RECEIVED';
+                                const amount = cells[3];
+                                const otherUser = cells[1] === parts[1] ? cells[2] : cells[1];
+                                appendOutput(`[${date}] ${type} ${amount}МР ${type === 'SENT' ? 'to' : 'from'} ${otherUser}`, 
+                                    type === 'SENT' ? 'error' : 'success');
+                            }
+                        });
+                        if (!found) {
+                            appendOutput('No transactions found', 'warning');
+                        }
+                    } catch (error) {
+                        appendOutput('Error fetching history', 'error');
+                    }
+                    break;
+
+                case 'top':
+                    try {
+                        const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
+                        const response = await fetch(csvUrl);
+                        const csvText = await response.text();
+                        const rows = csvText.split('\n').slice(1); // Skip header
+                        
+                        let users = rows.map(row => {
+                            const cells = row.split(',').map(cell => cell.trim().replace(/^["']|["']$/g, ''));
+                            return {
+                                id: cells[0],
+                                balance: parseInt(cells[1]) || 0
+                            };
+                        });
+                        
+                        users.sort((a, b) => b.balance - a.balance);
+                        
+                        appendOutput('Top 10 Users by Balance:', 'info');
+                        users.slice(0, 10).forEach((user, index) => {
+                            appendOutput(`${index + 1}. ${user.id}: ${user.balance}МР`, 'success');
+                        });
+                    } catch (error) {
+                        appendOutput('Error fetching top users', 'error');
+                    }
+                    break;
+
                 default:
                     appendOutput(`Unknown command: ${cmd}`, 'error');
             }
@@ -471,6 +613,16 @@
                 appendOutput(`$ ${command}`);
                 input.value = '';
                 await executeCommand(command);
+            }
+        });
+
+        document.getElementById('shell').addEventListener('click', function() {
+            input.focus();
+        });
+
+        input.addEventListener('keydown', function(event) {
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+                event.stopPropagation();
             }
         });
     </script>

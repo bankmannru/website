@@ -38,7 +38,7 @@ function handleRequest(e) {
 
       try {
         // Update broadcast message and URL in first row
-        systemSheet.getRange('A1').setValue(data.message);
+        systemSheet.getRange('A1').setValue(data.message || '');
         systemSheet.getRange('B1').setValue(data.redirectUrl || '');
         
         return output.setContent(callback + '(' + JSON.stringify({
