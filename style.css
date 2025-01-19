@@ -18,6 +18,7 @@
 
 :root {
     /* System tokens */
+    --md-icon-font: 'Material Symbols Rounded';
     --md-sys-color-primary: #0084ff;
     --md-sys-color-on-primary: #ffffff;
     --md-sys-color-outline: #6f7979;
