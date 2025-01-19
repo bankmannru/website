@@ -37,11 +37,54 @@
             }
         }
 
+        async function checkBanStatusAndNotify() {
+            const userId = '646839';
+            console.log('Checking ban status for user:', userId);
+            const status = await checkBanStatus(userId);
+            console.log('Received ban status:', status);
+            
+            if (status && status.isBanned) {
+                console.log('User is banned, showing dialog');
+                const dialog = document.createElement('md-dialog');
+                dialog.setAttribute('type', 'alert');
+                dialog.innerHTML = `
+                    <div slot="headline">Аккаунт заблокирован</div>
+                    <form slot="content" id="form-id" method="dialog">
+                        <p>Ваш аккаунт был заблокирован.</p>
+                        <p>Причина: ${status.reason}</p>
+                        <p>Для разблокировки обратитесь к администратору.</p>
+                    </form>
+                    <div slot="actions">
+                        <md-text-button form="form-id" value="ok">Понятно</md-text-button>
+                    </div>
+                `;
+                document.body.appendChild(dialog);
+                
+                const result = await new Promise((resolve) => {
+                    dialog.addEventListener('closed', () => {
+                        resolve(dialog.returnValue);
+                    });
+                    dialog.show();
+                });
+                
+                if (result === 'ok') {
+                    window.location.href = 'index.html';
+                }
+                dialog.remove();
+            } else {
+                console.log('User is not banned');
+            }
+        }
+
         function startBalanceChecking() {
-            // Initial load
+            // Initial checks
             loadBalance();
+            checkBanStatusAndNotify();
             // Check every 30 seconds
-            balanceCheckInterval = setInterval(loadBalance, 30000);
+            balanceCheckInterval = setInterval(() => {
+                loadBalance();
+                checkBanStatusAndNotify();
+            }, 30000);
         }
 
         function stopBalanceChecking() {
@@ -56,7 +99,8 @@
             if (password === '695') {
                 document.getElementById('password-container').style.display = 'none';
                 document.getElementById('card-container').style.display = 'block';
-                startBalanceChecking(); // Start checking balance periodically
+                checkBanStatusAndNotify(); // Check immediately after login
+                startBalanceChecking(); // Start periodic checks
             } else {
                 const dialog = document.createElement('md-dialog');
                 dialog.setAttribute('type', 'alert');

@@ -2,7 +2,7 @@
 // File > Share > Publish to web > Select Sheet1 > Publish
 // Then copy the URL and extract the ID
 const SHEET_ID = '16yZfXpChwAs5eb0wy0Rj3AACxtYkuaAyK0bhv5HTz98';
-const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzmqFBH8cK0Liwl47O1Fll0f0dUHMTvSJYZKyejME7SIrZiOMUXJ36Lmlz3WgyNf-h3/exec';
+const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzW93oBf5QuRZmg_o33JCg9Gk6-MMY88-q8KMShTGF3fsj5x_dxfLrHROFiT049BWEV/exec';
 
 async function getBalance(userId) {
     try {
@@ -41,17 +41,20 @@ async function makeTransaction(fromUserId, toUserId, amount) {
         console.log('Starting transaction:', { fromUserId, toUserId, amount });
         
         // First check if recipient exists
-        const recipientBalance = await getBalance(toUserId);
-        console.log('Recipient balance:', recipientBalance);
+        const [recipientBalance, senderBalance] = await Promise.all([
+            getBalance(toUserId),
+            fromUserId === 'SYSTEM' ? '∞' : getBalance(fromUserId)
+        ]);
+
+        console.log('Balances:', { recipientBalance, senderBalance });
+        
         if (recipientBalance === null) {
             console.error('Recipient not found');
             return false;
         }
 
-        // Check sender's balance
-        const senderBalance = await getBalance(fromUserId);
-        console.log('Sender balance:', senderBalance);
-        if (senderBalance === null || parseInt(senderBalance) < amount) {
+        // SYSTEM user has infinite balance
+        if (fromUserId !== 'SYSTEM' && (senderBalance === null || parseInt(senderBalance) < amount)) {
             console.error('Insufficient balance');
             return false;
         }
@@ -81,19 +84,25 @@ async function makeTransaction(fromUserId, toUserId, amount) {
             script.src = `${GOOGLE_APPS_SCRIPT_URL}?callback=${callbackName}&data=${encodeURIComponent(JSON.stringify(requestBody))}`;
             document.body.appendChild(script);
 
-            // Add timeout
+            // Shorter timeout
             setTimeout(() => {
                 delete window[callbackName];
                 script.remove();
                 reject(new Error('Transaction timeout'));
-            }, 10000);
+            }, 5000);
         });
 
         console.log('Transaction response:', result);
 
         if (result.success) {
-            // Wait a bit for Google Sheets to update
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            // Skip balance verification for SYSTEM user
+            if (fromUserId === 'SYSTEM') {
+                console.log('SYSTEM transaction successful');
+                return true;
+            }
+
+            // Reduced wait time
+            await new Promise(resolve => setTimeout(resolve, 1000));
             
             // Verify the transaction by checking if balance changed
             const newBalance = await getBalance(fromUserId);
@@ -112,6 +121,97 @@ async function makeTransaction(fromUserId, toUserId, amount) {
         return false;
     } catch (error) {
         console.error('Transaction error:', error);
+        return false;
+    }
+}
+
+async function checkBanStatus(userId) {
+    try {
+        const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
+        const response = await fetch(csvUrl);
+        
+        if (!response.ok) {
+            console.error('Failed to fetch sheet data:', response.status, response.statusText);
+            return null;
+        }
+        
+        const csvText = await response.text();
+        console.log('Raw CSV Data:', csvText);
+        
+        // Split into rows and clean up each cell
+        const rows = csvText.split('\n').map(row => {
+            // Split by comma but handle quoted values
+            const cells = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
+            return cells.map(cell => {
+                // Remove quotes and trim whitespace
+                return cell.replace(/^["']|["']$/g, '').trim();
+            });
+        });
+        
+        console.log('Parsed Rows:', rows);
+        
+        // Find user row (skip header)
+        const userRow = rows.find((row, index) => index > 0 && row[0] === userId);
+        console.log('Found User Row:', userRow);
+        
+        if (userRow) {
+            // Get ban status from column C (index 2) and reason from column D (index 3)
+            const status = {
+                isBanned: userRow[2] === 'TRUE',
+                reason: userRow[3] || ''
+            };
+            console.log('Ban Status Check:', {
+                userId,
+                banField: userRow[2],
+                isBanned: status.isBanned,
+                reason: status.reason,
+                fullRow: userRow
+            });
+            return status;
+        }
+        
+        console.log('User not found:', userId);
+        return null;
+    } catch (error) {
+        console.error('Error checking ban status:', error);
+        return null;
+    }
+}
+
+async function setBanState(userId, isBanned, banReason = '') {
+    try {
+        const requestBody = {
+            action: 'setBanState',
+            userId,
+            isBanned,
+            banReason
+        };
+        
+        // Create a unique callback name
+        const callbackName = 'jsonpCallback' + Date.now();
+        
+        // Create a promise that will be resolved by the JSONP callback
+        const result = await new Promise((resolve, reject) => {
+            window[callbackName] = function(data) {
+                delete window[callbackName];
+                script.remove();
+                resolve(data);
+            };
+
+            const script = document.createElement('script');
+            script.src = `${GOOGLE_APPS_SCRIPT_URL}?callback=${callbackName}&data=${encodeURIComponent(JSON.stringify(requestBody))}`;
+            document.body.appendChild(script);
+
+            setTimeout(() => {
+                delete window[callbackName];
+                script.remove();
+                reject(new Error('Operation timeout'));
+            }, 5000);
+        });
+
+        return result.success;
+    } catch (error) {
+        console.error('Error setting ban state:', error);
         return false;
     }
 }

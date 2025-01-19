@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="broadcast.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ManShell v1.0</title>
+    <script src="sheets.js"></script>
+    <style>
+        body {
+            background-color: black;
+            color: green;
+            font-family: monospace;
+            padding: 20px;
+        }
+        .shell {
+            border: 1px solid green;
+            padding: 10px;
+            margin: 20px auto;
+            width: 80%;
+            height: 400px;
+            overflow-y: auto;
+        }
+        .input-line {
+            display: flex;
+        }
+        .prompt {
+            margin-right: 10px;
+        }
+        .input {
+            flex-grow: 1;
+            background: none;
+            border: none;
+            color: green;
+            outline: none;
+            font-family: monospace;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: lightgreen;
+        }
+        .output.broadcast {
+            color: #ff9800;
+            font-weight: bold;
+        }
+        .output.info {
+            color: #2196f3;
+        }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <div class="output">
+            <p>Welcome to ManShell v1.0</p>
+            <p>Available commands:</p>
+            <p>- help</p>
+            <p>- give [userId] [amount]</p>
+            <p>- take [userId] [amount]</p>
+            <p>- ban [userId] [reason]</p>
+            <p>- unban [userId]</p>
+            <p>- balance [userId]</p>
+        </div>
+        <div class="input-line">
+            <span class="prompt">$</span>
+            <input type="text" class="input" autofocus>
+        </div>
+    </div>
+    <script>
+        const input = document.querySelector('.input');
+        const output = document.querySelector('.output');
+        const ADMIN_PASSWORD = '55300'; // Change this to your desired admin password
+        let isAuthenticated = false;
+
+        function appendOutput(text, className = '') {
+            const p = document.createElement('p');
+            p.textContent = text;
+            if (className) p.className = className;
+            output.appendChild(p);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        async function executeCommand(command) {
+            const parts = command.trim().split(' ');
+            const cmd = parts[0].toLowerCase();
+
+            if (!isAuthenticated && cmd !== 'login') {
+                appendOutput('Please login first using: login [password]', 'error');
+                return;
+            }
+
+            switch(cmd) {
+                case 'login':
+                    if (parts[1] === ADMIN_PASSWORD) {
+                        isAuthenticated = true;
+                        appendOutput('Successfully logged in', 'success');
+                    } else {
+                        appendOutput('Invalid password', 'error');
+                    }
+                    break;
+
+                case 'help':
+                    appendOutput('Available commands:');
+                    appendOutput('- help: Show this help message');
+                    appendOutput('- give [userId] [amount]: Give money to user');
+                    appendOutput('- take [userId] [amount]: Take money from user');
+                    appendOutput('- ban [userId] [reason]: Ban a user with optional reason');
+                    appendOutput('- unban [userId]: Unban a user');
+                    appendOutput('- balance [userId]: Check user balance');
+                    appendOutput('- clear: Clear the terminal');
+                    appendOutput('- status [userId]: Check user status and balance');
+                    appendOutput('- reward [userId] [amount]: Give reward from SYSTEM');
+                    appendOutput('- fine [userId] [amount]: Take money as fine');
+                    appendOutput('- reset [userId]: Reset user balance to 0');
+                    appendOutput('- transfer [fromId] [toId] [amount]: Transfer between users');
+                    appendOutput('- broadcast [message] [redirectUrl]: Send system message');
+                    appendOutput('- clearbroadcast: Clear system broadcast');
+                    appendOutput('- history [userId]: Show recent transactions');
+                    appendOutput('- search [query]: Search for users');
+                    appendOutput('- stats: Show system statistics');
+                    appendOutput('- version: Show system version');
+                    break;
+
+                case 'give':
+                    if (parts.length !== 3) {
+                        appendOutput('Usage: give [userId] [amount]', 'error');
+                        return;
+                    }
+                    try {
+                        const result = await makeTransaction('SYSTEM', parts[1], parseInt(parts[2]));
+                        if (result) {
+                            appendOutput(`Successfully gave ${parts[2]}MР to user ${parts[1]}`, 'success');
+                        } else {
+                            appendOutput('Transaction failed', 'error');
+                        }
+                    } catch (error) {
+                        appendOutput('Error: ' + error.message, 'error');
+                    }
+                    break;
+
+                case 'take':
+                    if (parts.length !== 3) {
+                        appendOutput('Usage: take [userId] [amount]', 'error');
+                        return;
+                    }
+                    try {
+                        const result = await makeTransaction(parts[1], 'SYSTEM', parseInt(parts[2]));
+                        if (result) {
+                            appendOutput(`Successfully took ${parts[2]}MР from user ${parts[1]}`, 'success');
+                        } else {
+                            appendOutput('Transaction failed', 'error');
+                        }
+                    } catch (error) {
+                        appendOutput('Error: ' + error.message, 'error');
+                    }
+                    break;
+
+                case 'ban':
+                    if (parts.length < 2) {
+                        appendOutput('Usage: ban [userId] [reason]', 'error');
+                        return;
+                    }
+                    try {
+                        const userId = parts[1];
+                        const reason = parts.slice(2).join(' ') || 'No reason provided';
+                        const result = await setBanState(userId, true, reason);
+                        if (result) {
+                            appendOutput(`Successfully banned user ${userId} (Reason: ${reason})`, 'success');
+                        } else {
+                            appendOutput('Failed to ban user', 'error');
+                        }
+                    } catch (error) {
+                        appendOutput('Error: ' + error.message, 'error');
+                    }
+                    break;
+
+                case 'unban':
+                    if (parts.length !== 2) {
+                        appendOutput('Usage: unban [userId]', 'error');
+                        return;
+                    }
+                    try {
+                        const result = await setBanState(parts[1], false);
+                        if (result) {
+                            appendOutput(`Successfully unbanned user ${parts[1]}`, 'success');
+                        } else {
+                            appendOutput('Failed to unban user', 'error');
+                        }
+                    } catch (error) {
+                        appendOutput('Error: ' + error.message, 'error');
+                    }
+                    break;
+
+                case 'balance':
+                    if (parts.length !== 2) {
+                        appendOutput('Usage: balance [userId]', 'error');
+                        return;
+                    }
+                    try {
+                        const balance = await getBalance(parts[1]);
+                        if (balance !== null) {
+                            appendOutput(`Balance for user ${parts[1]}: ${balance}MР`, 'success');
+                        } else {
+                            appendOutput('User not found', 'error');
+                        }
+                    } catch (error) {
+                        appendOutput('Error: ' + error.message, 'error');
+                    }
+                    break;
+
+                case 'status':
+                    if (parts.length !== 2) {
+                        appendOutput('Usage: status [userId]', 'error');
+                        return;
+                    }
+                    try {
+                        const [balance, banStatus] = await Promise.all([
+                            getBalance(parts[1]),
+                            checkBanStatus(parts[1])
+                        ]);
+                        if (balance !== null) {
+                            appendOutput(`User ${parts[1]}:`, 'info');
+                            appendOutput(`Balance: ${balance}МР`, 'success');
+                            appendOutput(`Status: ${banStatus?.isBanned ? 'BANNED' : 'Active'}`, banStatus?.isBanned ? 'error' : 'success');
+                            if (banStatus?.isBanned && banStatus.reason) {
+                                appendOutput(`Ban reason: ${banStatus.reason}`, 'error');
+                            }
+                        } else {
+                            appendOutput('User not found', 'error');
+                        }
+                    } catch (error) {
+                        appendOutput('Error: ' + error.message, 'error');
+                    }
+                    break;
+
+                case 'reward':
+                    if (parts.length !== 3 || isNaN(parts[2])) {
+                        appendOutput('Usage: reward [userId] [amount]', 'error');
+                        return;
+                    }
+                    try {
+                        const success = await makeTransaction('SYSTEM', parts[1], parseInt(parts[2]));
+                        if (success) {
+                            appendOutput(`Successfully rewarded ${parts[2]}МР to user ${parts[1]}`, 'success');
+                        } else {
+                            appendOutput('Failed to give reward', 'error');
+                        }
+                    } catch (error) {
+                        appendOutput('Error: ' + error.message, 'error');
+                    }
+                    break;
+
+                case 'fine':
+                    if (parts.length !== 3 || isNaN(parts[2])) {
+                        appendOutput('Usage: fine [userId] [amount]', 'error');
+                        return;
+                    }
+                    try {
+                        const success = await makeTransaction(parts[1], 'SYSTEM', parseInt(parts[2]));
+                        if (success) {
+                            appendOutput(`Successfully fined ${parts[2]}МР from user ${parts[1]}`, 'success');
+                        } else {
+                            appendOutput('Failed to apply fine', 'error');
+                        }
+                    } catch (error) {
+                        appendOutput('Error: ' + error.message, 'error');
+                    }
+                    break;
+
+                case 'reset':
+                    if (parts.length !== 2) {
+                        appendOutput('Usage: reset [userId]', 'error');
+                        return;
+                    }
+                    try {
+                        const balance = await getBalance(parts[1]);
+                        if (balance !== null) {
+                            const success = await makeTransaction(parts[1], 'SYSTEM', parseInt(balance));
+                            if (success) {
+                                appendOutput(`Successfully reset balance for user ${parts[1]}`, 'success');
+                            } else {
+                                appendOutput('Failed to reset balance', 'error');
+                            }
+                        } else {
+                            appendOutput('User not found', 'error');
+                        }
+                    } catch (error) {
+                        appendOutput('Error: ' + error.message, 'error');
+                    }
+                    break;
+
+                case 'transfer':
+                    if (parts.length !== 4 || isNaN(parts[3])) {
+                        appendOutput('Usage: transfer [fromId] [toId] [amount]', 'error');
+                        return;
+                    }
+                    try {
+                        const success = await makeTransaction(parts[1], parts[2], parseInt(parts[3]));
+                        if (success) {
+                            appendOutput(`Successfully transferred ${parts[3]}МР from ${parts[1]} to ${parts[2]}`, 'success');
+                        } else {
+                            appendOutput('Failed to transfer', 'error');
+                        }
+                    } catch (error) {
+                        appendOutput('Error: ' + error.message, 'error');
+                    }
+                    break;
+
+                case 'broadcast':
+                    if (parts.length < 2) {
+                        appendOutput('Usage: broadcast [message] [redirectUrl]', 'error');
+                        return;
+                    }
+                    
+                    // Extract message and optional redirect URL
+                    const redirectUrl = parts[parts.length - 1].startsWith('http') ? parts.pop() : null;
+                    const message = parts.slice(1).join(' ');
+                    
+                    try {
+                        const result = await new Promise((resolve, reject) => {
+                            const callbackName = 'jsonpCallback' + Date.now();
+                            
+                            window[callbackName] = function(data) {
+                                delete window[callbackName];
+                                script.remove();
+                                resolve(data);
+                            };
+
+                            const script = document.createElement('script');
+                            const requestBody = {
+                                action: 'setBroadcast',
+                                message: message,
+                                redirectUrl: redirectUrl || ''
+                            };
+                            
+                            script.src = `${GOOGLE_APPS_SCRIPT_URL}?callback=${callbackName}&data=${encodeURIComponent(JSON.stringify(requestBody))}`;
+                            document.body.appendChild(script);
+
+                            setTimeout(() => {
+                                delete window[callbackName];
+                                script.remove();
+                                reject(new Error('Operation timeout'));
+                            }, 5000);
+                        });
+
+                        if (result.success) {
+                            appendOutput(`Broadcast message set: "${message}"${redirectUrl ? ` with redirect to ${redirectUrl}` : ''}`, 'success');
+                        } else {
+                            appendOutput('Failed to set broadcast message', 'error');
+                        }
+                    } catch (error) {
+                        appendOutput('Error: ' + error.message, 'error');
+                    }
+                    break;
+
+                case 'clearbroadcast':
+                    try {
+                        const result = await new Promise((resolve, reject) => {
+                            const callbackName = 'jsonpCallback' + Date.now();
+                            
+                            window[callbackName] = function(data) {
+                                delete window[callbackName];
+                                script.remove();
+                                resolve(data);
+                            };
+
+                            const script = document.createElement('script');
+                            const requestBody = {
+                                action: 'setBroadcast',
+                                message: '',
+                                redirectUrl: ''
+                            };
+                            
+                            script.src = `${GOOGLE_APPS_SCRIPT_URL}?callback=${callbackName}&data=${encodeURIComponent(JSON.stringify(requestBody))}`;
+                            document.body.appendChild(script);
+
+                            setTimeout(() => {
+                                delete window[callbackName];
+                                script.remove();
+                                reject(new Error('Operation timeout'));
+                            }, 5000);
+                        });
+
+                        if (result.success) {
+                            appendOutput('Broadcast message cleared', 'success');
+                        } else {
+                            appendOutput('Failed to clear broadcast message', 'error');
+                        }
+                    } catch (error) {
+                        appendOutput('Error: ' + error.message, 'error');
+                    }
+                    break;
+
+                case 'clear':
+                    document.getElementById('output').innerHTML = '';
+                    break;
+
+                case 'version':
+                    appendOutput('ManShell v2.0', 'info');
+                    appendOutput('© 2024 All rights reserved', 'info');
+                    break;
+
+                case 'stats':
+                    try {
+                        const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
+                        const response = await fetch(csvUrl);
+                        const csvText = await response.text();
+                        const rows = csvText.split('\n').slice(1); // Skip header
+                        
+                        let totalBalance = 0;
+                        let activeUsers = 0;
+                        let bannedUsers = 0;
+                        
+                        rows.forEach(row => {
+                            const cells = row.split(',').map(cell => cell.trim().replace(/^["']|["']$/g, ''));
+                            totalBalance += parseInt(cells[1]) || 0;
+                            if (cells[2] === 'TRUE') bannedUsers++;
+                            else activeUsers++;
+                        });
+                        
+                        appendOutput('System Statistics:', 'info');
+                        appendOutput(`Total Users: ${rows.length}`, 'success');
+                        appendOutput(`Active Users: ${activeUsers}`, 'success');
+                        appendOutput(`Banned Users: ${bannedUsers}`, 'error');
+                        appendOutput(`Total Balance: ${totalBalance}МР`, 'success');
+                    } catch (error) {
+                        appendOutput('Error fetching statistics', 'error');
+                    }
+                    break;
+
+                case 'search':
+                    if (parts.length < 2) {
+                        appendOutput('Usage: search [query]', 'error');
+                        return;
+                    }
+                    try {
+                        const query = parts.slice(1).join(' ').toLowerCase();
+                        const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
+                        const response = await fetch(csvUrl);
+                        const csvText = await response.text();
+                        const rows = csvText.split('\n').slice(1); // Skip header
+                        
+                        let found = false;
+                        rows.forEach(row => {
+                            const cells = row.split(',').map(cell => cell.trim().replace(/^["']|["']$/g, ''));
+                            if (cells[0].toLowerCase().includes(query)) {
+                                found = true;
+                                appendOutput(`User ID: ${cells[0]}`, 'info');
+                                appendOutput(`Balance: ${cells[1]}МР`, 'success');
+                                appendOutput(`Status: ${cells[2] === 'TRUE' ? 'BANNED' : 'Active'}`, cells[2] === 'TRUE' ? 'error' : 'success');
+                                appendOutput('---', 'info');
+                            }
+                        });
+                        if (!found) {
+                            appendOutput('No users found', 'error');
+                        }
+                    } catch (error) {
+                        appendOutput('Error searching users', 'error');
+                    }
+                    break;
+
+                default:
+                    appendOutput(`Unknown command: ${cmd}`, 'error');
+            }
+        }
+
+        input.addEventListener('keydown', async function(event) {
+            if (event.key === 'Enter') {
+                const command = input.value;
+                appendOutput(`$ ${command}`);
+                input.value = '';
+                await executeCommand(command);
+            }
+        });
+    </script>
+</body>
+</html>
