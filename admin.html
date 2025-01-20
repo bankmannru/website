@@ -31,20 +31,24 @@
             background: var(--md-sys-color-surface);
             color: var(--md-sys-color-on-surface);
             font-family: 'Roboto', sans-serif;
-            display: grid;
-            grid-template-columns: 250px 1fr;
+            display: flex;
+            flex-direction: column;
             min-height: 100vh;
         }
 
         .sidebar {
             background: var(--md-sys-color-surface-container);
-            padding: 20px;
-            border-right: 1px solid #444;
+            padding: 8px;
+            border-bottom: 1px solid #444;
+            display: flex;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .main-content {
             padding: 20px;
             overflow-y: auto;
+            flex: 1;
         }
 
         .section {
@@ -98,7 +102,7 @@
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(2, 1fr);
             gap: 15px;
             margin-bottom: 20px;
         }
@@ -122,17 +126,27 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 16px;
+            display: block;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .user-list th, .user-list td {
             padding: 12px;
             text-align: left;
             border-bottom: 1px solid #444;
+            white-space: nowrap;
+            min-width: 100px;
         }
 
         .action-buttons {
             display: flex;
             gap: 8px;
+        }
+
+        .action-buttons md-icon-button {
+            --md-icon-button-state-layer-size: 48px;
+            margin: 0 4px;
         }
 
         @keyframes fadeIn {
@@ -179,6 +193,8 @@
             --md-dialog-container-color: var(--md-sys-color-surface-container);
             --md-dialog-headline-color: var(--md-sys-color-on-surface);
             --md-dialog-supporting-text-color: var(--md-sys-color-on-surface);
+            --md-dialog-container-max-width: min(560px, 100vw - 32px);
+            --md-dialog-container-max-height: min(560px, 100vh - 32px);
         }
 
         .actions md-icon-button {
@@ -208,30 +224,114 @@
         .suggestion-chip:hover {
             background: rgba(0, 255, 0, 0.2);
         }
+
+        .command-button {
+            min-height: 48px;
+            padding: 8px 16px;
+        }
+
+        /* Style the tabs container */
+        md-tabs {
+            width: 100%;
+            --md-primary-tab-container-color: transparent;
+            --md-primary-tab-active-indicator-color: #00ff00;
+            --md-primary-tab-active-hover-state-layer-color: rgba(0, 255, 0, 0.1);
+            --md-primary-tab-active-pressed-state-layer-color: rgba(0, 255, 0, 0.2);
+            --md-primary-tab-hover-state-layer-color: rgba(255, 255, 255, 0.1);
+            --md-primary-tab-pressed-state-layer-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Style individual tabs */
+        md-tab {
+            min-width: 80px;
+            text-align: center;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            color: var(--md-sys-color-on-surface);
+            --md-primary-tab-active-label-text-color: #00ff00;
+            --md-primary-tab-active-hover-label-text-color: #00ff00;
+            --md-primary-tab-active-pressed-label-text-color: #00ff00;
+        }
+
+        /* Style the tab icons */
+        md-tab md-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+            color: inherit;
+        }
+
+        /* Style the tab labels */
+        md-tab span {
+            font-size: 12px;
+            white-space: nowrap;
+            color: inherit;
+        }
+
+        @media (min-width: 768px) {
+            body {
+                display: grid;
+                grid-template-columns: 250px 1fr;
+            }
+            
+            .sidebar {
+                border-right: 1px solid #444;
+                border-bottom: none;
+                display: block;
+                overflow-x: visible;
+                padding: 20px;
+            }
+
+            /* Adjust tabs for desktop */
+            md-tab {
+                text-align: left;
+                padding: 16px;
+                flex-direction: row;
+                justify-content: flex-start;
+                gap: 12px;
+            }
+
+            md-tab span {
+                font-size: 14px;
+            }
+
+            md-tab md-icon {
+                margin-bottom: 0;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="sidebar">
-        <md-navigation-drawer>
-            <md-list>
-                <md-list-item type="button" onclick="showSection('dashboard')">
-                    <md-icon slot="start">dashboard</md-icon>
-                    Dashboard
-                </md-list-item>
-                <md-list-item type="button" onclick="showSection('users')">
-                    <md-icon slot="start">group</md-icon>
-                    Users
-                </md-list-item>
-                <md-list-item type="button" onclick="showSection('chat')">
-                    <md-icon slot="start">chat</md-icon>
-                    Chat
-                </md-list-item>
-                <md-list-item type="button" onclick="showSection('terminal')">
-                    <md-icon slot="start">terminal</md-icon>
-                    Terminal
-                </md-list-item>
-            </md-list>
-        </md-navigation-drawer>
+        <md-tabs>
+            <md-tab
+                onclick="showSection('dashboard')"
+                aria-controls="dashboard">
+                <md-icon slot="icon">dashboard</md-icon>
+                <span>Dashboard</span>
+            </md-tab>
+            <md-tab
+                onclick="showSection('users')"
+                aria-controls="users">
+                <md-icon slot="icon">group</md-icon>
+                <span>Users</span>
+            </md-tab>
+            <md-tab
+                onclick="showSection('chat')"
+                aria-controls="chat">
+                <md-icon slot="icon">chat</md-icon>
+                <span>Chat</span>
+            </md-tab>
+            <md-tab
+                onclick="showSection('terminal')"
+                aria-controls="terminal">
+                <md-icon slot="icon">terminal</md-icon>
+                <span>Terminal</span>
+            </md-tab>
+        </md-tabs>
     </div>
 
     <div class="main-content">
@@ -375,7 +475,28 @@
             });
         });
 
+        // Add this function to handle tab selection
+        function handleTabSelect(event) {
+            const tabs = document.querySelectorAll('md-tab');
+            tabs.forEach(tab => tab.selected = false);
+            event.target.selected = true;
+        }
+
+        // Add event listeners to tabs
+        document.querySelectorAll('md-tab').forEach(tab => {
+            tab.addEventListener('click', handleTabSelect);
+        });
+
+        // Update showSection function
         function showSection(sectionId) {
+            // Update tab selection
+            const tab = document.querySelector(`md-tab[aria-controls="${sectionId}"]`);
+            if (tab) {
+                const tabs = document.querySelectorAll('md-tab');
+                tabs.forEach(t => t.selected = false);
+                tab.selected = true;
+            }
+
             // Hide all sections
             document.querySelectorAll('.section').forEach(section => {
                 section.classList.remove('active');
@@ -471,58 +592,62 @@
         // Utilities
         async function executeCommand(action, data = {}) {
             try {
-                return await new Promise((resolve, reject) => {
+                return await new Promise((resolve) => {
                     // Create a unique callback name
                     const callbackName = 'cb_' + Math.random().toString(36).substr(2, 9);
                     
                     // Create the callback function
                     window[callbackName] = function(response) {
-                        // Clean up
+                        cleanup();
+                        resolve(response);
+                    };
+
+                    // Create cleanup function
+                    const cleanup = () => {
                         delete window[callbackName];
                         if (script && script.parentNode) {
                             script.parentNode.removeChild(script);
                         }
-                        resolve(response);
+                        if (timeoutId) {
+                            clearTimeout(timeoutId);
+                        }
                     };
 
                     // Create script element
                     const script = document.createElement('script');
                     
-                    // Add error handler
+                    // Build URL with parameters
+                    const params = {
+                        callback: callbackName,
+                        data: JSON.stringify({ action, ...data })
+                    };
+                    
+                    const queryString = Object.keys(params)
+                        .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+                        .join('&');
+                    
+                    script.src = `${GOOGLE_APPS_SCRIPT_URL}?${queryString}`;
+
+                    // Handle load errors
                     script.onerror = () => {
-                        delete window[callbackName];
-                        if (script.parentNode) {
-                            script.parentNode.removeChild(script);
-                        }
+                        cleanup();
                         resolve({
                             success: false,
                             error: 'Failed to load script'
                         });
                     };
 
-                    // Build URL with parameters
-                    const params = new URLSearchParams({
-                        callback: callbackName,
-                        data: JSON.stringify({ action, ...data })
-                    });
-
-                    // Set source and append script
-                    script.src = `${GOOGLE_APPS_SCRIPT_URL}?${params.toString()}`;
-                    document.body.appendChild(script);
-
                     // Add timeout
-                    setTimeout(() => {
-                        if (window[callbackName]) {
-                            delete window[callbackName];
-                            if (script.parentNode) {
-                                script.parentNode.removeChild(script);
-                            }
-                            resolve({
-                                success: false,
-                                error: 'Request timed out'
-                            });
-                        }
+                    const timeoutId = setTimeout(() => {
+                        cleanup();
+                        resolve({
+                            success: false,
+                            error: 'Request timed out'
+                        });
                     }, 10000);
+
+                    // Add script to document
+                    document.body.appendChild(script);
                 });
             } catch (error) {
                 console.error('Command error:', error);
