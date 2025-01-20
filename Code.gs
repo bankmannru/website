@@ -7,19 +7,18 @@ function doPost(e) {
 }
 
 function handleRequest(e) {
-  // Set CORS headers
   const output = ContentService.createTextOutput();
+  
+  // Set content type to JavaScript
   output.setMimeType(ContentService.MimeType.JAVASCRIPT);
   
   const callback = e.parameter.callback;
   if (!callback) {
-    return output.setContent('console.error("No callback provided")');
+    return output.setContent('console.error("No callback provided");');
   }
 
   try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Sheet1');
     const data = e.parameter.data ? JSON.parse(e.parameter.data) : null;
-    
     if (!data) {
       return output.setContent(callback + '(' + JSON.stringify({
         success: false,
@@ -27,6 +26,8 @@ function handleRequest(e) {
       }) + ');');
     }
 
+    let result = null;
+    
     if (data.action === 'setBroadcast') {
       const systemSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('SYSTEM');
       if (!systemSheet) {
@@ -41,15 +42,13 @@ function handleRequest(e) {
         systemSheet.getRange('A1').setValue(data.message || '');
         systemSheet.getRange('B1').setValue(data.redirectUrl || '');
         
-        return output.setContent(callback + '(' + JSON.stringify({
-          success: true
-        }) + ');');
+        result = { success: true };
       } catch (err) {
         console.error('Broadcast error:', err);
-        return output.setContent(callback + '(' + JSON.stringify({
+        result = {
           success: false,
           error: 'Failed to update broadcast'
-        }) + ');');
+        };
       }
     }
 
@@ -125,9 +124,7 @@ function handleRequest(e) {
         ]);
       }
       
-      return output.setContent(callback + '(' + JSON.stringify({
-        success: true
-      }) + ');');
+      result = { success: true };
     }
 
     if (data.action === 'setBanState') {
@@ -170,15 +167,13 @@ function handleRequest(e) {
           ]);
         }
         
-        return output.setContent(callback + '(' + JSON.stringify({
-          success: true
-        }) + ');');
+        result = { success: true };
       } catch (err) {
         console.error('Ban state error:', err);
-        return output.setContent(callback + '(' + JSON.stringify({
+        result = {
           success: false,
           error: 'Failed to update ban state'
-        }) + ');');
+        };
       }
     }
 
@@ -202,15 +197,13 @@ function handleRequest(e) {
           data.replyTo || ''  // reply data
         ]);
         
-        return output.setContent(callback + '(' + JSON.stringify({
-          success: true
-        }) + ');');
+        result = { success: true };
       } catch (err) {
         console.error('Chat error:', err);
-        return output.setContent(callback + '(' + JSON.stringify({
+        result = {
           success: false,
           error: 'Failed to save message'
-        }) + ');');
+        };
       }
     }
 
@@ -234,10 +227,12 @@ function handleRequest(e) {
           }
           
           chatSheet.getRange(i + 1, 5).setValue(JSON.stringify(reactions));
-          return output.setContent(callback + '(' + JSON.stringify({ success: true }) + ');');
+          result = { success: true };
+          return output.setContent(callback + '(' + JSON.stringify(result) + ');');
         }
       }
-      return output.setContent(callback + '(' + JSON.stringify({ success: false }) + ');');
+      result = { success: false };
+      return output.setContent(callback + '(' + JSON.stringify(result) + ');');
     }
 
     // Handle typing indicators
@@ -260,7 +255,8 @@ function handleRequest(e) {
         typingSheet.appendRow([data.username, true]);
       }
       
-      return output.setContent(callback + '(' + JSON.stringify({ success: true }) + ');');
+      result = { success: true };
+      return output.setContent(callback + '(' + JSON.stringify(result) + ');');
     }
 
     // Handle online status updates
@@ -290,19 +286,434 @@ function handleRequest(e) {
         onlineSheet.appendRow([data.username, data.timestamp]);
       }
       
-      return output.setContent(callback + '(' + JSON.stringify({ success: true }) + ');');
+      result = { success: true };
+      return output.setContent(callback + '(' + JSON.stringify(result) + ');');
     }
-    
-    return output.setContent(callback + '(' + JSON.stringify({
-      success: false,
-      error: 'Invalid action'
-    }) + ');');
-    
+
+    // Handle shell commands
+    if (data.action === 'executeShell') {
+      try {
+        const command = data.command;
+        const args = command.split(' ');
+        const cmd = args[0];
+        
+        let output = '';
+        
+        switch(cmd) {
+          case 'help':
+            output = `Available commands:
+              Chat Management:
+              /clear - Clear chat history
+              /ban <username> [reason] - Ban a user
+              /unban <username> - Unban a user
+              /mute <username> <minutes> - Mute user temporarily
+              /broadcast <message> - Send system broadcast
+              /users - List all online users
+              /history <username> - Show user's message history
+              
+              System Commands:
+              /ls [path] - List files and directories
+              /cat <file> - Show file contents
+              /stats - Show chat statistics
+              /ping - Check system status
+              /uptime - Show server uptime
+              /search <query> - Search messages
+              /export - Export chat logs
+              
+              Type /help <command> for detailed usage`;
+            break;
+            
+          case 'clear':
+            const chatSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('chatLogs');
+            chatSheet.clear();
+            chatSheet.appendRow(['timestamp', 'username', 'message', 'image', 'reactions', 'replyTo']);
+            output = 'Chat history cleared';
+            break;
+            
+          case 'ban':
+            if (args.length < 2) {
+              output = 'Usage: /ban <username> [reason]';
+              break;
+            }
+            const banReason = args.slice(2).join(' ') || 'No reason provided';
+            const banResult = setBanState(args[1], true, banReason);
+            output = banResult ? `Banned ${args[1]}: ${banReason}` : 'Failed to ban user';
+            break;
+            
+          case 'unban':
+            if (args.length < 2) {
+              output = 'Usage: /unban <username>';
+              break;
+            }
+            const unbanResult = setBanState(args[1], false);
+            output = unbanResult ? `Unbanned ${args[1]}` : 'Failed to unban user';
+            break;
+            
+          case 'users':
+            const onlineSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('onlineUsers');
+            const users = onlineSheet.getDataRange().getValues();
+            output = 'Online users:\n' + users.slice(1).map(row => 
+              `${row[0]} (last active: ${new Date(row[1]).toLocaleString()})`
+            ).join('\n');
+            break;
+            
+          case 'stats':
+            const stats = {
+              messages: chatSheet.getLastRow() - 1,
+              users: new Set(chatSheet.getRange('B2:B').getValues().flat()).size,
+              images: chatSheet.getRange('D2:D').getValues().filter(([v]) => v).length
+            };
+            output = `Chat Statistics:
+              Total Messages: ${stats.messages}
+              Unique Users: ${stats.users}
+              Images Shared: ${stats.images}`;
+            break;
+            
+          case 'search':
+            if (args.length < 2) {
+              output = 'Usage: /search <query>';
+              break;
+            }
+            const query = args.slice(1).join(' ').toLowerCase();
+            const messages = chatSheet.getDataRange().getValues();
+            const results = messages.slice(1).filter(row => 
+              row[2].toLowerCase().includes(query)
+            ).map(row => 
+              `[${new Date(row[0]).toLocaleString()}] ${row[1]}: ${row[2]}`
+            );
+            output = results.length ? results.join('\n') : 'No messages found';
+            break;
+            
+          case 'ls':
+            const path = args[1] || '.';
+            const folder = DriveApp.getFolderById(path === '.' ? 
+              DriveApp.getRootFolder().getId() : path);
+            const files = folder.getFiles();
+            const folders = folder.getFolders();
+            output = 'Directories:\n';
+            while (folders.hasNext()) {
+              const f = folders.next();
+              output += `📁 ${f.getName()} (${f.getId()})\n`;
+            }
+            output += '\nFiles:\n';
+            while (files.hasNext()) {
+              const f = files.next();
+              output += `📄 ${f.getName()} (${f.getId()})\n`;
+            }
+            break;
+            
+          case 'cat':
+            if (args.length < 2) {
+              output = 'Usage: /cat <fileId>';
+              break;
+            }
+            try {
+              const file = DriveApp.getFileById(args[1]);
+              output = file.getBlob().getDataAsString();
+            } catch (e) {
+              output = 'Error: File not found or cannot be read';
+            }
+            break;
+            
+          case 'export':
+            const csvContent = chatSheet.getDataRange().getValues()
+              .map(row => row.join(','))
+              .join('\n');
+            const exportFile = DriveApp.createFile('chat_export.csv', csvContent, 'text/csv');
+            output = `Chat logs exported: ${exportFile.getUrl()}`;
+            break;
+            
+          default:
+            output = 'Unknown command. Type /help for available commands.';
+        }
+        
+        result = {
+          success: true,
+          output
+        };
+      } catch (err) {
+        result = {
+          success: false,
+          error: 'Failed to execute command'
+        };
+      }
+    }
+
+    // Handle translation requests
+    if (data.action === 'translateText') {
+      try {
+        const text = data.text;
+        const targetLang = data.targetLang;
+        
+        // Use Google Translate API
+        const translatedText = LanguageApp.translate(text, 'auto', targetLang);
+        
+        result = {
+          success: true,
+          translatedText
+        };
+      } catch (err) {
+        result = {
+          success: false,
+          error: 'Translation failed'
+        };
+      }
+    }
+
+    // Handle message pinning
+    if (data.action === 'pinMessage') {
+      const pinnedSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('pinnedMessages');
+      if (!pinnedSheet) {
+        SpreadsheetApp.getActiveSpreadsheet().insertSheet('pinnedMessages');
+        pinnedSheet.appendRow(['messageId', 'pinnedBy', 'timestamp']);
+      }
+      
+      try {
+        pinnedSheet.appendRow([data.messageId, data.username, new Date().toISOString()]);
+        result = { success: true };
+      } catch (err) {
+        result = {
+          success: false,
+          error: 'Failed to pin message'
+        };
+      }
+    }
+
+    // Handle dashboard stats request
+    if (data.action === 'getDashboardStats') {
+      try {
+        const sheet = SpreadsheetApp.getActiveSpreadsheet();
+        const usersSheet = sheet.getSheetByName('Sheet1');
+        const chatSheet = sheet.getSheetByName('chatLogs');
+        const onlineSheet = sheet.getSheetByName('onlineUsers');
+        
+        // Get all users
+        const totalUsers = usersSheet ? Math.max(0, usersSheet.getLastRow() - 1) : 0;
+        
+        // Get banned users
+        const bannedUsers = usersSheet ? 
+          usersSheet.getRange('C2:C' + usersSheet.getLastRow())
+            .getValues()
+            .filter(([v]) => v === true || v === 'TRUE')
+            .length : 0;
+        
+        // Get total messages
+        const messagesTotal = chatSheet ? Math.max(0, chatSheet.getLastRow() - 1) : 0;
+        
+        // Get online users
+        const onlineUsers = onlineSheet ? Math.max(0, onlineSheet.getLastRow() - 1) : 0;
+        
+        result = {
+          success: true,
+          stats: {
+            totalUsers,
+            bannedUsers,
+            messagesTotal,
+            onlineUsers
+          }
+        };
+      } catch (err) {
+        result = {
+          success: false,
+          error: 'Failed to get stats: ' + err.toString()
+        };
+      }
+    }
+
+    // Handle user list request
+    if (data.action === 'getUsers') {
+      try {
+        const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Sheet1');
+        if (!sheet) {
+          return output.setContent(callback + '(' + JSON.stringify({
+            success: false,
+            error: 'Users sheet not found'
+          }) + ');');
+        }
+        
+        const lastRow = sheet.getLastRow();
+        if (lastRow <= 1) {
+          return output.setContent(callback + '(' + JSON.stringify({
+            success: true,
+            users: []
+          }) + ');');
+        }
+        
+        const values = sheet.getRange('A2:D' + lastRow).getValues();
+        const users = values.map(row => ({
+          username: row[0],
+          balance: row[1],
+          isBanned: row[2] === true || row[2] === 'TRUE',
+          banReason: row[3] || ''
+        }));
+        
+        result = {
+          success: true,
+          users
+        };
+      } catch (err) {
+        result = {
+          success: false,
+          error: 'Failed to get users: ' + err.toString()
+        };
+      }
+    }
+
+    // Handle card generation
+    if (data.action === 'generateCards') {
+      try {
+        const cardsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Cards');
+        if (!cardsSheet) {
+          SpreadsheetApp.getActiveSpreadsheet().insertSheet('Cards');
+          cardsSheet.appendRow(['number', 'value', 'used', 'usedBy', 'usedAt']);
+        }
+        
+        const cards = [];
+        for (let i = 0; i < data.count; i++) {
+          const cardNumber = generateUniqueCardNumber();
+          cardsSheet.appendRow([cardNumber, data.amount, false, '', '']);
+          cards.push(cardNumber);
+        }
+        
+        result = {
+          success: true,
+          cards
+        };
+      } catch (err) {
+        result = {
+          success: false,
+          error: 'Failed to generate cards'
+        };
+      }
+    }
+
+    // Handle user history request
+    if (data.action === 'getUserHistory') {
+      try {
+        const username = data.username;
+        const transactionSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Transactions');
+        const chatSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('chatLogs');
+        
+        const history = [];
+        
+        // Get transactions
+        if (transactionSheet) {
+          const transactions = transactionSheet.getDataRange().getValues();
+          transactions.slice(1).forEach(row => {
+            if (row[1] === username || row[2] === username) {
+              history.push({
+                timestamp: row[0],
+                type: 'Transaction',
+                amount: row[1] === username ? -row[3] : row[3],
+                details: row[4] || `${row[1]} → ${row[2]}`
+              });
+            }
+          });
+        }
+        
+        // Get chat activity
+        if (chatSheet) {
+          const messages = chatSheet.getDataRange().getValues();
+          messages.slice(1).forEach(row => {
+            if (row[1] === username) {
+              history.push({
+                timestamp: row[0],
+                type: 'Message',
+                amount: '-',
+                details: row[2] || 'Image shared'
+              });
+            }
+          });
+        }
+        
+        // Sort by timestamp
+        history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        
+        result = {
+          success: true,
+          history
+        };
+      } catch (err) {
+        result = {
+          success: false,
+          error: 'Failed to get user history'
+        };
+      }
+    }
+
+    // Handle chat clear request
+    if (data.action === 'clearChats') {
+      try {
+        const chatSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('chatLogs');
+        if (chatSheet) {
+          chatSheet.clear();
+          chatSheet.appendRow(['timestamp', 'username', 'message', 'image', 'reactions', 'replyTo']);
+        }
+        result = { success: true };
+      } catch (err) {
+        result = {
+          success: false,
+          error: 'Failed to clear chats'
+        };
+      }
+    }
+
+    // Handle search messages
+    if (data.action === 'searchMessages') {
+      try {
+        const chatSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('chatLogs');
+        if (!chatSheet) {
+          return output.setContent(callback + '(' + JSON.stringify({
+            success: true,
+            messages: []
+          }) + ');');
+        }
+        
+        const values = chatSheet.getDataRange().getValues();
+        const query = (data.query || '').toLowerCase();
+        
+        const messages = values.slice(1) // Skip header row
+          .filter(row => {
+            const message = (row[2] || '').toLowerCase();
+            const user = (row[1] || '').toLowerCase();
+            return message.includes(query) || user.includes(query);
+          })
+          .map(row => ({
+            timestamp: row[0],
+            user: row[1],
+            message: row[2],
+            image: row[3]
+          }))
+          .reverse() // Show newest first
+          .slice(0, 100); // Limit to 100 messages
+        
+        result = {
+          success: true,
+          messages
+        };
+      } catch (err) {
+        result = {
+          success: false,
+          error: 'Failed to search messages: ' + err.toString()
+        };
+      }
+    }
+
+    function generateUniqueCardNumber() {
+      const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      let result = '';
+      for (let i = 0; i < 16; i++) {
+        if (i > 0 && i % 4 === 0) result += '-';
+        result += chars[Math.floor(Math.random() * chars.length)];
+      }
+      return result;
+    }
+
+    return output.setContent(callback + '(' + JSON.stringify(result) + ');');
   } catch (error) {
-    console.error('Main error:', error);
     return output.setContent(callback + '(' + JSON.stringify({
       success: false,
       error: error.toString()
     }) + ');');
   }
-} '
+}

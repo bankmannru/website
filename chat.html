@@ -36,6 +36,7 @@
     <style>
         :root {
             --md-icon-font: 'Material Symbols Rounded';
+            --md-filled-text-field-container-color: white;
         }
         body {
             margin: 0;
@@ -82,20 +83,32 @@
             color: #888;
             margin-bottom: 4px;
         }
+        .input-area {
+            background: #2d2d2d;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+        }
         .input-container {
             display: flex;
             gap: 10px;
             align-items: flex-end;
         }
-        md-outlined-text-field {
-            flex-grow: 1;
-            --md-sys-color-primary: #00ff00;
-            --md-sys-color-outline: #444;
-            --md-sys-color-on-surface: white;
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        .action-buttons md-icon-button {
+            --md-icon-button-icon-size: 20px;
+            color: #888;
+            transition: color 0.2s;
+        }
+        .action-buttons md-icon-button:hover {
+            color: #00ff00;
         }
         md-filled-button {
-            --md-sys-color-primary: #00ff00;
-            --md-sys-color-on-primary: #1e1e1e;
+            --md-filled-button-container-height: 40px;
         }
         .online-users {
             position: fixed;
@@ -154,6 +167,32 @@
         .message:hover .message-actions {
             opacity: 1;
         }
+        .message-actions md-icon-button {
+            --md-icon-button-icon-size: 18px;
+            padding: 6px;
+        }
+        .formatted-text {
+            white-space: pre-wrap;
+        }
+        .formatted-text code {
+            background: #1e1e1e;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .formatted-text pre {
+            background: #1e1e1e;
+            padding: 8px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .shell-output {
+            font-family: monospace;
+            background: #000;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 8px;
+        }
         .emoji-picker {
             position: absolute;
             bottom: 100%;
@@ -204,6 +243,30 @@
         [contenteditable] {
             outline: none;
         }
+        .voice-record-btn {
+            background: #00ff00;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .voice-record-btn.recording {
+            background: #ff0000;
+            animation: pulse 1s infinite;
+        }
+        .audio-player {
+            margin-top: 8px;
+            width: 100%;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
 <body>
@@ -214,19 +277,43 @@
     </div>
 
     <div class="chat-container" id="chatContainer">
+        <div class="search-container">
+            <md-outlined-text-field 
+                type="text" 
+                id="searchInput" 
+                label="Search messages..."
+                style="width: 100%; margin-bottom: 10px;">
+                <md-icon slot="leading-icon">search</md-icon>
+            </md-outlined-text-field>
+        </div>
         <div class="messages" id="messages"></div>
         <img id="preview" class="image-preview">
         <div class="typing-indicator" id="typingIndicator"></div>
-        <div class="input-container">
-            <md-outlined-text-field type="text" id="messageInput" label="Отправьте сообщение..." style="--md-sys-color-primary: #00ff00;"></md-outlined-text-field>
-            <input type="file" id="imageInput" accept="image/*">
-            <md-icon-button class="upload-button" id="uploadButton">
-                <md-icon>settings</md-icon>
-            </md-icon-button>
-            <md-icon-button class="emoji-button" id="emojiButton">
-                <md-icon>sentiment_satisfied</md-icon>
-            </md-icon-button>
-            <md-filled-button id="sendButton">Отправить</md-filled-button>
+        <div class="input-area">
+            <div class="input-container">
+                <md-outlined-text-field 
+                    type="text" 
+                    id="messageInput" 
+                    label="Отправьте сообщение..." 
+                    style="--md-sys-color-primary: #00ff00;">
+                </md-outlined-text-field>
+                <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt,.zip" style="display: none;">
+                <div class="action-buttons">
+                    <md-icon-button id="uploadButton" title="Upload Image">
+                        <md-icon>image</md-icon>
+                    </md-icon-button>
+                    <md-icon-button id="fileButton" title="Share File">
+                        <md-icon>attach_file</md-icon>
+                    </md-icon-button>
+                    <md-icon-button id="emojiButton" title="Add Emoji">
+                        <md-icon>sentiment_satisfied</md-icon>
+                    </md-icon-button>
+                    <md-filled-button id="sendButton">
+                        <md-icon>send</md-icon>
+                    </md-filled-button>
+                </div>
+            </div>
         </div>
         <div class="emoji-picker" id="emojiPicker"></div>
     </div>
@@ -247,6 +334,10 @@
         let notificationPermission = false;
         const reactions = ['👍', '❤️', '😂', '😮', '😢', '🎉', '🔥', '👏'];
         const emojis = ['😊', '😂', '🤣', '❤️', '😍', '🔥', '👍', '✨', '🎉', '🌟', '💯', '🙌', '👏', '🤔', '😅', '🥺'];
+        
+        // Voice Messages
+        let mediaRecorder = null;
+        let audioChunks = [];
         
         // Initialize elements after DOM is loaded
         document.addEventListener('DOMContentLoaded', () => {
@@ -291,7 +382,6 @@
             document.getElementById('uploadButton').addEventListener('click', () => {
                 document.getElementById('imageInput').click();
             });
-            document.getElementById('imageInput').addEventListener('change', handleImageUpload);
             messageInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') sendMessage();
             });
@@ -308,7 +398,30 @@
             });
             
             // Start message refresh interval
-            setInterval(loadMessages, 5000);
+            setInterval(loadMessages, 2000);
+
+            // Add keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey || e.metaKey) {
+                    switch(e.key) {
+                        case 'Enter': // Ctrl/Cmd + Enter to send
+                            sendMessage();
+                            break;
+                        case 'b': // Ctrl/Cmd + B for bold
+                            e.preventDefault();
+                            wrapText('**');
+                            break;
+                        case 'i': // Ctrl/Cmd + I for italic
+                            e.preventDefault();
+                            wrapText('*');
+                            break;
+                        case 'k': // Ctrl/Cmd + K for code
+                            e.preventDefault();
+                            wrapText('`');
+                            break;
+                    }
+                }
+            });
         });
 
         function joinChat() {
@@ -329,49 +442,52 @@
             }
         }
 
-        function handleImageUpload(event) {
+        async function handleImageUpload(event) {
             const file = event.target.files[0];
             if (file && file.type.startsWith('image/')) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    currentImage = e.target.result;
-                    const preview = document.getElementById('preview');
-                    preview.src = currentImage;
-                    preview.style.display = 'block';
+                    // Resize and compress image before preview
+                    const img = new Image();
+                    img.onload = async function() {
+                        try {
+                            currentImage = await compressImage(this);
+                            const preview = document.getElementById('preview');
+                            preview.src = currentImage;
+                            preview.style.display = 'block';
+                        } catch (error) {
+                            console.error('Error processing image:', error);
+                        }
+                    };
+                    img.src = e.target.result;
                 };
                 reader.readAsDataURL(file);
             }
         }
 
-        function compressImage(base64String) {
+        function compressImage(img) {
             return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    
-                    // Calculate new dimensions (max 800px width/height)
-                    let width = img.width;
-                    let height = img.height;
-                    const maxSize = 800;
-                    
-                    if (width > height && width > maxSize) {
-                        height = (height * maxSize) / width;
-                        width = maxSize;
-                    } else if (height > maxSize) {
-                        width = (width * maxSize) / height;
-                        height = maxSize;
-                    }
-                    
-                    canvas.width = width;
-                    canvas.height = height;
-                    
-                    // Draw and compress
-                    ctx.drawImage(img, 0, 0, width, height);
-                    resolve(canvas.toDataURL('image/jpeg', 0.7));
-                };
-                img.onerror = reject;
-                img.src = base64String;
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Calculate new dimensions (max 800px width/height)
+                let width = img.width;
+                let height = img.height;
+                const maxSize = 800;
+                
+                if (width > height && width > maxSize) {
+                    height = (height * maxSize) / width;
+                    width = maxSize;
+                } else if (height > maxSize) {
+                    width = (width * maxSize) / height;
+                    height = maxSize;
+                }
+                canvas.width = width;
+                canvas.height = height;
+                
+                // Draw and compress
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', 0.6));
             });
         }
 
@@ -379,14 +495,27 @@
             const message = messageInput.value.trim();
             if (!message && !currentImage) return;
 
-            // Compress image if needed
-            let processedImage = currentImage;
-            if (currentImage) {
+            // Handle shell commands
+            if (message.startsWith('/')) {
                 try {
-                    processedImage = await compressImage(currentImage);
+                    const result = await executeShellCommand(message.slice(1));
+                    if (result.success) {
+                        const messageDiv = document.createElement('div');
+                        messageDiv.className = 'message received system';
+                        messageDiv.innerHTML = `
+                            <div class="header">System</div>
+                            <div class="content">
+                                <pre class="shell-output">${result.output}</pre>
+                            </div>
+                        `;
+                        messages.appendChild(messageDiv);
+                        messages.scrollTop = messages.scrollHeight;
+                    }
                 } catch (error) {
-                    console.error('Error compressing image:', error);
+                    console.error('Shell command error:', error);
                 }
+                messageInput.value = '';
+                return;
             }
 
             try {
@@ -404,7 +533,7 @@
                         action: 'sendMessage',
                         username: username,
                         message: message,
-                        image: processedImage,
+                        image: currentImage,
                         timestamp: new Date().toISOString(),
                         replyTo: replyingTo ? JSON.stringify(replyingTo) : ''
                     };
@@ -439,60 +568,70 @@
                 const response = await fetch(csvUrl);
                 const csvText = await response.text();
                 
-                messages.innerHTML = '';
-                // Parse CSV more carefully to handle base64 data
-                const rows = csvText.split('\n').slice(1).map(row => {
-                    const cells = [];
-                    let inQuotes = false;
-                    let currentCell = '';
-                    
-                    for (let i = 0; i < row.length; i++) {
-                        const char = row[i];
-                        if (char === '"') {
-                            if (inQuotes && row[i + 1] === '"') {
-                                currentCell += '"';
-                                i++;
-                            } else {
-                                inQuotes = !inQuotes;
-                            }
-                        } else if (char === ',' && !inQuotes) {
-                            cells.push(currentCell.replace(/^"|"$/g, ''));
-                            currentCell = '';
-                        } else {
-                            currentCell += char;
-                        }
-                    }
-                    cells.push(currentCell.replace(/^"|"$/g, ''));
-                    return cells;
-                });
-
-                // Check for new messages
-                if (rows.length > 0) {
-                    const latestMessage = rows[rows.length - 1];
-                    const [timestamp, user, message] = latestMessage;
-                    
-                    if (lastMessageTimestamp && 
-                        new Date(timestamp) > new Date(lastMessageTimestamp) && 
-                        user !== username) {
-                        showNotification(message, user);
-                    }
-                    
-                    lastMessageTimestamp = timestamp;
+                // Get only new messages
+                const rows = csvText.split('\n').slice(1);
+                const lastRow = rows[rows.length - 1];
+                if (lastRow && lastMessageTimestamp === lastRow.split(',')[0]) {
+                    return; // No new messages
                 }
 
-                rows.forEach(([timestamp, user, message, image]) => {
+                messages.innerHTML = '';
+                rows.forEach(row => {
+                    const [timestamp, user, message, image] = row.split(',').map(cell => 
+                        cell.trim().replace(/^["']|["']$/g, '')
+                    );
                     
                     const messageDiv = document.createElement('div');
                     messageDiv.className = `message ${user === username ? 'sent' : 'received'}`;
+                    
+                    // Add double-click to quote
+                    messageDiv.addEventListener('dblclick', () => {
+                        messageInput.value = `> ${user}: ${message}\n${messageInput.value}`;
+                        messageInput.focus();
+                    });
+                    
+                    const safeMessage = message ? message.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+                    const safeImage = image ? image.replace(/\\"/g, '"').replace(/&/g, '&amp;') : '';
+                    
                     messageDiv.innerHTML = `
                         <div class="header">${user} • ${new Date(timestamp).toLocaleString()}</div>
                         <div class="content">
-                            ${message ? `<div>${message.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>` : ''}
-                            ${image ? `<img src="${image.replace(/\\"/g, '"')}" alt="Shared image">` : ''}
+                            ${safeMessage ? `<div class="formatted-text">${safeMessage}</div>` : ''}
+                            ${safeImage ? `<img src="${safeImage}" alt="Shared image" loading="lazy">` : ''}
+                        </div>
+                        <div class="message-actions">
+                            <md-icon-button class="reply-btn" title="Reply">
+                                <md-icon>reply</md-icon>
+                            </md-icon-button>
+                            ${user === username ? `
+                                <md-icon-button class="edit-btn" title="Edit">
+                                    <md-icon>edit</md-icon>
+                                </md-icon-button>
+                            ` : ''}
                         </div>
                     `;
+
+                    // Add event listeners for actions
+                    messageDiv.querySelector('.reply-btn')?.addEventListener('click', () => {
+                        replyingTo = { timestamp, user, message: message || 'Image' };
+                        messageInput.placeholder = `Replying to ${user}...`;
+                        messageInput.focus();
+                    });
+
+                    messageDiv.querySelector('.edit-btn')?.addEventListener('click', () => {
+                        messageInput.value = message;
+                        messageInput.dataset.editing = timestamp;
+                        messageInput.focus();
+                    });
+
                     messages.appendChild(messageDiv);
                 });
+
+                // Update last message timestamp
+                if (rows.length > 0) {
+                    const lastMessage = rows[rows.length - 1].split(',')[0];
+                    lastMessageTimestamp = lastMessage;
+                }
 
                 messages.scrollTop = messages.scrollHeight;
             } catch (error) {
@@ -604,6 +743,249 @@
                 window.focus();
                 notification.close();
             };
+        }
+
+        function formatMessage(text) {
+            // Handle code blocks
+            text = text.replace(/```([\s\S]*?)```/g, (_, code) => 
+                `<pre><code>${code.trim()}</code></pre>`
+            );
+            
+            // Handle inline code
+            text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+            
+            // Handle bold
+            text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            
+            // Handle italic
+            text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+            
+            return text;
+        }
+
+        async function executeShellCommand(command) {
+            try {
+                const result = await new Promise((resolve, reject) => {
+                    const callbackName = 'jsonpCallback' + Date.now();
+                    window[callbackName] = function(data) {
+                        delete window[callbackName];
+                        script.remove();
+                        resolve(data);
+                    };
+                    const script = document.createElement('script');
+                    const requestBody = {
+                        action: 'executeShell',
+                        command
+                    };
+                    script.src = `${GOOGLE_APPS_SCRIPT_URL}?callback=${callbackName}&data=${encodeURIComponent(JSON.stringify(requestBody))}`;
+                    document.body.appendChild(script);
+                });
+
+                if (result.success) {
+                    const message = `$ ${command}\n${result.output}`;
+                    sendMessage(message, true);
+                }
+            } catch (error) {
+                console.error('Error executing shell command:', error);
+            }
+        }
+
+        function showReactionPicker(target, messageTimestamp) {
+            const picker = document.createElement('div');
+            picker.className = 'reaction-picker';
+            picker.style.cssText = `
+                position: absolute;
+                background: #2d2d2d;
+                border: 1px solid #444;
+                border-radius: 8px;
+                padding: 8px;
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 4px;
+                z-index: 1000;
+            `;
+            
+            reactions.forEach(emoji => {
+                const btn = document.createElement('div');
+                btn.className = 'emoji-btn';
+                btn.textContent = emoji;
+                btn.onclick = () => {
+                    toggleReaction(messageTimestamp, emoji);
+                    picker.remove();
+                };
+                picker.appendChild(btn);
+            });
+            
+            document.body.appendChild(picker);
+            const rect = target.getBoundingClientRect();
+            picker.style.top = rect.bottom + 'px';
+            picker.style.left = rect.left + 'px';
+            
+            // Close picker when clicking outside
+            const closeHandler = e => {
+                if (!picker.contains(e.target)) {
+                    picker.remove();
+                    document.removeEventListener('click', closeHandler);
+                }
+            };
+            setTimeout(() => document.addEventListener('click', closeHandler), 0);
+        }
+
+        async function toggleReaction(messageTimestamp, emoji) {
+            try {
+                const result = await new Promise((resolve, reject) => {
+                    const callbackName = 'jsonpCallback' + Date.now();
+                    window[callbackName] = function(data) {
+                        delete window[callbackName];
+                        script.remove();
+                        resolve(data);
+                    };
+                    const script = document.createElement('script');
+                    const requestBody = {
+                        action: 'toggleReaction',
+                        messageTimestamp,
+                        username,
+                        emoji
+                    };
+                    script.src = `${GOOGLE_APPS_SCRIPT_URL}?callback=${callbackName}&data=${encodeURIComponent(JSON.stringify(requestBody))}`;
+                    document.body.appendChild(script);
+                });
+
+                if (result.success) {
+                    loadMessages();
+                }
+            } catch (error) {
+                console.error('Error toggling reaction:', error);
+            }
+        }
+
+        // Voice Messages
+        document.getElementById('voiceButton').addEventListener('click', async () => {
+            if (!mediaRecorder) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    
+                    mediaRecorder.ondataavailable = (e) => {
+                        audioChunks.push(e.data);
+                    };
+                    
+                    mediaRecorder.onstop = async () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        const reader = new FileReader();
+                        reader.onload = async (e) => {
+                            const base64Audio = e.target.result;
+                            await sendMessage('', false, base64Audio);
+                        };
+                        reader.readAsDataURL(audioBlob);
+                        audioChunks = [];
+                    };
+                    
+                    mediaRecorder.start();
+                    document.getElementById('voiceButton').classList.add('recording');
+                } catch (err) {
+                    console.error('Error accessing microphone:', err);
+                }
+            } else {
+                mediaRecorder.stop();
+                mediaRecorder = null;
+                document.getElementById('voiceButton').classList.remove('recording');
+            }
+        });
+
+        // Message Translation
+        async function translateMessage(text, targetLang = 'en') {
+            try {
+                const result = await new Promise((resolve, reject) => {
+                    const callbackName = 'jsonpCallback' + Date.now();
+                    window[callbackName] = function(data) {
+                        delete window[callbackName];
+                        script.remove();
+                        resolve(data);
+                    };
+                    const script = document.createElement('script');
+                    const requestBody = {
+                        action: 'translateText',
+                        text,
+                        targetLang
+                    };
+                    script.src = `${GOOGLE_APPS_SCRIPT_URL}?callback=${callbackName}&data=${encodeURIComponent(JSON.stringify(requestBody))}`;
+                    document.body.appendChild(script);
+                });
+                
+                if (result.success) {
+                    return result.translatedText;
+                }
+            } catch (error) {
+                console.error('Translation error:', error);
+            }
+        }
+
+        // Message Search
+        const searchInput = document.getElementById('searchInput');
+        searchInput.addEventListener('input', () => {
+            const searchTerm = searchInput.value.toLowerCase();
+            const messageElements = document.querySelectorAll('.message');
+            
+            messageElements.forEach(msg => {
+                const content = msg.textContent.toLowerCase();
+                msg.style.display = content.includes(searchTerm) ? 'block' : 'none';
+            });
+        });
+
+        // File Sharing
+        document.getElementById('fileInput').addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const base64File = e.target.result;
+                    await sendMessage(`Shared file: ${file.name}`, false, null, base64File);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Message Pinning
+        async function pinMessage(messageId) {
+            try {
+                const result = await new Promise((resolve, reject) => {
+                    const callbackName = 'jsonpCallback' + Date.now();
+                    window[callbackName] = function(data) {
+                        delete window[callbackName];
+                        script.remove();
+                        resolve(data);
+                    };
+                    const script = document.createElement('script');
+                    const requestBody = {
+                        action: 'pinMessage',
+                        messageId,
+                        username
+                    };
+                    script.src = `${GOOGLE_APPS_SCRIPT_URL}?callback=${callbackName}&data=${encodeURIComponent(JSON.stringify(requestBody))}`;
+                    document.body.appendChild(script);
+                });
+
+                if (result.success) {
+                    loadMessages();
+                }
+            } catch (error) {
+                console.error('Error pinning message:', error);
+            }
+        }
+
+        function wrapText(wrapper) {
+            const input = messageInput;
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+            const text = input.value;
+            const before = text.substring(0, start);
+            const selection = text.substring(start, end);
+            const after = text.substring(end);
+            input.value = before + wrapper + selection + wrapper + after;
+            input.selectionStart = end + wrapper.length * 2;
+            input.selectionEnd = input.selectionStart;
+            input.focus();
         }
     </script>
 </body>
