@@ -7,8 +7,10 @@ function doPost(e) {
 }
 
 function handleRequest(e) {
-  const output = ContentService.createTextOutput()
-    .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  const output = ContentService.createTextOutput();
+  
+  // Set content type to JavaScript
+  output.setMimeType(ContentService.MimeType.JAVASCRIPT);
   
   const callback = e.parameter.callback;
   if (!callback) {
@@ -16,7 +18,9 @@ function handleRequest(e) {
   }
 
   try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Sheet1');
     const data = e.parameter.data ? JSON.parse(e.parameter.data) : null;
+    
     if (!data) {
       return output.setContent(callback + '(' + JSON.stringify({
         success: false,
@@ -24,8 +28,6 @@ function handleRequest(e) {
       }) + ');');
     }
 
-    let result = null;
-    
     if (data.action === 'setBroadcast') {
       const systemSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('SYSTEM');
       if (!systemSheet) {
@@ -40,13 +42,15 @@ function handleRequest(e) {
         systemSheet.getRange('A1').setValue(data.message || '');
         systemSheet.getRange('B1').setValue(data.redirectUrl || '');
         
-        result = { success: true };
+        return output.setContent(callback + '(' + JSON.stringify({
+          success: true
+        }) + ');');
       } catch (err) {
         console.error('Broadcast error:', err);
-        result = {
+        return output.setContent(callback + '(' + JSON.stringify({
           success: false,
           error: 'Failed to update broadcast'
-        };
+        }) + ');');
       }
     }
 
@@ -122,7 +126,9 @@ function handleRequest(e) {
         ]);
       }
       
-      result = { success: true };
+      return output.setContent(callback + '(' + JSON.stringify({
+        success: true
+      }) + ');');
     }
 
     if (data.action === 'setBanState') {
@@ -165,13 +171,15 @@ function handleRequest(e) {
           ]);
         }
         
-        result = { success: true };
+        return output.setContent(callback + '(' + JSON.stringify({
+          success: true
+        }) + ');');
       } catch (err) {
         console.error('Ban state error:', err);
-        result = {
+        return output.setContent(callback + '(' + JSON.stringify({
           success: false,
           error: 'Failed to update ban state'
-        };
+        }) + ');');
       }
     }
 
@@ -195,13 +203,15 @@ function handleRequest(e) {
           data.replyTo || ''  // reply data
         ]);
         
-        result = { success: true };
+        return output.setContent(callback + '(' + JSON.stringify({
+          success: true
+        }) + ');');
       } catch (err) {
         console.error('Chat error:', err);
-        result = {
+        return output.setContent(callback + '(' + JSON.stringify({
           success: false,
           error: 'Failed to save message'
-        };
+        }) + ');');
       }
     }
 
@@ -225,12 +235,10 @@ function handleRequest(e) {
           }
           
           chatSheet.getRange(i + 1, 5).setValue(JSON.stringify(reactions));
-          result = { success: true };
-          return output.setContent(callback + '(' + JSON.stringify(result) + ');');
+          return output.setContent(callback + '(' + JSON.stringify({ success: true }) + ');');
         }
       }
-      result = { success: false };
-      return output.setContent(callback + '(' + JSON.stringify(result) + ');');
+      return output.setContent(callback + '(' + JSON.stringify({ success: false }) + ');');
     }
 
     // Handle typing indicators
@@ -253,8 +261,7 @@ function handleRequest(e) {
         typingSheet.appendRow([data.username, true]);
       }
       
-      result = { success: true };
-      return output.setContent(callback + '(' + JSON.stringify(result) + ');');
+      return output.setContent(callback + '(' + JSON.stringify({ success: true }) + ');');
     }
 
     // Handle online status updates
@@ -284,8 +291,7 @@ function handleRequest(e) {
         onlineSheet.appendRow([data.username, data.timestamp]);
       }
       
-      result = { success: true };
-      return output.setContent(callback + '(' + JSON.stringify(result) + ');');
+      return output.setContent(callback + '(' + JSON.stringify({ success: true }) + ');');
     }
 
     // Handle shell commands
@@ -425,15 +431,15 @@ function handleRequest(e) {
             output = 'Unknown command. Type /help for available commands.';
         }
         
-        result = {
+        return output.setContent(callback + '(' + JSON.stringify({
           success: true,
           output
-        };
+        }) + ');');
       } catch (err) {
-        result = {
+        return output.setContent(callback + '(' + JSON.stringify({
           success: false,
           error: 'Failed to execute command'
-        };
+        }) + ');');
       }
     }
 
@@ -446,15 +452,15 @@ function handleRequest(e) {
         // Use Google Translate API
         const translatedText = LanguageApp.translate(text, 'auto', targetLang);
         
-        result = {
+        return output.setContent(callback + '(' + JSON.stringify({
           success: true,
           translatedText
-        };
+        }) + ');');
       } catch (err) {
-        result = {
+        return output.setContent(callback + '(' + JSON.stringify({
           success: false,
           error: 'Translation failed'
-        };
+        }) + ');');
       }
     }
 
@@ -468,12 +474,12 @@ function handleRequest(e) {
       
       try {
         pinnedSheet.appendRow([data.messageId, data.username, new Date().toISOString()]);
-        result = { success: true };
+        return output.setContent(callback + '(' + JSON.stringify({ success: true }) + ');');
       } catch (err) {
-        result = {
+        return output.setContent(callback + '(' + JSON.stringify({
           success: false,
           error: 'Failed to pin message'
-        };
+        }) + ');');
       }
     }
 
@@ -501,7 +507,7 @@ function handleRequest(e) {
         // Get online users
         const onlineUsers = onlineSheet ? Math.max(0, onlineSheet.getLastRow() - 1) : 0;
         
-        result = {
+        return output.setContent(callback + '(' + JSON.stringify({
           success: true,
           stats: {
             totalUsers,
@@ -509,12 +515,12 @@ function handleRequest(e) {
             messagesTotal,
             onlineUsers
           }
-        };
+        }) + ');');
       } catch (err) {
-        result = {
+        return output.setContent(callback + '(' + JSON.stringify({
           success: false,
           error: 'Failed to get stats: ' + err.toString()
-        };
+        }) + ');');
       }
     }
 
@@ -545,15 +551,15 @@ function handleRequest(e) {
           banReason: row[3] || ''
         }));
         
-        result = {
+        return output.setContent(callback + '(' + JSON.stringify({
           success: true,
           users
-        };
+        }) + ');');
       } catch (err) {
-        result = {
+        return output.setContent(callback + '(' + JSON.stringify({
           success: false,
           error: 'Failed to get users: ' + err.toString()
-        };
+        }) + ');');
       }
     }
 
@@ -573,15 +579,15 @@ function handleRequest(e) {
           cards.push(cardNumber);
         }
         
-        result = {
+        return output.setContent(callback + '(' + JSON.stringify({
           success: true,
           cards
-        };
+        }) + ');');
       } catch (err) {
-        result = {
+        return output.setContent(callback + '(' + JSON.stringify({
           success: false,
           error: 'Failed to generate cards'
-        };
+        }) + ');');
       }
     }
 
@@ -627,15 +633,15 @@ function handleRequest(e) {
         // Sort by timestamp
         history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         
-        result = {
+        return output.setContent(callback + '(' + JSON.stringify({
           success: true,
           history
-        };
+        }) + ');');
       } catch (err) {
-        result = {
+        return output.setContent(callback + '(' + JSON.stringify({
           success: false,
           error: 'Failed to get user history'
-        };
+        }) + ');');
       }
     }
 
@@ -647,12 +653,12 @@ function handleRequest(e) {
           chatSheet.clear();
           chatSheet.appendRow(['timestamp', 'username', 'message', 'image', 'reactions', 'replyTo']);
         }
-        result = { success: true };
+        return output.setContent(callback + '(' + JSON.stringify({ success: true }) + ');');
       } catch (err) {
-        result = {
+        return output.setContent(callback + '(' + JSON.stringify({
           success: false,
           error: 'Failed to clear chats'
-        };
+        }) + ');');
       }
     }
 
@@ -685,201 +691,15 @@ function handleRequest(e) {
           .reverse() // Show newest first
           .slice(0, 100); // Limit to 100 messages
         
-        result = {
+        return output.setContent(callback + '(' + JSON.stringify({
           success: true,
           messages
-        };
+        }) + ');');
       } catch (err) {
-        result = {
+        return output.setContent(callback + '(' + JSON.stringify({
           success: false,
           error: 'Failed to search messages: ' + err.toString()
-        };
-      }
-    }
-
-    // Handle executeCommand
-    if (data.action === 'executeCommand') {
-      try {
-        const command = data.command.toLowerCase().trim();
-        let output = '';
-
-        if (command === 'help') {
-          output = `Available commands:
-- help: Show this help message
-- users: List all users
-- ban <username> [reason]: Ban a user
-- unban <username>: Unban a user
-- give <username> <amount>: Give coins to user
-- take <username> <amount>: Take coins from user
-- stats: Show system statistics
-- clear: Clear terminal output`;
-        } 
-        else if (command === 'users') {
-          const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Sheet1');
-          const users = sheet.getRange('A2:D' + sheet.getLastRow()).getValues();
-          output = users.map(row => 
-            `${row[0]} | Balance: ${row[1]} | ${row[2] === 'TRUE' ? '🚫 BANNED' : '✅ Active'}`
-          ).join('\n');
-        }
-        else if (command === 'stats') {
-          const sheet = SpreadsheetApp.getActiveSpreadsheet();
-          const usersSheet = sheet.getSheetByName('Sheet1');
-          const chatSheet = sheet.getSheetByName('chatLogs');
-          const onlineSheet = sheet.getSheetByName('onlineUsers');
-          
-          const totalUsers = usersSheet ? Math.max(0, usersSheet.getLastRow() - 1) : 0;
-          const bannedUsers = usersSheet ? 
-            usersSheet.getRange('C2:C' + usersSheet.getLastRow())
-              .getValues()
-              .filter(([v]) => v === true || v === 'TRUE')
-              .length : 0;
-          const totalMessages = chatSheet ? Math.max(0, chatSheet.getLastRow() - 1) : 0;
-          const onlineUsers = onlineSheet ? Math.max(0, onlineSheet.getLastRow() - 1) : 0;
-          
-          output = `System Statistics:
-Total Users: ${totalUsers}
-Online Users: ${onlineUsers}
-Banned Users: ${bannedUsers}
-Total Messages: ${totalMessages}`;
-        }
-        else if (command === 'clear') {
-          output = 'Terminal cleared';
-        }
-        else if (command.startsWith('ban ')) {
-          const parts = command.split(' ');
-          const username = parts[1];
-          const reason = parts.slice(2).join(' ') || 'No reason provided';
-          
-          // Find user's row
-          const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Sheet1');
-          const values = sheet.getDataRange().getValues();
-          let userRow = -1;
-          
-          for (let i = 1; i < values.length; i++) {
-            if (values[i][0].toString() === username) {
-              userRow = i + 1;
-              break;
-            }
-          }
-          
-          if (userRow === -1) {
-            output = `Failed to ban ${username}: User not found`;
-          } else {
-            try {
-              // Update ban state in column C and reason in column D
-              sheet.getRange(userRow, 3).setValue('TRUE');
-              sheet.getRange(userRow, 4).setValue(reason);
-              
-              // Log the ban action
-              const logSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Transactions');
-              if (logSheet) {
-                logSheet.appendRow([new Date(), 'SYSTEM', username, 'BANNED', reason]);
-              }
-              
-              output = `Successfully banned ${username} (Reason: ${reason})`;
-            } catch (err) {
-              output = `Failed to ban ${username}: ${err.toString()}`;
-            }
-          }
-        }
-        else if (command.startsWith('unban ')) {
-          const username = command.split(' ')[1];
-          // Find user's row
-          const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Sheet1');
-          const values = sheet.getDataRange().getValues();
-          let userRow = -1;
-          
-          for (let i = 1; i < values.length; i++) {
-            if (values[i][0].toString() === username) {
-              userRow = i + 1;
-              break;
-            }
-          }
-          
-          if (userRow === -1) {
-            output = `Failed to unban ${username}: User not found`;
-          } else {
-            try {
-              // Update ban state and clear reason
-              sheet.getRange(userRow, 3).setValue('FALSE');
-              sheet.getRange(userRow, 4).setValue('');
-              
-              // Log the unban action
-              const logSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Transactions');
-              if (logSheet) {
-                logSheet.appendRow([new Date(), 'SYSTEM', username, 'UNBANNED', '']);
-              }
-              
-              output = `Successfully unbanned ${username}`;
-            } catch (err) {
-              output = `Failed to unban ${username}: ${err.toString()}`;
-            }
-          }
-        }
-        else if (command.startsWith('give ')) {
-          const parts = command.split(' ');
-          const username = parts[1];
-          const amount = parseInt(parts[2]);
-          
-          if (isNaN(amount) || amount <= 0) {
-            output = 'Invalid amount';
-          } else {
-            try {
-              const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Sheet1');
-              const values = sheet.getDataRange().getValues();
-              let userRow = -1;
-              
-              for (let i = 1; i < values.length; i++) {
-                if (values[i][0].toString() === username) {
-                  userRow = i + 1;
-                  break;
-                }
-              }
-              
-              if (userRow === -1) {
-                output = `Failed to give coins: User ${username} not found`;
-              } else {
-                const currentBalance = parseInt(sheet.getRange(userRow, 2).getValue()) || 0;
-                sheet.getRange(userRow, 2).setValue(currentBalance + amount);
-                
-                // Log transaction
-                const logSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Transactions');
-                if (logSheet) {
-                  logSheet.appendRow([new Date(), 'SYSTEM', username, amount, 'Admin give command']);
-                }
-                
-                output = `Successfully gave ${amount} coins to ${username}`;
-              }
-            } catch (err) {
-              output = `Failed to give coins: ${err.toString()}`;
-            }
-          }
-        }
-        else if (command.startsWith('login ')) {
-          const password = command.split(' ')[1];
-          if (password === 'admun') { // Make sure this matches your ADMIN_PASSWORD
-            output = 'Successfully logged in as admin';
-          } else {
-            output = 'Invalid password';
-          }
-        }
-        else {
-          output = 'Unknown command. Type "help" for available commands.';
-        }
-
-        return ContentService.createTextOutput()
-          .setMimeType(ContentService.MimeType.JAVASCRIPT)
-          .setContent(callback + '(' + JSON.stringify({
-            success: true,
-            output: output
-          }) + ');');
-      } catch (err) {
-        return ContentService.createTextOutput()
-          .setMimeType(ContentService.MimeType.JAVASCRIPT)
-          .setContent(callback + '(' + JSON.stringify({
-            success: false,
-            error: 'Failed to execute command: ' + err.toString()
-          }) + ');');
+        }) + ');');
       }
     }
 
@@ -893,15 +713,14 @@ Total Messages: ${totalMessages}`;
       return result;
     }
 
-    return ContentService.createTextOutput()
-      .setMimeType(ContentService.MimeType.JAVASCRIPT)
-      .setContent(callback + '(' + JSON.stringify(result) + ');');
+    return output.setContent(callback + '(' + JSON.stringify({
+      success: true,
+      data: result
+    }) + ');');
   } catch (error) {
-    return ContentService.createTextOutput()
-      .setMimeType(ContentService.MimeType.JAVASCRIPT)
-      .setContent(callback + '(' + JSON.stringify({
-        success: false,
-        error: error.toString()
-      }) + ');');
+    return output.setContent(callback + '(' + JSON.stringify({
+      success: false,
+      error: error.toString()
+    }) + ');');
   }
 }
