@@ -23,7 +23,10 @@
         import '@material/web/all.js';
         import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
 
-        document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+        // Дождемся загрузки компонентов
+        window.addEventListener('load', () => {
+            document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+        });
     </script>
     
     <!-- Custom CSS -->
@@ -219,10 +222,16 @@
             });
         });
 
+        // Дождемся загрузки DOM и компонентов
+        window.addEventListener('load', () => {
+            const loginDialog = document.querySelector('md-dialog#login-dialog');
+            if (loginDialog) {
+                loginDialog.show();
+            }
+        });
+
         // Проверяем, вошел ли пользователь
         if (!username) {
-            loginDialog.showModal();
-            
             // Активируем кнопку только если имя введено
             usernameInput.addEventListener('input', () => {
                 startChatBtn.disabled = !usernameInput.value.trim();
@@ -407,10 +416,12 @@
             themeSwitch.checked = !isDark;
             
             // Обновляем состояние всех Material компонентов
-            document.querySelectorAll('md-*').forEach(element => {
-                if (element.updateComplete) {
-                    element.updateComplete.then(() => element.requestUpdate());
-                }
+            requestAnimationFrame(() => {
+                document.querySelectorAll('[md-]').forEach(element => {
+                    if (element.updateComplete) {
+                        element.updateComplete.then(() => element.requestUpdate());
+                    }
+                });
             });
         }
 
