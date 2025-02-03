@@ -110,6 +110,32 @@
             font-size: 14px;
             font-weight: 500;
         }
+
+        .color-pickers {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .color-picker {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .color-picker label {
+            font-size: 14px;
+            color: var(--md-sys-color-on-surface-variant);
+        }
+
+        .color-picker input[type="color"] {
+            width: 100%;
+            height: 40px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -130,12 +156,58 @@
         <!-- Card Creation Form -->
         <form id="card-form" class="creation-form">
             <md-outlined-text-field
-                label="Имя и Фамилия"
+                id="holder-input"
+                label="Имя и фамилия"
                 required
-                id="holder-input">
-            </md-outlined-text-field>
+                onInput="updatePreview()"
+            ></md-outlined-text-field>
 
-            <md-filled-select label="Тип карты" required id="theme-select">
+            <div class="color-pickers">
+                <div class="color-picker">
+                    <label>Основной цвет</label>
+                    <input type="color" id="primary-color" value="#ff7e5f" onInput="updatePreview()">
+                </div>
+                <div class="color-picker">
+                    <label>Дополнительный цвет</label>
+                    <input type="color" id="secondary-color" value="#feb47b" onInput="updatePreview()">
+                </div>
+                </div>
+                
+            <md-outlined-select id="pattern-select" label="Узор карты" onInput="updatePreview()">
+                <md-select-option value="waves">
+                    <div slot="headline">Волны</div>
+                </md-select-option>
+                <md-select-option value="dots">
+                    <div slot="headline">Точки</div>
+                </md-select-option>
+                <md-select-option value="lines">
+                    <div slot="headline">Линии</div>
+                </md-select-option>
+                <md-select-option value="circles">
+                    <div slot="headline">Круги</div>
+                </md-select-option>
+                <md-select-option value="grid">
+                    <div slot="headline">Сетка</div>
+                </md-select-option>
+            </md-outlined-select>
+
+            <md-outlined-select id="chip-style" label="Стиль чипа" onInput="updatePreview()">
+                <md-select-option value="classic">
+                    <div slot="headline">Классический</div>
+                </md-select-option>
+                <md-select-option value="modern">
+                    <div slot="headline">Современный</div>
+                </md-select-option>
+                <md-select-option value="minimal">
+                    <div slot="headline">Минималистичный</div>
+                </md-select-option>
+            </md-outlined-select>
+
+            <md-outlined-select
+                id="theme-select"
+                label="Тема карты"
+                onInput="updatePreview()"
+            >
                 <md-select-option value="default">
                     <div slot="headline">Стандартная</div>
                 </md-select-option>
@@ -145,20 +217,92 @@
                 <md-select-option value="gold">
                     <div slot="headline">Золотая</div>
                 </md-select-option>
-                <md-select-option value="neon">
-                    <div slot="headline">Неоновая</div>
+                <md-select-option value="custom">
+                    <div slot="headline">Пользовательская</div>
                 </md-select-option>
-                <md-select-option value="ocean">
-                    <div slot="headline">Океан</div>
-                </md-select-option>
-            </md-filled-select>
+            </md-outlined-select>
 
             <md-filled-button type="submit">
                 Создать карту
-                <md-icon slot="icon">add_card</md-icon>
             </md-filled-button>
         </form>
-    </div>
+                </div>
+
+    <script>
+        // Глобальная функция обновления предпросмотра
+        function updatePreview() {
+            const holder = document.getElementById('holder-input').value.toUpperCase() || 'ИМЯ ФАМИЛИЯ';
+            let theme = document.getElementById('theme-select').value;
+            
+            // Объект с секретными кодами и их описаниями
+            const secretCodes = {
+                'SUPERNOVA': {
+                    theme: 'supernova',
+                    icon: 'stars',
+                    message: '🌟 Активирована супер-карта! 🌟'
+                },
+                'SANDBOX': {
+                    theme: 'sandbox',
+                    icon: 'beach_access',
+                    message: '🏖️ Активирована песочная карта! 🏖️'
+                },
+                'NEON': {
+                    theme: 'neon',
+                    icon: 'bolt',
+                    message: '⚡ Активирована неоновая карта! ⚡'
+                },
+                'HOLO': {
+                    theme: 'holo',
+                    icon: 'gradient',
+                    message: '🌈 Активирована голографическая карта! 🌈'
+                },
+                'MATRIX': {
+                    theme: 'matrix',
+                    icon: 'code',
+                    message: '🖥️ Активирована матричная карта! 🖥️'
+                }
+            };
+
+            // Проверяем на секретные коды
+            if (secretCodes[holder]) {
+                const code = secretCodes[holder];
+                theme = code.theme;
+                
+                // Показываем уведомление об активации
+                const toast = document.createElement('div');
+                toast.className = 'toast success';
+                toast.innerHTML = `
+                    <md-icon>${code.icon}</md-icon>
+                    <span>${code.message}</span>
+                `;
+                document.body.appendChild(toast);
+                
+                requestAnimationFrame(() => {
+                    toast.style.opacity = '1';
+                    toast.style.transform = 'translateY(0)';
+                });
+
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateY(20px)';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
+
+            const primaryColor = document.getElementById('primary-color').value;
+            const secondaryColor = document.getElementById('secondary-color').value;
+            const pattern = document.getElementById('pattern-select').value;
+            const chipStyle = document.getElementById('chip-style').value;
+
+            const previewCard = document.getElementById('preview-card');
+            previewCard.setAttribute('holder', holder);
+            previewCard.setAttribute('theme', theme);
+            previewCard.setAttribute('primary-color', primaryColor);
+            previewCard.setAttribute('secondary-color', secondaryColor);
+            previewCard.setAttribute('pattern', pattern);
+            previewCard.setAttribute('chip-style', chipStyle);
+        }
+    </script>
 
     <script type="module">
         import { database } from './firebase-config.js';
@@ -166,15 +310,6 @@
 
         const form = document.getElementById('card-form');
         const previewCard = document.getElementById('preview-card');
-
-        // Update preview as user types
-        document.getElementById('holder-input').addEventListener('input', (e) => {
-            previewCard.setAttribute('holder', e.target.value.toUpperCase());
-        });
-
-        document.getElementById('theme-select').addEventListener('change', (e) => {
-            previewCard.setAttribute('theme', e.target.value);
-        });
 
         function showNotification(message, isError = false) {
             const toast = document.createElement('div');

@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, onValue, remove, set, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, onValue, remove, set, get, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 // Конфигурация Firebase
 const firebaseConfig = {
@@ -258,4 +258,69 @@ themeToggle.addEventListener('click', () => {
 
 // Применяем сохраненную тему
 const savedTheme = localStorage.getItem('theme') || 'light';
-document.body.className = `${savedTheme}-theme`; 
+document.body.className = `${savedTheme}-theme`;
+
+// Функция удаления всех пользователей
+async function clearAllUsers() {
+    try {
+        // Создаем диалог подтверждения
+        const confirmResult = confirm('Вы уверены, что хотите удалить всех пользователей? Это действие нельзя отменить.');
+        
+        if (confirmResult) {
+            // Получаем ссылку на всех пользователей
+            const usersRef = ref(database, 'users');
+            
+            // Получаем текущий список пользователей
+            const snapshot = await get(usersRef);
+            if (snapshot.exists()) {
+                // Удаляем всех пользователей напрямую
+                await remove(usersRef);
+                
+                // Обновляем статистику
+                stats.totalUsers = 0;
+                stats.onlineUsers = 0;
+                stats.bannedUsers = 0;
+                updateStats();
+                
+                // Очищаем список пользователей
+                const usersList = document.getElementById('users-list');
+                usersList.innerHTML = '';
+                
+                showNotification('Все пользователи успешно удалены');
+                
+                // Принудительно обновляем список
+                loadUsers();
+            } else {
+                showNotification('Нет пользователей для удаления');
+            }
+        }
+    } catch (error) {
+        console.error('Error clearing users:', error);
+        showNotification('Ошибка при удалении пользователей', true);
+    }
+}
+
+// Функция отображения уведомлений
+function showNotification(message, isError = false) {
+    const toast = document.createElement('div');
+    toast.className = `toast ${isError ? 'error' : 'success'}`;
+    toast.innerHTML = `
+        <md-icon>${isError ? 'error' : 'check_circle'}</md-icon>
+        <span>${message}</span>
+    `;
+    document.body.appendChild(toast);
+    
+    requestAnimationFrame(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateY(0)';
+    });
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(20px)';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Добавляем обработчик для кнопки удаления всех пользователей
+document.getElementById('clear-users').addEventListener('click', clearAllUsers); 

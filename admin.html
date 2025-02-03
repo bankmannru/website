@@ -53,6 +53,10 @@
                     <md-icon-button id="refresh-users">
                         <md-icon>refresh</md-icon>
                     </md-icon-button>
+                    <md-filled-tonal-button id="clear-users" class="error">
+                        <md-icon slot="icon">delete_sweep</md-icon>
+                        Удалить всех
+                    </md-filled-tonal-button>
                     <md-outlined-text-field
                         id="users-search"
                         type="search"
@@ -179,5 +183,18 @@
     </md-dialog>
 
     <script type="module" src="admin.js"></script>
+
+    <style>
+        .error {
+            --md-sys-color-primary: var(--md-sys-color-error);
+            --md-sys-color-on-primary: var(--md-sys-color-on-error);
+        }
+
+        .section-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+    </style>
 </body>
 </html> 

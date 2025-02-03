@@ -248,4 +248,36 @@ md-outlined-button {
 .delete-button {
     --md-outlined-button-container-color: var(--md-sys-color-error-container);
     --md-outlined-button-label-text-color: var(--md-sys-color-error);
+}
+
+.toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--md-sys-color-surface-container);
+    color: var(--md-sys-color-on-surface);
+    padding: 12px 24px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    z-index: 1000;
+}
+
+.toast.success md-icon {
+    color: var(--md-sys-color-primary);
+}
+
+.toast.error md-icon {
+    color: var(--md-sys-color-error);
+}
+
+.toast span {
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
 } 

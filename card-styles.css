@@ -153,15 +153,32 @@
 }
 
 .card-theme-neon {
-    --card-primary-color: #8e44ad;
-    --card-secondary-color: #9b59b6;
-    --card-pattern: 
-        radial-gradient(circle at 50% 0%, rgba(255,255,255,0.3) 0%, transparent 70%),
-        linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
-    --chip-gradient: linear-gradient(135deg, #2ecc71, #27ae60);
+    --card-primary-color: #000000;
+    --card-secondary-color: #0a0a0a;
+    background: linear-gradient(135deg, var(--card-primary-color), var(--card-secondary-color));
     box-shadow: 
-        0 8px 32px rgba(142, 68, 173, 0.3),
-        0 0 20px rgba(142, 68, 173, 0.2);
+        0 0 20px #0ff,
+        0 0 30px #0ff,
+        0 0 40px #0ff,
+        inset 0 0 15px rgba(0, 255, 255, 0.5);
+    border: 2px solid #0ff;
+}
+
+.card-theme-neon .bank-logo,
+.card-theme-neon .card-number,
+.card-theme-neon .card-holder .value,
+.card-theme-neon .card-expires .value {
+    color: #0ff;
+    text-shadow: 
+        0 0 5px #0ff,
+        0 0 10px #0ff,
+        0 0 20px #0ff;
+    animation: neonPulse 1.5s infinite alternate;
+}
+
+@keyframes neonPulse {
+    0% { opacity: 0.8; }
+    100% { opacity: 1; }
 }
 
 .card-theme-ocean {
@@ -257,4 +274,303 @@
     .card-holder, .card-expires {
         font-size: 12px;
     }
+}
+
+/* Паттерны карт */
+.pattern-waves {
+    background-image: 
+        repeating-linear-gradient(45deg, 
+            rgba(255,255,255,0.1) 0px, 
+            rgba(255,255,255,0.1) 2px,
+            transparent 2px, 
+            transparent 8px
+        );
+}
+
+.pattern-dots {
+    background-image: 
+        radial-gradient(
+            rgba(255,255,255,0.1) 1px,
+            transparent 1px
+        );
+    background-size: 8px 8px;
+}
+
+.pattern-lines {
+    background-image:
+        linear-gradient(0deg,
+            transparent 0%,
+            rgba(255,255,255,0.1) 50%,
+            transparent 100%
+        );
+    background-size: 20px 20px;
+}
+
+.pattern-circles {
+    background-image:
+        radial-gradient(circle at 50% 50%,
+            rgba(255,255,255,0.1) 0%,
+            transparent 60%
+        );
+    background-size: 40px 40px;
+}
+
+.pattern-grid {
+    background-image:
+        linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+/* Стили чипа */
+.chip-classic {
+    background: var(--chip-gradient);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.chip-modern {
+    background: linear-gradient(135deg, #000, #333);
+    border: none;
+    box-shadow: 
+        0 2px 4px rgba(0,0,0,0.2),
+        inset 0 1px 2px rgba(255,255,255,0.1);
+}
+
+.chip-minimal {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.3);
+    backdrop-filter: blur(5px);
+}
+
+/* Пользовательская тема */
+.card-theme-custom {
+    --card-primary-color: var(--custom-primary-color, #ff7e5f);
+    --card-secondary-color: var(--custom-secondary-color, #feb47b);
+    --card-pattern: var(--custom-pattern, none);
+}
+
+/* Супер-карта */
+.card-theme-supernova {
+    --card-primary-color: #7400b8;
+    --card-secondary-color: #80ffdb;
+    --card-pattern: 
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,0.2) 0%, transparent 50%),
+        linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(255,255,255,0.1) 25%, transparent 25%);
+    background: linear-gradient(135deg, var(--card-primary-color), var(--card-secondary-color));
+    animation: superCardGlow 3s infinite, superCardRotate 15s linear infinite;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 
+        0 0 30px rgba(116, 0, 184, 0.5),
+        inset 0 0 20px rgba(128, 255, 219, 0.3);
+}
+
+.card-theme-supernova .bank-logo {
+    background: linear-gradient(to right, #ff0080, #ff8c00, #40e0d0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: superTextGlow 2s infinite;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.card-theme-supernova .card-chip {
+    background: linear-gradient(135deg, #ffd700, #ff0080);
+    animation: superChipPulse 1.5s infinite;
+    border: none;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+}
+
+.card-theme-supernova .card-nfc {
+    animation: superNfcPulse 2s infinite;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.card-theme-supernova .card-number {
+    font-size: 28px;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    animation: superNumberGlow 2s infinite;
+}
+
+@keyframes superCardGlow {
+    0%, 100% { 
+        box-shadow: 
+            0 0 30px rgba(116, 0, 184, 0.5),
+            inset 0 0 20px rgba(128, 255, 219, 0.3);
+    }
+    50% { 
+        box-shadow: 
+            0 0 50px rgba(116, 0, 184, 0.8),
+            inset 0 0 30px rgba(128, 255, 219, 0.5);
+    }
+}
+
+@keyframes superCardRotate {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 200% 200%; }
+}
+
+@keyframes superTextGlow {
+    0%, 100% { filter: brightness(1) blur(0); }
+    50% { filter: brightness(1.5) blur(1px); }
+}
+
+@keyframes superChipPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+@keyframes superNfcPulse {
+    0% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.2); opacity: 0.4; }
+    100% { transform: scale(1); opacity: 0.8; }
+}
+
+@keyframes superNumberGlow {
+    0%, 100% { text-shadow: 0 0 10px rgba(255, 255, 255, 0.5); }
+    50% { text-shadow: 0 0 20px rgba(255, 255, 255, 0.8); }
+}
+
+/* Песочная карта */
+.card-theme-sandbox {
+    --card-primary-color: #d4a76a;
+    --card-secondary-color: #8b4513;
+    background: linear-gradient(135deg, var(--card-primary-color), var(--card-secondary-color));
+    position: relative;
+    overflow: hidden;
+}
+
+.card-theme-sandbox::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: 
+        repeating-linear-gradient(
+            45deg,
+            rgba(255,255,255,0.1) 0px,
+            rgba(255,255,255,0.1) 2px,
+            transparent 2px,
+            transparent 4px
+        );
+    filter: url('#turbulence');
+    animation: sandFlow 10s infinite linear;
+    mix-blend-mode: overlay;
+}
+
+.card-theme-sandbox .bank-logo {
+    color: #442211;
+    text-shadow: 1px 1px 2px rgba(255,255,255,0.3);
+    animation: sandShimmer 3s infinite;
+}
+
+.card-theme-sandbox .card-chip {
+    background: linear-gradient(135deg, #c0a080, #8b4513);
+    border: none;
+    animation: sandChipFloat 4s infinite ease-in-out;
+    box-shadow: 
+        0 2px 4px rgba(0,0,0,0.2),
+        inset 0 1px 2px rgba(255,255,255,0.3);
+}
+
+.card-theme-sandbox .card-number {
+    color: #442211;
+    text-shadow: 1px 1px 2px rgba(255,255,255,0.3);
+    animation: sandTextFloat 5s infinite ease-in-out;
+}
+
+/* SVG фильтр для эффекта песка */
+@keyframes sandFlow {
+    0% { transform: translate(0, 0); }
+    25% { transform: translate(2px, 2px); }
+    50% { transform: translate(0, 4px); }
+    75% { transform: translate(-2px, 2px); }
+    100% { transform: translate(0, 0); }
+}
+
+@keyframes sandShimmer {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
+}
+
+@keyframes sandChipFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-2px); }
+}
+
+@keyframes sandTextFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-1px) rotate(0.5deg); }
+}
+
+/* Голографическая карта */
+.card-theme-holo {
+    background: linear-gradient(135deg, 
+        #ff00cc, #333399, #00ccff, #33cc33, #ffcc00
+    );
+    background-size: 400% 400%;
+    animation: holographicShift 10s ease infinite;
+    position: relative;
+}
+
+.card-theme-holo::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: 
+        linear-gradient(45deg, 
+            transparent 25%, 
+            rgba(255,255,255,0.2) 25%, 
+            rgba(255,255,255,0.2) 50%, 
+            transparent 50%
+        );
+    background-size: 10px 10px;
+    animation: holoPattern 1s linear infinite;
+    mix-blend-mode: overlay;
+}
+
+@keyframes holographicShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes holoPattern {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(10px); }
+}
+
+/* Матричная карта */
+.card-theme-matrix {
+    background: #000;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-theme-matrix::before {
+    content: '01';
+    position: absolute;
+    inset: 0;
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    line-height: 10px;
+    color: #0f0;
+    opacity: 0.3;
+    animation: matrixRain 2s linear infinite;
+    white-space: pre;
+    pointer-events: none;
+}
+
+.card-theme-matrix .bank-logo,
+.card-theme-matrix .card-number,
+.card-theme-matrix .card-holder .value,
+.card-theme-matrix .card-expires .value {
+    color: #0f0;
+    text-shadow: 0 0 5px #0f0;
+    font-family: 'Courier New', monospace;
+}
+
+@keyframes matrixRain {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(10px); }
 } 
