@@ -1,995 +1,183 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-    <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Rounded" rel="stylesheet">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ManChat Admin</title>
-    <script src="sheets.js"></script>
+    <title>Беседка - Админ панель</title>
+    
+    <!-- Material Design Typography -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
+    
+    <!-- Material Web Components -->
     <script type="importmap">
-    {
-      "imports": {
-        "@material/web/": "https://esm.run/@material/web/"
-      }
-    }
+        {
+            "imports": {
+                "@material/web/": "https://esm.run/@material/web/"
+            }
+        }
     </script>
     <script type="module">
         import '@material/web/all.js';
+        import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
+
+        document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
     </script>
-    <style>
-        :root {
-            --md-icon-font: 'Material Symbols Rounded';
-            --md-sys-color-primary: #00ff00;
-            --md-sys-color-surface: #1e1e1e;
-            --md-sys-color-surface-container: #2d2d2d;
-            --md-sys-color-on-surface: #ffffff;
-        }
-        
-        body {
-            margin: 0;
-            background: var(--md-sys-color-surface);
-            color: var(--md-sys-color-on-surface);
-            font-family: 'Roboto', sans-serif;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-
-        .sidebar {
-            background: var(--md-sys-color-surface-container);
-            padding: 8px;
-            border-bottom: 1px solid #444;
-            display: flex;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .main-content {
-            padding: 20px;
-            overflow-y: auto;
-            flex: 1;
-        }
-
-        .section {
-            display: none;
-            animation: fadeIn 0.3s ease-out;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease-out, visibility 0.3s ease-out;
-            position: absolute;
-            width: calc(100% - 40px); /* Account for padding */
-        }
-
-        .section.active {
-            display: block;
-            opacity: 1;
-            visibility: visible;
-            position: relative;
-        }
-
-        .card {
-            background: var(--md-sys-color-surface-container);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 20px;
-            animation: slideUp 0.3s ease-out;
-        }
-
-        .terminal-output {
-            background: #000;
-            border-radius: 8px;
-            padding: 15px;
-            font-family: monospace;
-            margin: 10px 0;
-            max-height: 300px;
-            overflow-y: auto;
-            color: #00ff00;
-        }
-
-        .command-group {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 10px;
-            margin: 10px 0;
-        }
-
-        .command-button {
-            --md-filled-button-container-color: var(--md-sys-color-surface-container);
-            --md-filled-button-label-text-color: var(--md-sys-color-on-surface);
-            width: 100%;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .stat-card {
-            background: rgba(0, 255, 0, 0.1);
-            border-radius: 12px;
-            padding: 15px;
-            text-align: center;
-            border: 1px solid #00ff00;
-        }
-
-        .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #00ff00;
-            margin: 10px 0;
-        }
-
-        .user-list {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 16px;
-            display: block;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .user-list th, .user-list td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #444;
-            white-space: nowrap;
-            min-width: 100px;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 8px;
-        }
-
-        .action-buttons md-icon-button {
-            --md-icon-button-state-layer-size: 48px;
-            margin: 0 4px;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes slideUp {
-            from { 
-                transform: translateY(20px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .chart-container {
-            height: 300px;
-            margin: 20px 0;
-        }
-
-        .actions {
-            display: flex;
-            gap: 8px;
-            margin-top: 16px;
-        }
-
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--md-sys-color-surface-container);
-            color: var(--md-sys-color-on-surface);
-            padding: 12px 24px;
-            border-radius: 24px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            animation: slideUp 0.3s ease-out;
-        }
-
-        md-dialog {
-            --md-dialog-container-color: var(--md-sys-color-surface-container);
-            --md-dialog-headline-color: var(--md-sys-color-on-surface);
-            --md-dialog-supporting-text-color: var(--md-sys-color-on-surface);
-            --md-dialog-container-max-width: min(560px, 100vw - 32px);
-            --md-dialog-container-max-height: min(560px, 100vh - 32px);
-        }
-
-        .actions md-icon-button {
-            --md-icon-button-icon-size: 20px;
-        }
-
-        md-chip-set {
-            --md-chip-container-shape: 8px;
-        }
-
-        .terminal-suggestions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 16px;
-        }
-
-        .suggestion-chip {
-            background: rgba(0, 255, 0, 0.1);
-            border: 1px solid #00ff00;
-            border-radius: 16px;
-            padding: 4px 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .suggestion-chip:hover {
-            background: rgba(0, 255, 0, 0.2);
-        }
-
-        .command-button {
-            min-height: 48px;
-            padding: 8px 16px;
-        }
-
-        /* Style the tabs container */
-        md-tabs {
-            width: 100%;
-            --md-primary-tab-container-color: transparent;
-            --md-primary-tab-active-indicator-color: #00ff00;
-            --md-primary-tab-active-hover-state-layer-color: rgba(0, 255, 0, 0.1);
-            --md-primary-tab-active-pressed-state-layer-color: rgba(0, 255, 0, 0.2);
-            --md-primary-tab-hover-state-layer-color: rgba(255, 255, 255, 0.1);
-            --md-primary-tab-pressed-state-layer-color: rgba(255, 255, 255, 0.2);
-        }
-
-        /* Style individual tabs */
-        md-tab {
-            min-width: 80px;
-            text-align: center;
-            padding: 8px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            cursor: pointer;
-            color: var(--md-sys-color-on-surface);
-            --md-primary-tab-active-label-text-color: #00ff00;
-            --md-primary-tab-active-hover-label-text-color: #00ff00;
-            --md-primary-tab-active-pressed-label-text-color: #00ff00;
-        }
-
-        /* Style the tab icons */
-        md-tab md-icon {
-            font-size: 24px;
-            margin-bottom: 4px;
-            color: inherit;
-        }
-
-        /* Style the tab labels */
-        md-tab span {
-            font-size: 12px;
-            white-space: nowrap;
-            color: inherit;
-        }
-
-        @media (min-width: 768px) {
-            body {
-                display: grid;
-                grid-template-columns: 250px 1fr;
-            }
-            
-            .sidebar {
-                border-right: 1px solid #444;
-                border-bottom: none;
-                display: block;
-                overflow-x: visible;
-                padding: 20px;
-            }
-
-            /* Adjust tabs for desktop */
-            md-tab {
-                text-align: left;
-                padding: 16px;
-                flex-direction: row;
-                justify-content: flex-start;
-                gap: 12px;
-            }
-
-            md-tab span {
-                font-size: 14px;
-            }
-
-            md-tab md-icon {
-                margin-bottom: 0;
-            }
-        }
-    </style>
+    
+    <!-- Custom CSS -->
+    <link href="styles.css" rel="stylesheet">
+    <link href="admin.css" rel="stylesheet">
 </head>
-<body>
-    <div class="sidebar">
-        <md-tabs>
-            <md-tab
-                onclick="showSection('dashboard')"
-                aria-controls="dashboard">
-                <md-icon slot="icon">dashboard</md-icon>
-                <span>Dashboard</span>
-            </md-tab>
-            <md-tab
-                onclick="showSection('users')"
-                aria-controls="users">
-                <md-icon slot="icon">group</md-icon>
-                <span>Users</span>
-            </md-tab>
-            <md-tab
-                onclick="showSection('chat')"
-                aria-controls="chat">
-                <md-icon slot="icon">chat</md-icon>
-                <span>Chat</span>
-            </md-tab>
-            <md-tab
-                onclick="showSection('terminal')"
-                aria-controls="terminal">
-                <md-icon slot="icon">terminal</md-icon>
-                <span>Terminal</span>
-            </md-tab>
-        </md-tabs>
-    </div>
-
-    <div class="main-content">
-        <div id="dashboard" class="section">
-            <h2>Dashboard</h2>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <md-icon>group</md-icon>
-                    <div class="stat-value" id="totalUsers">0</div>
-                    <div>Total Users</div>
-                </div>
-                <div class="stat-card">
+<body class="light-theme">
+    <nav>
+        <div class="nav-content">
+            <h1 class="headline-large">Админ панель</h1>
+            <div class="nav-actions">
+                <md-icon-button href="index.html">
                     <md-icon>chat</md-icon>
-                    <div class="stat-value" id="totalMessages">0</div>
-                    <div>Messages</div>
+                </md-icon-button>
+                <md-icon-button id="theme-toggle">
+                    <md-icon>dark_mode</md-icon>
+                </md-icon-button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container admin-container">
+        <div class="admin-section">
+            <div class="section-header">
+                <h2 class="title-large">Пользователи</h2>
+                <div class="section-actions">
+                    <md-icon-button id="refresh-users">
+                        <md-icon>refresh</md-icon>
+                    </md-icon-button>
+                    <md-outlined-text-field
+                        id="users-search"
+                        type="search"
+                        label="Поиск пользователей"
+                        supporting-text="Поиск по имени пользователя"
+                    >
+                        <md-icon slot="leading-icon">search</md-icon>
+                    </md-outlined-text-field>
+                </div>
+            </div>
+            <div class="stats-row">
+                <div class="stat-card">
+                    <span class="headline-medium" id="total-users">0</span>
+                    <span class="body-medium">Всего пользователей</span>
                 </div>
                 <div class="stat-card">
-                    <md-icon>warning</md-icon>
-                    <div class="stat-value" id="bannedUsers">0</div>
-                    <div>Banned Users</div>
+                    <span class="headline-medium" id="online-users">0</span>
+                    <span class="body-medium">Онлайн</span>
                 </div>
                 <div class="stat-card">
-                    <md-icon>person</md-icon>
-                    <div class="stat-value" id="onlineUsers">0</div>
-                    <div>Online Users</div>
+                    <span class="headline-medium" id="banned-users">0</span>
+                    <span class="body-medium">Заблокировано</span>
                 </div>
             </div>
-            <div class="card">
-                <h3>Quick Actions</h3>
-                <div class="command-group">
-                    <md-filled-button class="command-button" onclick="clearChat()">
-                        <md-icon slot="icon">delete</md-icon>
-                        Clear Chat
-                    </md-filled-button>
-                    <md-filled-button class="command-button" onclick="exportChat()">
-                        <md-icon slot="icon">download</md-icon>
-                        Export Chat
-                    </md-filled-button>
-                    <md-filled-button class="command-button" onclick="showBroadcastDialog()">
-                        <md-icon slot="icon">campaign</md-icon>
-                        Broadcast
-                    </md-filled-button>
-                    <md-filled-button class="command-button" onclick="refreshStats()">
-                        <md-icon slot="icon">refresh</md-icon>
-                        Refresh Stats
-                    </md-filled-button>
+            <div id="users-list" class="admin-list"></div>
+        </div>
+        
+        <div class="admin-section">
+            <div class="section-header">
+                <h2 class="title-large">Модерация сообщений</h2>
+                <div class="section-actions">
+                    <md-icon-button id="refresh-messages">
+                        <md-icon>refresh</md-icon>
+                    </md-icon-button>
+                    <md-outlined-text-field
+                        id="messages-search"
+                        type="search"
+                        label="Поиск сообщений"
+                        supporting-text="Поиск по тексту сообщения"
+                    >
+                        <md-icon slot="leading-icon">search</md-icon>
+                    </md-outlined-text-field>
                 </div>
             </div>
+            <div class="stats-row">
+                <div class="stat-card">
+                    <span class="headline-medium" id="total-messages">0</span>
+                    <span class="body-medium">Всего сообщений</span>
+                </div>
+                <div class="stat-card">
+                    <span class="headline-medium" id="today-messages">0</span>
+                    <span class="body-medium">Сообщений сегодня</span>
+                </div>
+                <div class="stat-card">
+                    <span class="headline-medium" id="deleted-messages">0</span>
+                    <span class="body-medium">Удалено</span>
+                </div>
+            </div>
+            <div id="messages-list" class="admin-list"></div>
         </div>
 
-        <div id="users" class="section">
-            <h2>User Management</h2>
-            <div class="card">
-                <md-filled-text-field type="text" id="userSearch" label="Search users">
-                    <md-icon slot="leading-icon">search</md-icon>
-                </md-filled-text-field>
-                <table class="user-list">
-                    <thead>
-                        <tr>
-                            <th>Username</th>
-                            <th>Balance</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="userTableBody"></tbody>
-                </table>
+        <md-elevated-card class="admin-section">
+            <div class="section-header">
+                <h2 class="title-large">Настройки чата</h2>
             </div>
-        </div>
-
-        <div id="chat" class="section">
-            <h2>Chat Management</h2>
-            <div class="card">
-                <div class="command-group">
-                    <md-filled-button class="command-button" onclick="clearChat()">
-                        <md-icon slot="icon">delete</md-icon>
-                        Clear Chat
-                    </md-filled-button>
-                    <md-filled-button class="command-button" onclick="exportChat()">
-                        <md-icon slot="icon">download</md-icon>
-                        Export Chat
-                    </md-filled-button>
+            <div class="settings-list">
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <span class="title-medium">Режим только для чтения</span>
+                        <span class="body-medium">Запретить отправку новых сообщений</span>
+                    </div>
+                    <md-switch id="readonly-mode"></md-switch>
                 </div>
-                <md-filled-text-field type="text" id="chatSearch" label="Search messages">
-                    <md-icon slot="leading-icon">search</md-icon>
-                </md-filled-text-field>
-                <div class="terminal-output" id="chatOutput"></div>
-            </div>
-        </div>
-
-        <div id="terminal" class="section">
-            <h2>Terminal</h2>
-            <div class="card">
-                <md-filled-text-field type="text" id="commandInput" label="Enter command">
-                    <md-icon slot="leading-icon">terminal</md-icon>
-                </md-filled-text-field>
-                <div class="terminal-output" id="terminalOutput"></div>
-                <div class="command-group">
-                    <md-filled-button class="command-button" onclick="runCommand('help')">
-                        <md-icon slot="icon">help</md-icon>
-                        Help
-                    </md-filled-button>
-                    <md-filled-button class="command-button" onclick="runCommand('clear')">
-                        <md-icon slot="icon">clear</md-icon>
-                        Clear
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <span class="title-medium">Очистить все сообщения</span>
+                        <span class="body-medium">Удалить всю историю чата</span>
+                    </div>
+                    <md-filled-tonal-button id="clear-all-messages" class="error">
+                        <md-icon slot="icon">delete_forever</md-icon>
+                        Очистить
+                    </md-filled-tonal-button>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <span class="title-medium">Изменить пароль админа</span>
+                        <span class="body-medium">Установить новый пароль доступа</span>
+                    </div>
+                    <md-filled-button id="change-password">
+                        <md-icon slot="icon">key</md-icon>
+                        Изменить
                     </md-filled-button>
                 </div>
             </div>
-        </div>
+        </md-elevated-card>
     </div>
 
-    <script>
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            // Wait for Material components to be ready
-            customElements.whenDefined('md-navigation-drawer').then(() => {
-                initializeAdmin();
-                // Show dashboard by default
-                document.querySelectorAll('.section').forEach(section => {
-                    section.classList.remove('active');
-                });
-                document.getElementById('dashboard').classList.add('active');
-                
-                // Add event listeners
-                document.getElementById('userSearch')?.addEventListener('input', filterUsers);
-                document.getElementById('chatSearch')?.addEventListener('input', searchMessages);
-                document.getElementById('commandInput')?.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        runCommand(e.target.value);
-                        e.target.value = '';
-                    }
-                });
+    <md-dialog id="password-dialog" modal>
+        <div slot="headline" class="headline-small">Изменение пароля</div>
+        <form slot="content" method="dialog" class="dialog-content">
+            <md-outlined-text-field
+                id="new-password"
+                type="password"
+                label="Новый пароль"
+                required
+                minlength="6"
+            ></md-outlined-text-field>
+            <md-outlined-text-field
+                id="confirm-password"
+                type="password"
+                label="Подтвердите пароль"
+                required
+                minlength="6"
+            ></md-outlined-text-field>
+            <div slot="actions">
+                <md-text-button dialog-action="close">
+                    Отмена
+                </md-text-button>
+                <md-filled-button id="save-password">
+                    Сохранить
+                </md-filled-button>
+            </div>
+        </form>
+    </md-dialog>
 
-                // Add navigation click handlers
-                document.querySelectorAll('md-list-item').forEach(item => {
-                    item.addEventListener('click', (e) => {
-                        const section = e.currentTarget.textContent.trim().toLowerCase();
-                        showSection(section);
-                    });
-                });
-            });
-        });
-
-        // Add this function to handle tab selection
-        function handleTabSelect(event) {
-            const tabs = document.querySelectorAll('md-tab');
-            tabs.forEach(tab => tab.selected = false);
-            event.target.selected = true;
-        }
-
-        // Add event listeners to tabs
-        document.querySelectorAll('md-tab').forEach(tab => {
-            tab.addEventListener('click', handleTabSelect);
-        });
-
-        // Update showSection function
-        function showSection(sectionId) {
-            // Update tab selection
-            const tab = document.querySelector(`md-tab[aria-controls="${sectionId}"]`);
-            if (tab) {
-                const tabs = document.querySelectorAll('md-tab');
-                tabs.forEach(t => t.selected = false);
-                tab.selected = true;
-            }
-
-            // Hide all sections
-            document.querySelectorAll('.section').forEach(section => {
-                section.classList.remove('active');
-            });
-            // Show selected section
-            document.getElementById(sectionId).classList.add('active');
-            
-            // Load section-specific data
-            switch(sectionId) {
-                case 'users':
-                    loadUsers();
-                    break;
-                case 'chat':
-                    searchMessages();
-                    break;
-                case 'dashboard':
-                    refreshStats();
-                    break;
-            }
-        }
-
-        // Stats
-        async function refreshStats() {
-            const result = await executeCommand('getDashboardStats');
-            if (result.success) {
-                document.getElementById('totalUsers').textContent = result.stats.totalUsers;
-                document.getElementById('totalMessages').textContent = result.stats.messagesTotal;
-                document.getElementById('bannedUsers').textContent = result.stats.bannedUsers;
-                document.getElementById('onlineUsers').textContent = result.stats.onlineUsers;
-            }
-        }
-
-        // Users
-        async function loadUsers() {
-            const result = await executeCommand('getUsers');
-            if (result.success) {
-                const tbody = document.getElementById('userTableBody');
-                tbody.innerHTML = result.users.map(user => `
-                    <tr>
-                        <td>${user.username}</td>
-                        <td>${user.balance}</td>
-                        <td>
-                            <md-chip-set>
-                                <md-filter-chip 
-                                    label="${user.isBanned ? 'Banned' : 'Active'}"
-                                    selected="${user.isBanned}"
-                                    style="--md-sys-color-primary: ${user.isBanned ? '#ff4444' : '#00ff00'}">
-                                </md-filter-chip>
-                            </md-chip-set>
-                        </td>
-                        <td class="action-buttons">
-                            <md-icon-button onclick="toggleBan('${user.username}', ${!user.isBanned})">
-                                <md-icon>${user.isBanned ? 'lock_open' : 'lock'}</md-icon>
-                            </md-icon-button>
-                            <md-icon-button onclick="editBalance('${user.username}')">
-                                <md-icon>payments</md-icon>
-                            </md-icon-button>
-                            <md-icon-button onclick="viewHistory('${user.username}')">
-                                <md-icon>history</md-icon>
-                            </md-icon-button>
-                        </td>
-                    </tr>
-                `).join('');
-            }
-        }
-
-        // Chat
-        async function clearChat() {
-            if (await showConfirmDialog('Clear Chat', 'Are you sure? This cannot be undone.')) {
-                const result = await executeCommand('clearChats');
-                if (result.success) {
-                    showToast('Chat cleared successfully');
-                    document.getElementById('chatOutput').innerHTML = '';
-                }
-            }
-        }
-
-        // Terminal
-        async function runCommand(command) {
-            const output = document.getElementById('terminalOutput');
-            output.innerHTML += `<div style="color: #888">$ ${command}</div>`;
-            
-            const result = await executeCommand('executeShell', { command });
-            if (result.success) {
-                output.innerHTML += `<div>${result.output}</div>`;
-            } else {
-                output.innerHTML += `<div style="color: #ff4444">Error: ${result.error}</div>`;
-            }
-            
-            output.scrollTop = output.scrollHeight;
-        }
-
-        // Utilities
-        async function executeCommand(action, data = {}) {
-            try {
-                return await new Promise((resolve) => {
-                    // Create a unique callback name
-                    const callbackName = 'cb_' + Math.random().toString(36).substr(2, 9);
-                    
-                    // Create the callback function
-                    window[callbackName] = function(response) {
-                        cleanup();
-                        resolve(response);
-                    };
-
-                    // Create cleanup function
-                    const cleanup = () => {
-                        delete window[callbackName];
-                        if (script && script.parentNode) {
-                            script.parentNode.removeChild(script);
-                        }
-                        if (timeoutId) {
-                            clearTimeout(timeoutId);
-                        }
-                    };
-
-                    // Create script element
-                    const script = document.createElement('script');
-                    
-                    // Build URL with parameters
-                    const params = {
-                        callback: callbackName,
-                        data: JSON.stringify({ action, ...data })
-                    };
-                    
-                    const queryString = Object.keys(params)
-                        .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
-                        .join('&');
-                    
-                    script.src = `${GOOGLE_APPS_SCRIPT_URL}?${queryString}`;
-
-                    // Handle load errors
-                    script.onerror = () => {
-                        cleanup();
-                        resolve({
-                            success: false,
-                            error: 'Failed to load script'
-                        });
-                    };
-
-                    // Add timeout
-                    const timeoutId = setTimeout(() => {
-                        cleanup();
-                        resolve({
-                            success: false,
-                            error: 'Request timed out'
-                        });
-                    }, 10000);
-
-                    // Add script to document
-                    document.body.appendChild(script);
-                });
-            } catch (error) {
-                console.error('Command error:', error);
-                showToast('Error: ' + error.message);
-                return { 
-                    success: false, 
-                    error: error.toString() 
-                };
-            }
-        }
-
-        function showToast(message) {
-            const toast = document.createElement('div');
-            toast.style.cssText = `
-                position: fixed;
-                bottom: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: var(--md-sys-color-surface-container);
-                color: var(--md-sys-color-on-surface);
-                padding: 12px 24px;
-                border-radius: 24px;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-                animation: slideUp 0.3s ease-out;
-            `;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
-        }
-
-        async function showConfirmDialog(title, message) {
-            return new Promise((resolve) => {
-                const dialog = document.createElement('md-dialog');
-                dialog.innerHTML = `
-                    <div slot="headline">${title}</div>
-                    <div slot="content">${message}</div>
-                    <div slot="actions">
-                        <md-text-button value="cancel">Cancel</md-text-button>
-                        <md-text-button value="confirm">Confirm</md-text-button>
-                    </div>
-                `;
-                document.body.appendChild(dialog);
-                dialog.show();
-
-                dialog.addEventListener('close', (e) => {
-                    dialog.remove();
-                    resolve(e.detail.action === 'confirm');
-                });
-            });
-        }
-
-        async function toggleBan(username, shouldBan) {
-            const reason = shouldBan ? await showPromptDialog('Ban User', 'Enter ban reason:') : '';
-            const result = await executeCommand('setBanState', {
-                userId: username,
-                isBanned: shouldBan,
-                banReason: reason
-            });
-            
-            if (result.success) {
-                showToast(`User ${shouldBan ? 'banned' : 'unbanned'} successfully`);
-                loadUsers();
-            }
-        }
-
-        async function editBalance(username) {
-            const amount = await showPromptDialog('Edit Balance', 'Enter amount (positive to add, negative to subtract):', 'number');
-            if (!amount) return;
-            
-            const result = await executeCommand('makeTransaction', {
-                fromUserId: amount > 0 ? 'SYSTEM' : username,
-                toUserId: amount > 0 ? username : 'SYSTEM',
-                amount: Math.abs(parseInt(amount))
-            });
-            
-            if (result.success) {
-                showToast('Balance updated successfully');
-                loadUsers();
-            }
-        }
-
-        async function viewHistory(username) {
-            const result = await executeCommand('getUserHistory', { username });
-            if (result.success) {
-                const dialog = document.createElement('md-dialog');
-                dialog.innerHTML = `
-                    <div slot="headline">History for ${username}</div>
-                    <div slot="content" style="max-height: 400px; overflow-y: auto;">
-                        <table class="user-list">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Type</th>
-                                    <th>Amount</th>
-                                    <th>Details</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${result.history.map(entry => `
-                                    <tr>
-                                        <td>${new Date(entry.timestamp).toLocaleString()}</td>
-                                        <td>${entry.type}</td>
-                                        <td style="color: ${entry.amount > 0 ? '#00ff00' : '#ff4444'}">${entry.amount}</td>
-                                        <td>${entry.details}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                    <div slot="actions">
-                        <md-text-button value="close">Close</md-text-button>
-                    </div>
-                `;
-                document.body.appendChild(dialog);
-                dialog.show();
-                dialog.addEventListener('close', () => dialog.remove());
-            }
-        }
-
-        async function searchMessages() {
-            const query = document.getElementById('chatSearch').value;
-            const result = await executeCommand('searchMessages', { query });
-            
-            if (result.success) {
-                document.getElementById('chatOutput').innerHTML = result.messages.map(msg => `
-                    <div style="margin-bottom: 8px;">
-                        <span style="color: #888">[${new Date(msg.timestamp).toLocaleString()}]</span>
-                        <span style="color: #00ff00">${msg.user}:</span>
-                        ${msg.message}
-                    </div>
-                `).join('');
-            }
-        }
-
-        async function filterUsers(e) {
-            const query = e.target.value.toLowerCase();
-            const rows = document.querySelectorAll('#userTableBody tr');
-            rows.forEach(row => {
-                const username = row.querySelector('td').textContent.toLowerCase();
-                row.style.display = username.includes(query) ? '' : 'none';
-            });
-        }
-
-        async function exportChat() {
-            const result = await executeCommand('exportChat');
-            if (result.success) {
-                showToast('Chat exported successfully');
-                window.open(result.url, '_blank');
-            }
-        }
-
-        async function showPromptDialog(title, message, type = 'text') {
-            return new Promise((resolve) => {
-                const dialog = document.createElement('md-dialog');
-                dialog.innerHTML = `
-                    <div slot="headline">${title}</div>
-                    <form slot="content" id="dialogForm">
-                        <md-filled-text-field 
-                            type="${type}" 
-                            label="${message}"
-                            required>
-                        </md-filled-text-field>
-                    </form>
-                    <div slot="actions">
-                        <md-text-button form="dialogForm" value="cancel">Cancel</md-text-button>
-                        <md-text-button form="dialogForm" value="ok">OK</md-text-button>
-                    </div>
-                `;
-                document.body.appendChild(dialog);
-                dialog.show();
-
-                const form = dialog.querySelector('form');
-                const input = dialog.querySelector('md-filled-text-field');
-
-                form.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    dialog.close();
-                    resolve(input.value);
-                });
-
-                dialog.addEventListener('close', (e) => {
-                    dialog.remove();
-                    resolve(e.detail.action === 'ok' ? input.value : null);
-                });
-            });
-        }
-
-        // Add command suggestions
-        const commandSuggestions = {
-            'help': 'Show available commands',
-            'users': 'Manage users (ban/unban/balance)',
-            'chat': 'Manage chat (clear/export)',
-            'stats': 'Show system statistics',
-            'clear': 'Clear terminal output'
-        };
-
-        document.getElementById('commandInput').addEventListener('input', (e) => {
-            const input = e.target.value.toLowerCase();
-            const matches = Object.entries(commandSuggestions)
-                .filter(([cmd]) => cmd.startsWith(input))
-                .map(([cmd, desc]) => `
-                    <md-filled-button class="command-button" onclick="runCommand('${cmd}')">
-                        <md-icon slot="icon">terminal</md-icon>
-                        ${cmd} - ${desc}
-                    </md-filled-button>
-                `);
-            
-            document.querySelector('#terminal .command-group').innerHTML = matches.join('') || `
-                <div style="color: #888">No matching commands</div>
-            `;
-        });
-
-        // Add this initialization function
-        async function initializeAdmin() {
-            try {
-                // Show loading state in all stat cards
-                ['totalUsers', 'totalMessages', 'onlineUsers', 'bannedUsers'].forEach(id => {
-                    const element = document.getElementById(id);
-                    if (element) element.textContent = '...';
-                });
-                
-                // Load initial data with error handling
-                let hasError = false;
-                
-                const stats = await executeCommand('getDashboardStats');
-                if (stats.success) {
-                    updateDashboard(stats.stats);
-                } else {
-                    console.error('Failed to load stats:', stats.error);
-                    hasError = true;
-                }
-                
-                const users = await executeCommand('getUsers');
-                if (users.success) {
-                    updateUserList(users.users);
-                } else {
-                    console.error('Failed to load users:', users.error);
-                    hasError = true;
-                }
-
-                // Load initial chat messages
-                const messages = await executeCommand('searchMessages', { query: '' });
-                if (messages.success) {
-                    updateChatMessages(messages.messages);
-                } else {
-                    console.error('Failed to load messages:', messages.error);
-                    hasError = true;
-                }
-
-                if (hasError) {
-                    showToast('Some data failed to load. Please refresh the page.');
-                }
-
-                // Start periodic refresh
-                setInterval(async () => {
-                    try {
-                        const newStats = await executeCommand('getDashboardStats');
-                        if (newStats.success) {
-                            updateDashboard(newStats.stats);
-                        }
-                        
-                        const newUsers = await executeCommand('getUsers');
-                        if (newUsers.success) {
-                            updateUserList(newUsers.users);
-                        }
-                    } catch (error) {
-                        console.error('Refresh error:', error);
-                    }
-                }, 30000);
-                
-            } catch (error) {
-                console.error('Initialization error:', error);
-                showToast('Failed to initialize admin panel: ' + error.message);
-                
-                // Reset stat cards on error
-                ['totalUsers', 'totalMessages', 'onlineUsers', 'bannedUsers'].forEach(id => {
-                    const element = document.getElementById(id);
-                    if (element) element.textContent = '0';
-                });
-            }
-        }
-
-        // Update these helper functions
-        function updateDashboard(stats) {
-            const updates = {
-                'totalUsers': stats.totalUsers || 0,
-                'totalMessages': stats.messagesTotal || 0,
-                'onlineUsers': stats.onlineUsers || 0,
-                'bannedUsers': stats.bannedUsers || 0
-            };
-            
-            Object.entries(updates).forEach(([id, value]) => {
-                const element = document.getElementById(id);
-                if (element) element.textContent = value;
-            });
-        }
-
-        function updateUserList(users) {
-            const tbody = document.getElementById('userTableBody');
-            if (!tbody) return;
-            
-            tbody.innerHTML = users.map(user => `
-                <tr>
-                    <td>${user.username}</td>
-                    <td>${user.balance}</td>
-                    <td>
-                        <md-chip-set>
-                            <md-filter-chip 
-                                label="${user.isBanned ? 'Banned' : 'Active'}"
-                                selected="${user.isBanned}"
-                                style="--md-sys-color-primary: ${user.isBanned ? '#ff4444' : '#00ff00'}">
-                            </md-filter-chip>
-                        </md-chip-set>
-                    </td>
-                    <td class="action-buttons">
-                        <md-icon-button onclick="toggleBan('${user.username}', ${!user.isBanned})">
-                            <md-icon>${user.isBanned ? 'lock_open' : 'lock'}</md-icon>
-                        </md-icon-button>
-                        <md-icon-button onclick="editBalance('${user.username}')">
-                            <md-icon>payments</md-icon>
-                        </md-icon-button>
-                        <md-icon-button onclick="viewHistory('${user.username}')">
-                            <md-icon>history</md-icon>
-                        </md-icon-button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function updateChatMessages(messages) {
-            const chatOutput = document.getElementById('chatOutput');
-            if (!chatOutput) return;
-            
-            chatOutput.innerHTML = messages.map(msg => `
-                <div style="margin-bottom: 8px;">
-                    <span style="color: #888">[${new Date(msg.timestamp).toLocaleString()}]</span>
-                    <span style="color: #00ff00">${msg.user}:</span>
-                    ${msg.message}
-                    ${msg.image ? `<br><img src="${msg.image}" style="max-width: 200px; border-radius: 4px; margin-top: 4px;">` : ''}
-                </div>
-            `).join('');
-        }
-    </script>
+    <script type="module" src="admin.js"></script>
 </body>
 </html> 

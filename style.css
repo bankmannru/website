@@ -27,7 +27,32 @@
     --md-filled-text-field-focus-active-indicator-color: #ffffff;
     --md-sys-color-secondary-container: #ccd8e8;
     --md-sys-color-on-secondary-container: #050c1f;
-  }
+    /* Light theme */
+    --md-sys-color-primary-container: #d3e4ff;
+    --md-sys-color-on-primary-container: #001c39;
+    --md-sys-color-secondary: #535f70;
+    --md-sys-color-on-secondary: #ffffff;
+    --md-sys-color-error: #ba1a1a;
+    --md-sys-color-on-error: #ffffff;
+    --md-sys-color-surface: #fdfbff;
+    --md-sys-color-on-surface: #1a1c1e;
+}
+
+/* Dark theme */
+.dark-theme {
+    --md-sys-color-primary: #a5c8ff;
+    --md-sys-color-on-primary: #003060;
+    --md-sys-color-primary-container: #004788;
+    --md-sys-color-on-primary-container: #d3e4ff;
+    --md-sys-color-secondary: #bbc7db;
+    --md-sys-color-on-secondary: #253140;
+    --md-sys-color-secondary-container: #3c4858;
+    --md-sys-color-on-secondary-container: #d7e3f8;
+    --md-sys-color-error: #ffb4ab;
+    --md-sys-color-on-error: #690005;
+    --md-sys-color-surface: #1a1c1e;
+    --md-sys-color-on-surface: #e2e2e5;
+}
 
 body {
     background: linear-gradient(to right, #ff7e5f, #feb47b);
@@ -307,7 +332,7 @@ Icon buttons can be grouped together or they can stand alone.
 Standard Icon buttons are low-emphasis buttons.
 They are used for the lowest priority actions, especially when presenting multiple options.
 
-Icon buttons can be placed on a variety of backgrounds. Until the button is interacted with, its container isn’t visible.
+Icon buttons can be placed on a variety of backgrounds. Until the button is interacted with, its container isn't visible.
 */
 
 /* Auto layout */
@@ -555,7 +580,7 @@ flex-grow: 0;
 Buttons communicate actions that users can take. They are typically placed throughout your UI, in places like Dialogs, Modal windows, Forms, Cards and Toolbars
 
 Outlined buttons are medium-emphasis buttons.
-They contain actions that are important, but aren’t the primary action in an app.
+They contain actions that are important, but aren't the primary action in an app.
 
 Outlined buttons pair well with filled buttons to indicate an alternative, secondary action.
 */
@@ -636,7 +661,7 @@ flex-grow: 0;
 Buttons communicate actions that users can take. They are typically placed throughout your UI, in places like Dialogs, Modal windows, Forms, Cards and Toolbars
 
 Filled buttons are high-emphasis buttons.
-They have the most visual impact after the FAB, and should be used for important, final actions that complete a flow, like &quot;Save&quot;, &quot;Join now&quot;, or &quot;Confirm&quot;.
+They have the most visual impact after the FAB, and should be used for important, final actions that complete a flow, like "Save", "Join now", or "Confirm".
 */
 
 /* Auto layout */
@@ -944,6 +969,32 @@ bottom: 0%;
 
 .resizable-input {
     resize: vertical;
+}
+
+.toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--md-sys-color-surface-container);
+    color: var(--md-sys-color-on-surface);
+    padding: 12px 24px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    z-index: 1000;
+}
+
+.toast.success md-icon {
+    color: var(--md-sys-color-primary);
+}
+
+.toast.error md-icon {
+    color: var(--md-sys-color-error);
 }
 
 

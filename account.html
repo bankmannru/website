@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет - Банк Маннру</title>
+    
+    <!-- Styles -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Material Web Components -->
+    <script type="importmap">
+        {
+            "imports": {
+                "@material/web/": "https://esm.run/@material/web/"
+            }
+        }
+    </script>
+    <script type="module">
+        import '@material/web/all.js';
+        import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
+        document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+    </script>
+
+    <!-- Custom Components -->
+    <script type="module" src="card-creator.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            min-height: 100vh;
+            font-family: 'Product Sans', sans-serif;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .account-header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .account-header h1 {
+            color: white;
+            margin: 0;
+        }
+
+        .card-section {
+            margin-bottom: 24px;
+            perspective: 1000px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .balance-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .balance-amount {
+            font-size: 48px;
+            font-weight: 700;
+            color: white;
+            margin: 16px 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .transactions-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .transaction-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .transaction-item:hover {
+            transform: translateX(4px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .transaction-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .transaction-icon {
+            padding: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .transaction-details {
+            display: flex;
+            flex-direction: column;
+            color: white;
+        }
+
+        .transaction-title {
+            font-weight: 500;
+        }
+
+        .transaction-date {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .amount-positive {
+            color: #4caf50;
+            font-weight: 500;
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+        }
+
+        .amount-negative {
+            color: #f44336;
+            font-weight: 500;
+            text-shadow: 0 0 10px rgba(244, 67, 54, 0.3);
+        }
+
+        /* Диалоги */
+        md-dialog {
+            --md-dialog-container-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        .dialog-content {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding: 24px;
+            min-width: 300px;
+        }
+
+        md-outlined-text-field {
+            width: 100%;
+            --md-outlined-text-field-container-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Кнопки */
+        md-filled-button {
+            --md-filled-button-container-color: rgba(255, 255, 255, 0.2);
+            --md-filled-button-hover-state-layer-color: rgba(255, 255, 255, 0.1);
+        }
+
+        md-outlined-button {
+            --md-outlined-button-outline-color: rgba(255, 255, 255, 0.3);
+            --md-outlined-button-hover-state-layer-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            color: #333;
+            padding: 12px 24px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.success md-icon {
+            color: #4caf50;
+        }
+
+        .toast.error md-icon {
+            color: #f44336;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+
+            .balance-amount {
+                font-size: 36px;
+            }
+
+            .account-header {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="account-header">
+            <h1 class="headline-large">Личный кабинет</h1>
+            <md-filled-button id="logout-button">
+                Выйти
+                <md-icon slot="icon">logout</md-icon>
+            </md-filled-button>
+        </div>
+
+        <div class="card-section">
+            <bank-card id="user-card"></bank-card>
+        </div>
+
+        <div class="balance-section">
+            <h2 class="title-large">Баланс</h2>
+            <div class="balance-amount" id="balance-amount">0 ₽</div>
+            <div style="display: flex; gap: 12px;">
+                <md-filled-button id="deposit-button">
+                    Пополнить
+                    <md-icon slot="icon">add</md-icon>
+                </md-filled-button>
+                <md-outlined-button id="transfer-button">
+                    Перевести
+                    <md-icon slot="icon">send</md-icon>
+                </md-outlined-button>
+            </div>
+        </div>
+
+        <div class="transactions-section">
+            <h2 class="title-large">История операций</h2>
+            <div class="transaction-list" id="transaction-list">
+                <!-- Transactions will be added here -->
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { database } from './firebase-config.js';
+        import { ref, get, onValue, update, push } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+        import { logout } from './auth.js';
+
+        function showNotification(message, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${isError ? 'error' : 'success'}`;
+            toast.innerHTML = `
+                <md-icon>${isError ? 'error' : 'check_circle'}</md-icon>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(toast);
+            
+            requestAnimationFrame(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateY(0)';
+            });
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(20px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Get card ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const cardId = urlParams.get('id');
+        
+        if (!cardId) {
+            window.location.href = 'index.html';
+        }
+
+        // Get card data
+        const cardRef = ref(database, `cards/${cardId}`);
+        get(cardRef).then((snapshot) => {
+            if (snapshot.exists()) {
+                const cardData = snapshot.val();
+                
+                // Update card display
+                const userCard = document.getElementById('user-card');
+                userCard.setAttribute('number', cardData.number);
+                userCard.setAttribute('holder', cardData.holder);
+                userCard.setAttribute('expires', cardData.expires);
+                userCard.setAttribute('theme', cardData.theme);
+
+                // Update balance
+                updateBalanceDisplay(cardData.balance);
+            } else {
+                window.location.href = 'index.html';
+            }
+        }).catch((error) => {
+            console.error(error);
+            window.location.href = 'index.html';
+        });
+
+        // Listen for balance changes
+        onValue(ref(database, `cards/${cardId}/balance`), (snapshot) => {
+            if (snapshot.exists()) {
+                updateBalanceDisplay(snapshot.val());
+            }
+        });
+
+        // Listen for transactions
+        onValue(ref(database, `cards/${cardId}/transactions`), (snapshot) => {
+            if (snapshot.exists()) {
+                const transactions = snapshot.val();
+                updateTransactionsList(transactions);
+            }
+        });
+
+        function updateBalanceDisplay(balance) {
+            document.getElementById('balance-amount').textContent = 
+                new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB' })
+                .format(balance);
+        }
+
+        function updateTransactionsList(transactions) {
+            const list = document.getElementById('transaction-list');
+            list.innerHTML = '';
+            
+            Object.entries(transactions).reverse().forEach(([id, transaction]) => {
+                const item = document.createElement('div');
+                item.className = 'transaction-item';
+                item.innerHTML = `
+                    <div class="transaction-info">
+                        <div class="transaction-icon">
+                            <md-icon>${transaction.type === 'deposit' ? 'add' : 'send'}</md-icon>
+                        </div>
+                        <div class="transaction-details">
+                            <div class="transaction-title">${transaction.description}</div>
+                            <div class="transaction-date">${new Date(transaction.timestamp).toLocaleString()}</div>
+                        </div>
+                    </div>
+                    <div class="amount-${transaction.amount > 0 ? 'positive' : 'negative'}">
+                        ${transaction.amount > 0 ? '+' : ''}${new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB' }).format(transaction.amount)}
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        // Handle deposit
+        document.getElementById('deposit-button').addEventListener('click', () => {
+            const dialog = document.createElement('md-dialog');
+            dialog.innerHTML = `
+                <div slot="headline">Пополнение карты</div>
+                <div slot="content" class="dialog-content">
+                    <md-outlined-text-field
+                        type="number"
+                        label="Сумма"
+                        required
+                        min="1"
+                        id="deposit-amount">
+                    </md-outlined-text-field>
+                </div>
+                <div slot="actions">
+                    <md-text-button value="cancel">Отмена</md-text-button>
+                    <md-filled-button value="confirm">Пополнить</md-filled-button>
+                </div>
+            `;
+            
+            document.body.appendChild(dialog);
+            dialog.show();
+
+            dialog.addEventListener('close', async (e) => {
+                if (e.target.returnValue === 'confirm') {
+                    const amount = Number(document.getElementById('deposit-amount').value);
+                    if (amount > 0) {
+                        try {
+                            const snapshot = await get(cardRef);
+                            const currentBalance = snapshot.val().balance || 0;
+                            
+                            const updates = {};
+                            updates[`cards/${cardId}/balance`] = currentBalance + amount;
+                            
+                            // Add transaction
+                            const transactionRef = push(ref(database, `cards/${cardId}/transactions`));
+                            updates[`cards/${cardId}/transactions/${transactionRef.key}`] = {
+                                type: 'deposit',
+                                amount: amount,
+                                description: 'Пополнение карты',
+                                timestamp: Date.now()
+                            };
+
+                            await update(ref(database), updates);
+                            showNotification('Карта успешно пополнена!');
+                        } catch (error) {
+                            console.error(error);
+                            showNotification('Ошибка при пополнении карты', true);
+                        }
+                    }
+                }
+                dialog.remove();
+            });
+        });
+
+        // Handle transfer
+        document.getElementById('transfer-button').addEventListener('click', () => {
+            const dialog = document.createElement('md-dialog');
+            dialog.innerHTML = `
+                <div slot="headline">Перевод средств</div>
+                <div slot="content" class="dialog-content">
+                    <md-outlined-text-field
+                        type="number"
+                        label="Номер карты получателя"
+                        required
+                        minlength="6"
+                        maxlength="6"
+                        id="recipient-number">
+                    </md-outlined-text-field>
+                    <md-outlined-text-field
+                        type="number"
+                        label="Сумма"
+                        required
+                        min="1"
+                        id="transfer-amount">
+                    </md-outlined-text-field>
+                </div>
+                <div slot="actions">
+                    <md-text-button value="cancel">Отмена</md-text-button>
+                    <md-filled-button value="confirm">Перевести</md-filled-button>
+                </div>
+            `;
+            
+            document.body.appendChild(dialog);
+            dialog.show();
+
+            dialog.addEventListener('close', async (e) => {
+                if (e.target.returnValue === 'confirm') {
+                    const recipientNumber = document.getElementById('recipient-number').value;
+                    const amount = Number(document.getElementById('transfer-amount').value);
+
+                    if (amount > 0) {
+                        try {
+                            // Get sender's card data
+                            const senderSnapshot = await get(cardRef);
+                            const senderData = senderSnapshot.val();
+                            const senderBalance = senderData.balance || 0;
+
+                            if (senderBalance < amount) {
+                                showNotification('Недостаточно средств', true);
+                                return;
+                            }
+
+                            // Find recipient's card
+                            const cardsSnapshot = await get(ref(database, 'cards'));
+                            let recipientId = null;
+                            let recipientData = null;
+
+                            cardsSnapshot.forEach((childSnapshot) => {
+                                const card = childSnapshot.val();
+                                if (card.number.toString() === recipientNumber.toString()) {
+                                    recipientId = childSnapshot.key;
+                                    recipientData = card;
+                                }
+                            });
+
+                            if (!recipientId) {
+                                showNotification('Карта получателя не найдена', true);
+                                return;
+                            }
+
+                            if (recipientId === cardId) {
+                                showNotification('Нельзя перевести деньги самому себе', true);
+                                return;
+                            }
+
+                            const updates = {};
+                            
+                            // Update balances
+                            updates[`cards/${cardId}/balance`] = senderBalance - amount;
+                            updates[`cards/${recipientId}/balance`] = (recipientData.balance || 0) + amount;
+
+                            // Add sender's transaction
+                            const senderTransactionRef = push(ref(database, `cards/${cardId}/transactions`));
+                            updates[`cards/${cardId}/transactions/${senderTransactionRef.key}`] = {
+                                type: 'transfer',
+                                amount: -amount,
+                                description: `Перевод на карту ${recipientNumber}`,
+                                timestamp: Date.now()
+                            };
+
+                            // Add recipient's transaction
+                            const recipientTransactionRef = push(ref(database, `cards/${recipientId}/transactions`));
+                            updates[`cards/${recipientId}/transactions/${recipientTransactionRef.key}`] = {
+                                type: 'transfer',
+                                amount: amount,
+                                description: `Перевод с карты ${senderData.number}`,
+                                timestamp: Date.now()
+                            };
+
+                            await update(ref(database), updates);
+                            showNotification('Перевод успешно выполнен!');
+                            dialog.remove();
+                        } catch (error) {
+                            console.error('Transfer error:', error);
+                            showNotification('Ошибка при выполнении перевода', true);
+                        }
+                    }
+                } else {
+                    dialog.remove();
+                }
+            });
+        });
+
+        // Handle logout
+        document.getElementById('logout-button').addEventListener('click', () => {
+            logout();
+        });
+    </script>
+</body>
+</html> 

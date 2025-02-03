@@ -1,31 +1,48 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <script src="sheets.js"></script>
-  <script src="broadcast.js"></script>
-  <link rel="icon" type="image/x-icon" href="Icons/play_store_512.png" />
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-  <script type="importmap">
-    {
-      "imports": {
-        "@material/web/": "https://esm.run/@material/web/"
-      }
-    }
-  </script>
-  <script type="module">
-    import '@material/web/all.js';
-    import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
-
-    document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
-  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Банк Маннру</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Styles -->
+  <link rel="icon" type="image/x-icon" href="Icons/play_store_512.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+
+  <!-- Material Web Components -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <script type="importmap">
+      {
+        "imports": {
+          "@material/web/": "https://esm.run/@material/web/"
+        }
+      }
+    </script>
+    <script type="module">
+      import '@material/web/all.js';
+      import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
+  
+      document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+    </script>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js" type="module"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js" type="module"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js" type="module"></script>
+
+  <!-- App Scripts -->
+  <script src="sheets.js"></script>
+  <script src="broadcast.js"></script>
 </head>
-<body onload="applyTheme(localStorage.getItem('theme') || 'default');">
+<body>
+    <div style="position: fixed; top: 20px; right: 20px;">
+        <md-filled-button id="login-button">
+            <md-icon slot="icon">credit_card</md-icon>
+            Войти по карте
+        </md-filled-button>
+    </div>
     <div class='header' style="display: flex; align-items: center; justify-content: center;">Мы набираем работников для банк Маннру. 
         <a href="https://forms.gle/GJFTNofAoNCuxMT37" style="margin-left: 10px;">
             <md-filled-tonal-button>
@@ -54,5 +71,44 @@
         </md-filled-icon-button>
     </div>
     <script src="executor.js"></script>
+    <script>
+        // Theme handling function
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.body.classList.add('dark-theme');
+                document.body.classList.remove('light-theme');
+            } else {
+                document.body.classList.add('light-theme');
+                document.body.classList.remove('dark-theme');
+            }
+        }
+
+        // Apply theme on load
+        document.addEventListener('DOMContentLoaded', () => {
+            applyTheme(localStorage.getItem('theme') || 'default');
+        });
+    </script>
+    <script type="module">
+        import { showLoginDialog } from './auth.js';
+        import { app, database, auth } from './firebase-config.js';
+
+        // Setup login button
+        const loginButton = document.getElementById('login-button');
+        loginButton.addEventListener('click', () => {
+            showLoginDialog();
+        });
+
+        // Check if user is logged in
+        const userId = localStorage.getItem('userId');
+        if (userId) {
+            loginButton.innerHTML = `
+                <md-icon slot="icon">account_circle</md-icon>
+                Моя карта
+            `;
+            loginButton.addEventListener('click', () => {
+                window.location.href = `account=${userId}.html`;
+            });
+        }
+    </script>
 </body>
 </html>

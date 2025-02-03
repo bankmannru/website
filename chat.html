@@ -1,992 +1,515 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-    <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Rounded" rel="stylesheet">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ManChat</title>
-    <script src="sheets.js"></script>
-    <script src="broadcast.js"></script>
-    <script>
-        // Register service worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/service-worker.js')
-                .then(registration => {
-                    console.log('ServiceWorker registration successful');
-                })
-                .catch(err => {
-                    console.log('ServiceWorker registration failed: ', err);
-                });
-        }
-    </script>
+    <title>Беседка - Уютный чат</title>
+    
+    <!-- Material Design Typography -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
+    
+    <!-- Material Web Components -->
     <script type="importmap">
-    {
-      "imports": {
-        "@material/web/": "https://esm.run/@material/web/"
-      }
-    }
+        {
+            "imports": {
+                "@material/web/": "https://esm.run/@material/web/"
+            }
+        }
     </script>
     <script type="module">
-    import '@material/web/all.js';
-    import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
+        import '@material/web/all.js';
+        import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
 
-    document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+        document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
     </script>
-    <style>
-        :root {
-            --md-icon-font: 'Material Symbols Rounded';
-            --md-filled-text-field-container-color: white;
-        }
-        body {
-            margin: 0;
-            padding: 20px;
-            font-family: 'Roboto', sans-serif;
-            background: #1e1e1e;
-            color: white;
-        }
-        .login-container {
-            max-width: 400px;
-            margin: 100px auto;
-            text-align: center;
-        }
-        .chat-container {
-            max-width: 800px;
-            margin: 0 auto;
-            display: none;
-        }
-        .messages {
-            height: calc(100vh - 200px);
-            overflow-y: auto;
-            border: 1px solid #444;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            background: #2d2d2d;
-        }
-        .message {
-            margin-bottom: 12px;
-            padding: 8px 12px;
-            border-radius: 8px;
-            max-width: 80%;
-        }
-        .message.sent {
-            background: #004d40;
-            margin-left: auto;
-        }
-        .message.received {
-            background: #2d2d2d;
-            border: 1px solid #444;
-        }
-        .message .header {
-            font-size: 0.8em;
-            color: #888;
-            margin-bottom: 4px;
-        }
-        .input-area {
-            background: #2d2d2d;
-            border: 1px solid #444;
-            border-radius: 8px;
-            padding: 12px;
-            margin-top: 10px;
-        }
-        .input-container {
-            display: flex;
-            gap: 10px;
-            align-items: flex-end;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 8px;
-        }
-        .action-buttons md-icon-button {
-            --md-icon-button-icon-size: 20px;
-            color: #888;
-            transition: color 0.2s;
-        }
-        .action-buttons md-icon-button:hover {
-            color: #00ff00;
-        }
-        md-filled-button {
-            --md-filled-button-container-height: 40px;
-        }
-        .online-users {
-            position: fixed;
-            right: 20px;
-            top: 20px;
-            background: #2d2d2d;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #444;
-            min-width: 150px;
-        }
-        .online-users h3 {
-            margin: 0 0 10px 0;
-        }
-        .user {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            margin: 5px 0;
-        }
-        .user::before {
-            content: '';
-            width: 8px;
-            height: 8px;
-            background: #00ff00;
-            border-radius: 50%;
-        }
-        .image-preview {
-            max-width: 200px;
-            max-height: 200px;
-            margin: 10px 0;
-            border-radius: 8px;
-            display: none;
-        }
-        .message img {
-            max-width: 100%;
-            border-radius: 4px;
-            margin-top: 8px;
-        }
-        .upload-button {
-            padding: 8px;
-            border-radius: 50%;
-            cursor: pointer;
-            color: #00ff00;
-        }
-        #imageInput {
-            display: none;
-        }
-        .message-actions {
-            display: flex;
-            gap: 8px;
-            margin-top: 4px;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-        .message:hover .message-actions {
-            opacity: 1;
-        }
-        .message-actions md-icon-button {
-            --md-icon-button-icon-size: 18px;
-            padding: 6px;
-        }
-        .formatted-text {
-            white-space: pre-wrap;
-        }
-        .formatted-text code {
-            background: #1e1e1e;
-            padding: 2px 4px;
-            border-radius: 4px;
-            font-family: monospace;
-        }
-        .formatted-text pre {
-            background: #1e1e1e;
-            padding: 8px;
-            border-radius: 4px;
-            overflow-x: auto;
-        }
-        .shell-output {
-            font-family: monospace;
-            background: #000;
-            padding: 8px;
-            border-radius: 4px;
-            margin-top: 8px;
-        }
-        .emoji-picker {
-            position: absolute;
-            bottom: 100%;
-            right: 0;
-            background: #2d2d2d;
-            border: 1px solid #444;
-            border-radius: 8px;
-            padding: 10px;
-            display: none;
-            grid-template-columns: repeat(8, 1fr);
-            gap: 5px;
-            margin-bottom: 10px;
-        }
-        .emoji-btn {
-            cursor: pointer;
-            padding: 5px;
-            border-radius: 4px;
-            transition: background 0.2s;
-        }
-        .emoji-btn:hover {
-            background: #444;
-        }
-        .reactions {
-            display: flex;
-            gap: 4px;
-            margin-top: 4px;
-        }
-        .reaction {
-            background: #1e1e1e;
-            padding: 2px 6px;
-            border-radius: 12px;
-            font-size: 0.9em;
-            cursor: pointer;
-        }
-        .typing-indicator {
-            padding: 10px;
-            color: #888;
-            font-style: italic;
-        }
-        .reply-to {
-            background: #1e1e1e;
-            padding: 8px;
-            border-left: 3px solid #00ff00;
-            margin-bottom: 8px;
-            border-radius: 4px;
-            font-size: 0.9em;
-        }
-        [contenteditable] {
-            outline: none;
-        }
-        .voice-record-btn {
-            background: #00ff00;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .voice-record-btn.recording {
-            background: #ff0000;
-            animation: pulse 1s infinite;
-        }
-        .audio-player {
-            margin-top: 8px;
-            width: 100%;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-    </style>
+    
+    <!-- Custom CSS -->
+    <link href="styles.css" rel="stylesheet">
 </head>
-<body>
-    <div class="login-container" id="loginContainer">
-        <h2>Welcome to ManChat</h2>
-        <md-filled-text-field  type="text" id="nameInput" label="Введите ваше имя" style="width: 100%; margin-bottom: 20px;"></md-filled-text-field>
-        <md-filled-button id="joinButton">Join Chat</md-filled-button>
-    </div>
-
-    <div class="chat-container" id="chatContainer">
-        <div class="search-container">
-            <md-outlined-text-field 
-                type="text" 
-                id="searchInput" 
-                label="Search messages..."
-                style="width: 100%; margin-bottom: 10px;">
-                <md-icon slot="leading-icon">search</md-icon>
-            </md-outlined-text-field>
-        </div>
-        <div class="messages" id="messages"></div>
-        <img id="preview" class="image-preview">
-        <div class="typing-indicator" id="typingIndicator"></div>
-        <div class="input-area">
-            <div class="input-container">
-                <md-outlined-text-field 
-                    type="text" 
-                    id="messageInput" 
-                    label="Отправьте сообщение..." 
-                    style="--md-sys-color-primary: #00ff00;">
-                </md-outlined-text-field>
-                <input type="file" id="imageInput" accept="image/*" style="display: none;">
-                <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt,.zip" style="display: none;">
-                <div class="action-buttons">
-                    <md-icon-button id="uploadButton" title="Upload Image">
-                        <md-icon>image</md-icon>
-                    </md-icon-button>
-                    <md-icon-button id="fileButton" title="Share File">
-                        <md-icon>attach_file</md-icon>
-                    </md-icon-button>
-                    <md-icon-button id="emojiButton" title="Add Emoji">
-                        <md-icon>sentiment_satisfied</md-icon>
-                    </md-icon-button>
-                    <md-filled-button id="sendButton">
-                        <md-icon>send</md-icon>
-                    </md-filled-button>
-                </div>
+<body class="light-theme">
+    <nav>
+        <div class="nav-content">
+            <h1 class="headline-large">Беседка</h1>
+            <div class="nav-actions">
+                <md-icon-button id="admin-button">
+                    <md-icon>admin_panel_settings</md-icon>
+                </md-icon-button>
+                <md-icon-button id="theme-toggle">
+                    <md-icon>dark_mode</md-icon>
+                </md-icon-button>
+                <md-icon-button id="settings-button">
+                    <md-icon>settings</md-icon>
+                </md-icon-button>
             </div>
         </div>
-        <div class="emoji-picker" id="emojiPicker"></div>
-    </div>
+    </nav>
 
-    <div class="online-users">
-        <h3>Online Users</h3>
-        <div id="usersList"></div>
-    </div>
-
-    <script>
-        let username = '';
-        let messageInput, messages, usersList, nameInput, emojiPicker;
-        let currentImage = null;
-        let replyingTo = null;
-        let typingTimeout = null;
-        let onlineUsersInterval = null;
-        let lastMessageTimestamp = null;
-        let notificationPermission = false;
-        const reactions = ['👍', '❤️', '😂', '😮', '😢', '🎉', '🔥', '👏'];
-        const emojis = ['😊', '😂', '🤣', '❤️', '😍', '🔥', '👍', '✨', '🎉', '🌟', '💯', '🙌', '👏', '🤔', '😅', '🥺'];
-        
-        // Voice Messages
-        let mediaRecorder = null;
-        let audioChunks = [];
-        
-        // Initialize elements after DOM is loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            // Initialize DOM elements
-            messageInput = document.getElementById('messageInput');
-            messages = document.getElementById('messages');
-            usersList = document.getElementById('usersList');
-            nameInput = document.getElementById('nameInput');
-            emojiPicker = document.getElementById('emojiPicker');
+    <div class="container">
+        <div class="chat-container">
+            <div id="messages" class="messages-area"></div>
             
-            // Request notification permission
-            if ('Notification' in window) {
-                Notification.requestPermission().then(permission => {
-                    notificationPermission = permission === 'granted';
-                });
+            <div class="input-area">
+                <form onsubmit="return false;">
+                    <md-icon-button id="attach-button">
+                        <md-icon>add_photo_alternate</md-icon>
+                    </md-icon-button>
+                    <md-filled-text-field
+                        id="message-input"
+                        type="text"
+                        placeholder="Введите сообщение..."
+                    ></md-filled-text-field>
+                    <md-icon-button id="send-button">
+                        <md-icon>send</md-icon>
+                    </md-icon-button>
+                </form>
+                <input type="file" id="file-input" accept="image/*" style="display: none">
+            </div>
+        </div>
+    </div>
+
+    <!-- Диалог входа -->
+    <md-dialog id="login-dialog" class="login-dialog" modal>
+        <div slot="headline" class="headline-small">Добро пожаловать в Беседку</div>
+        <form slot="content" method="dialog" class="login-form">
+            <md-outlined-text-field
+                id="username-input"
+                label="Ваше имя"
+                required
+                minlength="2"
+                supporting-text="Как вас будут видеть другие участники"
+            ></md-outlined-text-field>
+            <md-filled-button id="start-chat-btn" disabled>
+                Начать общение
+            </md-filled-button>
+        </form>
+    </md-dialog>
+
+    <!-- Диалог настроек -->
+    <md-dialog id="settings-dialog">
+        <div slot="headline" class="headline-small">Настройки</div>
+        <div slot="content">
+            <div class="setting-item">
+                <div class="setting-info">
+                    <span class="title-medium">Тёмная тема</span>
+                    <span class="body-medium">Включить тёмное оформление</span>
+                </div>
+                <md-switch id="theme-switch"></md-switch>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <span class="title-medium">Размер шрифта</span>
+                    <span class="body-medium">Масштаб текста сообщений</span>
+                </div>
+                <div class="font-size-controls">
+                    <md-icon-button id="decrease-font">
+                        <md-icon>text_decrease</md-icon>
+                    </md-icon-button>
+                    <span id="font-size-value" class="body-large">100%</span>
+                    <md-icon-button id="increase-font">
+                        <md-icon>text_increase</md-icon>
+                    </md-icon-button>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <span class="title-medium">Изменить имя</span>
+                    <span class="body-medium">Как вас будут видеть другие</span>
+                </div>
+                <div class="nickname-input">
+                    <md-outlined-text-field
+                        id="nickname-input"
+                        label="Ваше имя"
+                    ></md-outlined-text-field>
+                    <md-icon-button id="save-nickname">
+                        <md-icon>save</md-icon>
+                    </md-icon-button>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-info">
+                    <span class="title-medium">Очистить историю</span>
+                    <span class="body-medium">Очистить локальную историю чата</span>
+                </div>
+                <md-filled-tonal-button id="clear-history" class="error">
+                    <md-icon slot="icon">delete</md-icon>
+                    Очистить
+                </md-filled-tonal-button>
+            </div>
+        </div>
+        <div slot="actions">
+            <md-text-button dialog-action="close">
+                Закрыть
+            </md-text-button>
+        </div>
+    </md-dialog>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref as dbRef, push, onChildAdded, onValue, remove, set, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        
+        // DOM элементы
+        const messagesArea = document.getElementById('messages');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const fileInput = document.getElementById('file-input');
+        const attachButton = document.getElementById('attach-button');
+        
+        // DOM элементы для входа
+        const loginDialog = document.getElementById('login-dialog');
+        const usernameInput = document.getElementById('username-input');
+        const startChatBtn = document.getElementById('start-chat-btn');
+
+        // DOM элементы для настроек
+        const themeToggle = document.getElementById('theme-toggle');
+        const settingsButton = document.getElementById('settings-button');
+        const settingsDialog = document.getElementById('settings-dialog');
+        const closeSettings = document.getElementById('close-settings');
+        const themeSwitch = document.getElementById('theme-switch');
+        const decreaseFontBtn = document.getElementById('decrease-font');
+        const increaseFontBtn = document.getElementById('increase-font');
+        const fontSizeValue = document.getElementById('font-size-value');
+        const nicknameInput = document.getElementById('nickname-input');
+        const saveNicknameBtn = document.getElementById('save-nickname');
+        const clearHistoryBtn = document.getElementById('clear-history');
+
+        // DOM элементы
+        const adminButton = document.getElementById('admin-button');
+
+        // Конфигурация Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBoT-HND1o56AJlpbqfEV3iMLR5YnK8fVg",
+            authDomain: "besedka-chat.firebaseapp.com",
+            databaseURL: "https://besedka-chat-default-rtdb.firebaseio.com",
+            projectId: "besedka-chat",
+            messagingSenderId: "751408360344",
+            appId: "1:751408360344:web:fa0c11530b270184c499ed",
+            measurementId: "G-M075LD8008"
+        };
+
+        // Инициализация Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Генерация случайного ID пользователя
+        const userId = 'user_' + Math.random().toString(36).substr(2, 9);
+
+        // Загрузка сохранённых настроек
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        const savedFontSize = localStorage.getItem('font-size') || 100;
+        let username = localStorage.getItem('username');
+
+        // Применяем сохранённые настройки
+        document.body.className = `${savedTheme}-theme`;
+        themeSwitch.checked = savedTheme === 'dark';
+        fontSizeValue.textContent = `${savedFontSize}%`;
+        document.documentElement.style.setProperty('--message-font-size', `${savedFontSize}%`);
+
+        // Обновляем состояние всех Material компонентов после загрузки
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('md-*').forEach(element => {
+                if (element.updateComplete) {
+                    element.updateComplete.then(() => element.requestUpdate());
+                }
+            });
+        });
+
+        // Проверяем, вошел ли пользователь
+        if (!username) {
+            loginDialog.showModal();
+            
+            // Активируем кнопку только если имя введено
+            usernameInput.addEventListener('input', () => {
+                startChatBtn.disabled = !usernameInput.value.trim();
+            });
+
+            // Обработка входа
+            startChatBtn.addEventListener('click', () => {
+                username = usernameInput.value.trim();
+                if (username) {
+                    localStorage.setItem('username', username);
+                    loginDialog.close();
+                    initChat();
+                }
+            });
+        } else {
+            initChat();
+        }
+
+        // Функция инициализации чата
+        async function initChat() {
+            // Проверяем, не заблокирован ли пользователь
+            const userRef = dbRef(database, `users/${userId}`);
+            const userSnapshot = await get(userRef);
+            
+            if (!userSnapshot.exists()) {
+                // Регистрируем пользователя
+                registerUser();
+            } else {
+                // Проверяем статус блокировки
+                const userData = userSnapshot.val();
+                if (userData.banned) {
+                    alert('Ваш аккаунт заблокирован администратором');
+                    localStorage.removeItem('username');
+                    window.location.reload();
+                    return;
+                }
             }
 
-            // Initialize emoji picker
-            emojis.forEach(emoji => {
-                const btn = document.createElement('div');
-                btn.className = 'emoji-btn';
-                btn.textContent = emoji;
-                btn.onclick = () => {
-                    messageInput.value += emoji;
-                    emojiPicker.style.display = 'none';
+            // Создаем ссылку на сообщения один раз
+            const messagesRef = dbRef(database, 'messages');
+
+            // Обновляем отправку сообщения, добавляя имя пользователя
+            function sendMessage() {
+                const text = messageInput.value.trim();
+                if (text.length === 0) return;
+
+                const message = {
+                    type: 'text',
+                    text: text,
+                    userId: userId,
+                    username: username,
+                    timestamp: Date.now()
                 };
-                emojiPicker.appendChild(btn);
+
+                push(messagesRef, message);
+                messageInput.value = '';
+            }
+
+            // Обновляем отображение сообщений, добавляя имя пользователя
+            onChildAdded(messagesRef, (snapshot) => {
+                const message = snapshot.val();
+                const messageElement = document.createElement('div');
+                const isOwnMessage = message.userId === userId;
+                
+                messageElement.className = `message ${isOwnMessage ? 'sent' : 'received'}`;
+                
+                if (message.type === 'image') {
+                    messageElement.innerHTML = `
+                        <div class="message-info">${message.username || 'Пользователь'}</div>
+                        <div class="message-image">
+                            <img src="${message.imageData}" alt="Изображение" loading="lazy">
+                        </div>
+                        <div class="message-time">${new Date(message.timestamp).toLocaleTimeString()}</div>
+                    `;
+                } else {
+                    messageElement.innerHTML = `
+                        <div class="message-info">${message.username || 'Пользователь'}</div>
+                        <div class="message-text">${message.text}</div>
+                        <div class="message-time">${new Date(message.timestamp).toLocaleTimeString()}</div>
+                    `;
+                }
+                
+                messagesArea.appendChild(messageElement);
+                messagesArea.scrollTop = messagesArea.scrollHeight;
             });
 
-            document.getElementById('emojiButton').onclick = (e) => {
-                e.stopPropagation();
-                emojiPicker.style.display = emojiPicker.style.display === 'grid' ? 'none' : 'grid';
-            };
+            // Обновляем поле никнейма в настройках
+            nicknameInput.value = username;
 
-            document.addEventListener('click', () => {
-                emojiPicker.style.display = 'none';
-            });
-
-            // Add event listeners
-            document.getElementById('joinButton').addEventListener('click', joinChat);
-            document.getElementById('sendButton').addEventListener('click', sendMessage);
-            document.getElementById('uploadButton').addEventListener('click', () => {
-                document.getElementById('imageInput').click();
-            });
+            // Слушатели событий для текстовых сообщений
+            sendButton.addEventListener('click', sendMessage);
             messageInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') sendMessage();
             });
-            nameInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') joinChat();
-            });
-            // Add typing indicator
-            messageInput.addEventListener('input', () => {
-                if (username) {
-                    broadcastTyping(true);
-                    clearTimeout(typingTimeout);
-                    typingTimeout = setTimeout(() => broadcastTyping(false), 2000);
-                }
-            });
-            
-            // Start message refresh interval
-            setInterval(loadMessages, 2000);
 
-            // Add keyboard shortcuts
-            document.addEventListener('keydown', (e) => {
-                if (e.ctrlKey || e.metaKey) {
-                    switch(e.key) {
-                        case 'Enter': // Ctrl/Cmd + Enter to send
-                            sendMessage();
-                            break;
-                        case 'b': // Ctrl/Cmd + B for bold
-                            e.preventDefault();
-                            wrapText('**');
-                            break;
-                        case 'i': // Ctrl/Cmd + I for italic
-                            e.preventDefault();
-                            wrapText('*');
-                            break;
-                        case 'k': // Ctrl/Cmd + K for code
-                            e.preventDefault();
-                            wrapText('`');
-                            break;
-                    }
+            // Обработка загрузки изображений
+            attachButton.addEventListener('click', () => fileInput.click());
+            
+            fileInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                // Проверяем размер файла (максимум 1MB)
+                if (file.size > 1 * 1024 * 1024) {
+                    alert('Файл слишком большой. Максимальный размер: 1MB');
+                    fileInput.value = '';
+                    return;
                 }
+
+                try {
+                    // Показываем индикатор загрузки
+                    const loadingMessage = document.createElement('div');
+                    loadingMessage.className = 'message sent';
+                    loadingMessage.innerHTML = `
+                        <div class="message-text">Загрузка изображения...</div>
+                    `;
+                    messagesArea.appendChild(loadingMessage);
+                    messagesArea.scrollTop = messagesArea.scrollHeight;
+
+                    // Конвертируем изображение в base64
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        const base64Image = e.target.result;
+                        
+                        // Создаем сообщение с изображением
+                        const message = {
+                            type: 'image',
+                            imageData: base64Image,
+                            userId: userId,
+                            username: username, // Добавляем имя пользователя
+                            timestamp: Date.now()
+                        };
+
+                        const messagesRef = dbRef(database, 'messages');
+                        await push(messagesRef, message);
+                        
+                        // Удаляем сообщение о загрузке
+                        messagesArea.removeChild(loadingMessage);
+                    };
+                    
+                    reader.readAsDataURL(file);
+                } catch (error) {
+                    console.error('Error uploading image:', error);
+                    alert('Ошибка при загрузке изображения: ' + error.message);
+                }
+
+                fileInput.value = '';
             });
+        }
+
+        // Обработчики настроек
+        themeToggle.addEventListener('click', toggleTheme);
+        themeSwitch.addEventListener('change', toggleTheme);
+        settingsButton.addEventListener('click', async () => {
+            const dialog = document.getElementById('settings-dialog');
+            await dialog.updateComplete;
+            dialog.show();
         });
 
-        function joinChat() {
-            username = document.getElementById('nameInput').value.trim();
-            if (username) {
-                document.getElementById('loginContainer').style.display = 'none';
-                document.getElementById('chatContainer').style.display = 'block';
-                updateOnlineStatus(true);
-                loadMessages();
-                // Start checking online users
-                onlineUsersInterval = setInterval(loadOnlineUsers, 5000);
-                // Add window unload handler
-                window.addEventListener('beforeunload', () => updateOnlineStatus(false));
-                // Initial load of online users
-                loadOnlineUsers();
-                // Add visibility change handler
-                document.addEventListener('visibilitychange', handleVisibilityChange);
-            }
-        }
+        // Добавим обработчик для кнопки закрытия
+        document.querySelector('[dialog-action="close"]').addEventListener('click', async () => {
+            const dialog = document.getElementById('settings-dialog');
+            await dialog.updateComplete;
+            dialog.close();
+        });
 
-        async function handleImageUpload(event) {
-            const file = event.target.files[0];
-            if (file && file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    // Resize and compress image before preview
-                    const img = new Image();
-                    img.onload = async function() {
-                        try {
-                            currentImage = await compressImage(this);
-                            const preview = document.getElementById('preview');
-                            preview.src = currentImage;
-                            preview.style.display = 'block';
-                        } catch (error) {
-                            console.error('Error processing image:', error);
-                        }
-                    };
-                    img.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
+        // Обработчик изменения никнейма
+        saveNicknameBtn.addEventListener('click', () => {
+            const newUsername = nicknameInput.value.trim();
+            if (newUsername) {
+                username = newUsername;
+                localStorage.setItem('username', username);
+                alert('Имя успешно изменено!');
             }
-        }
+        });
 
-        function compressImage(img) {
-            return new Promise((resolve, reject) => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                
-                // Calculate new dimensions (max 800px width/height)
-                let width = img.width;
-                let height = img.height;
-                const maxSize = 800;
-                
-                if (width > height && width > maxSize) {
-                    height = (height * maxSize) / width;
-                    width = maxSize;
-                } else if (height > maxSize) {
-                    width = (width * maxSize) / height;
-                    height = maxSize;
+        // Функция переключения темы
+        function toggleTheme() {
+            const isDark = document.body.classList.contains('dark-theme');
+            document.body.className = isDark ? 'light-theme' : 'dark-theme';
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+            themeSwitch.checked = !isDark;
+            
+            // Обновляем состояние всех Material компонентов
+            document.querySelectorAll('md-*').forEach(element => {
+                if (element.updateComplete) {
+                    element.updateComplete.then(() => element.requestUpdate());
                 }
-                canvas.width = width;
-                canvas.height = height;
-                
-                // Draw and compress
-                ctx.drawImage(img, 0, 0, width, height);
-                resolve(canvas.toDataURL('image/jpeg', 0.6));
             });
         }
 
-        async function sendMessage() {
-            const message = messageInput.value.trim();
-            if (!message && !currentImage) return;
-
-            // Handle shell commands
-            if (message.startsWith('/')) {
-                try {
-                    const result = await executeShellCommand(message.slice(1));
-                    if (result.success) {
-                        const messageDiv = document.createElement('div');
-                        messageDiv.className = 'message received system';
-                        messageDiv.innerHTML = `
-                            <div class="header">System</div>
-                            <div class="content">
-                                <pre class="shell-output">${result.output}</pre>
-                            </div>
-                        `;
-                        messages.appendChild(messageDiv);
-                        messages.scrollTop = messages.scrollHeight;
-                    }
-                } catch (error) {
-                    console.error('Shell command error:', error);
-                }
-                messageInput.value = '';
-                return;
-            }
-
-            try {
-                const result = await new Promise((resolve, reject) => {
-                    const callbackName = 'jsonpCallback' + Date.now();
-                    
-                    window[callbackName] = function(data) {
-                        delete window[callbackName];
-                        script.remove();
-                        resolve(data);
-                    };
-
-                    const script = document.createElement('script');
-                    const requestBody = {
-                        action: 'sendMessage',
-                        username: username,
-                        message: message,
-                        image: currentImage,
-                        timestamp: new Date().toISOString(),
-                        replyTo: replyingTo ? JSON.stringify(replyingTo) : ''
-                    };
-                    
-                    script.src = `${GOOGLE_APPS_SCRIPT_URL}?callback=${callbackName}&data=${encodeURIComponent(JSON.stringify(requestBody))}`;
-                    document.body.appendChild(script);
-
-                    setTimeout(() => {
-                        delete window[callbackName];
-                        script.remove();
-                        reject(new Error('Operation timeout'));
-                    }, 5000);
-                });
-
-                if (result.success) {
-                    messageInput.value = '';
-                    currentImage = null;
-                    document.getElementById('preview').style.display = 'none';
-                    document.getElementById('imageInput').value = '';
-                    replyingTo = null;
-                    messageInput.placeholder = 'Type a message...';
-                    loadMessages();
-                }
-            } catch (error) {
-                console.error('Error sending message:', error);
-            }
-        }
-
-        async function loadMessages() {
-            try {
-                const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=chatLogs`;
-                const response = await fetch(csvUrl);
-                const csvText = await response.text();
-                
-                // Get only new messages
-                const rows = csvText.split('\n').slice(1);
-                const lastRow = rows[rows.length - 1];
-                if (lastRow && lastMessageTimestamp === lastRow.split(',')[0]) {
-                    return; // No new messages
-                }
-
-                messages.innerHTML = '';
-                rows.forEach(row => {
-                    const [timestamp, user, message, image] = row.split(',').map(cell => 
-                        cell.trim().replace(/^["']|["']$/g, '')
-                    );
-                    
-                    const messageDiv = document.createElement('div');
-                    messageDiv.className = `message ${user === username ? 'sent' : 'received'}`;
-                    
-                    // Add double-click to quote
-                    messageDiv.addEventListener('dblclick', () => {
-                        messageInput.value = `> ${user}: ${message}\n${messageInput.value}`;
-                        messageInput.focus();
-                    });
-                    
-                    const safeMessage = message ? message.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
-                    const safeImage = image ? image.replace(/\\"/g, '"').replace(/&/g, '&amp;') : '';
-                    
-                    messageDiv.innerHTML = `
-                        <div class="header">${user} • ${new Date(timestamp).toLocaleString()}</div>
-                        <div class="content">
-                            ${safeMessage ? `<div class="formatted-text">${safeMessage}</div>` : ''}
-                            ${safeImage ? `<img src="${safeImage}" alt="Shared image" loading="lazy">` : ''}
-                        </div>
-                        <div class="message-actions">
-                            <md-icon-button class="reply-btn" title="Reply">
-                                <md-icon>reply</md-icon>
-                            </md-icon-button>
-                            ${user === username ? `
-                                <md-icon-button class="edit-btn" title="Edit">
-                                    <md-icon>edit</md-icon>
-                                </md-icon-button>
-                            ` : ''}
-                        </div>
+        // Создание списка пользователей для приватных чатов
+        function createUsersList() {
+            const usersRef = dbRef(database, 'users');
+            onChildAdded(usersRef, (snapshot) => {
+                const user = snapshot.val();
+                if (user.userId !== userId) {
+                    const userElement = document.createElement('div');
+                    userElement.className = 'user-item';
+                    userElement.innerHTML = `
+                        <div class="user-info">${user.username}</div>
+                        <button class="icon-button" onclick="startPrivateChat('${user.userId}', '${user.username}')">
+                            <span class="material-symbols-outlined">chat</span>
+                        </button>
                     `;
-
-                    // Add event listeners for actions
-                    messageDiv.querySelector('.reply-btn')?.addEventListener('click', () => {
-                        replyingTo = { timestamp, user, message: message || 'Image' };
-                        messageInput.placeholder = `Replying to ${user}...`;
-                        messageInput.focus();
-                    });
-
-                    messageDiv.querySelector('.edit-btn')?.addEventListener('click', () => {
-                        messageInput.value = message;
-                        messageInput.dataset.editing = timestamp;
-                        messageInput.focus();
-                    });
-
-                    messages.appendChild(messageDiv);
-                });
-
-                // Update last message timestamp
-                if (rows.length > 0) {
-                    const lastMessage = rows[rows.length - 1].split(',')[0];
-                    lastMessageTimestamp = lastMessage;
+                    usersList.appendChild(userElement);
                 }
-
-                messages.scrollTop = messages.scrollHeight;
-            } catch (error) {
-                console.error('Error loading messages:', error);
-            }
-        }
-
-        async function updateOnlineStatus(isOnline) {
-            try {
-                const result = await new Promise((resolve, reject) => {
-                    const callbackName = 'jsonpCallback' + Date.now();
-                    window[callbackName] = function(data) {
-                        delete window[callbackName];
-                        script.remove();
-                        resolve(data);
-                    };
-                    const script = document.createElement('script');
-                    const requestBody = {
-                        action: 'updateOnlineStatus',
-                        username: username,
-                        isOnline,
-                        timestamp: new Date().toISOString()
-                    };
-                    script.src = `${GOOGLE_APPS_SCRIPT_URL}?callback=${callbackName}&data=${encodeURIComponent(JSON.stringify(requestBody))}`;
-                    document.body.appendChild(script);
-                    // Add error handling for script loading
-                    script.onerror = () => reject(new Error('Failed to load script'));
-                });
-                if (result.success) {
-                    console.log('Online status updated:', isOnline);
-                }
-            } catch (error) {
-                console.error('Error updating online status:', error);
-            }
-        }
-
-        async function loadOnlineUsers() {
-            try {
-                const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=onlineUsers`;
-                const response = await fetch(csvUrl);
-                const csvText = await response.text();
-                
-                usersList.innerHTML = '';
-                const rows = csvText.split('\n').slice(1); // Skip header
-                
-                rows.forEach(row => {
-                    const [user, timestamp] = row.split(',').map(cell => 
-                        cell.trim().replace(/^["']|["']$/g, '')
-                    );
-                    
-                    // Check if user was active in the last 10 seconds
-                    const lastActive = new Date(timestamp);
-                    const now = new Date();
-                    if (now - lastActive < 10000) {
-                        const userDiv = document.createElement('div');
-                        userDiv.className = 'user';
-                        userDiv.textContent = user;
-                        usersList.appendChild(userDiv);
-                    }
-                });
-            } catch (error) {
-                console.error('Error loading online users:', error);
-            }
-        }
-
-        async function broadcastTyping(isTyping) {
-            try {
-                const result = await new Promise((resolve, reject) => {
-                    const callbackName = 'jsonpCallback' + Date.now();
-                    window[callbackName] = function(data) {
-                        delete window[callbackName];
-                        script.remove();
-                        resolve(data);
-                    };
-                    const script = document.createElement('script');
-                    const requestBody = {
-                        action: 'updateTyping',
-                        username: username,
-                        isTyping
-                    };
-                    script.src = `${GOOGLE_APPS_SCRIPT_URL}?callback=${callbackName}&data=${encodeURIComponent(JSON.stringify(requestBody))}`;
-                    document.body.appendChild(script);
-                });
-            } catch (error) {
-                console.error('Error updating typing status:', error);
-            }
-        }
-
-        function handleVisibilityChange() {
-            if (!document.hidden) {
-                // Clear notifications when user returns to the tab
-                if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-                    navigator.serviceWorker.controller.postMessage({ action: 'clearNotifications' });
-                }
-            }
-        }
-
-        function showNotification(message, user) {
-            if (!notificationPermission || document.visibilityState !== 'hidden') return;
-            
-            const notification = new Notification('New Message from ' + user, {
-                body: message,
-                icon: '/favicon.ico',
-                badge: '/favicon.ico',
-                tag: 'chat-message'
             });
-
-            notification.onclick = function() {
-                window.focus();
-                notification.close();
-            };
         }
 
-        function formatMessage(text) {
-            // Handle code blocks
-            text = text.replace(/```([\s\S]*?)```/g, (_, code) => 
-                `<pre><code>${code.trim()}</code></pre>`
-            );
+        // Функция для начала приватного чата
+        window.startPrivateChat = (targetUserId, targetUsername) => {
+            const chatId = [userId, targetUserId].sort().join('_');
+            const privateChatRef = dbRef(database, `private_chats/${chatId}`);
             
-            // Handle inline code
-            text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
-            
-            // Handle bold
-            text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-            
-            // Handle italic
-            text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-            
-            return text;
-        }
-
-        async function executeShellCommand(command) {
-            try {
-                const result = await new Promise((resolve, reject) => {
-                    const callbackName = 'jsonpCallback' + Date.now();
-                    window[callbackName] = function(data) {
-                        delete window[callbackName];
-                        script.remove();
-                        resolve(data);
-                    };
-                    const script = document.createElement('script');
-                    const requestBody = {
-                        action: 'executeShell',
-                        command
-                    };
-                    script.src = `${GOOGLE_APPS_SCRIPT_URL}?callback=${callbackName}&data=${encodeURIComponent(JSON.stringify(requestBody))}`;
-                    document.body.appendChild(script);
-                });
-
-                if (result.success) {
-                    const message = `$ ${command}\n${result.output}`;
-                    sendMessage(message, true);
-                }
-            } catch (error) {
-                console.error('Error executing shell command:', error);
-            }
-        }
-
-        function showReactionPicker(target, messageTimestamp) {
-            const picker = document.createElement('div');
-            picker.className = 'reaction-picker';
-            picker.style.cssText = `
-                position: absolute;
-                background: #2d2d2d;
-                border: 1px solid #444;
-                border-radius: 8px;
-                padding: 8px;
-                display: grid;
-                grid-template-columns: repeat(4, 1fr);
-                gap: 4px;
-                z-index: 1000;
+            // Создаем или открываем приватный чат
+            const chatDialog = document.createElement('dialog');
+            chatDialog.className = 'chat-dialog';
+            chatDialog.innerHTML = `
+                <div class="dialog-header">
+                    <h2>Чат с ${targetUsername}</h2>
+                    <button class="icon-button" onclick="this.closest('dialog').close()">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <div class="private-messages"></div>
+                <div class="input-area">
+                    <form onsubmit="return false;">
+                        <input type="text" placeholder="Введите сообщение...">
+                        <button type="submit" class="icon-button">
+                            <span class="material-symbols-outlined">send</span>
+                        </button>
+                    </form>
+                </div>
             `;
             
-            reactions.forEach(emoji => {
-                const btn = document.createElement('div');
-                btn.className = 'emoji-btn';
-                btn.textContent = emoji;
-                btn.onclick = () => {
-                    toggleReaction(messageTimestamp, emoji);
-                    picker.remove();
-                };
-                picker.appendChild(btn);
+            document.body.appendChild(chatDialog);
+            chatDialog.showModal();
+            
+            const messagesDiv = chatDialog.querySelector('.private-messages');
+            const input = chatDialog.querySelector('input');
+            const form = chatDialog.querySelector('form');
+            
+            // Загружаем существующие сообщения
+            onChildAdded(privateChatRef, (snapshot) => {
+                const message = snapshot.val();
+                const messageElement = document.createElement('div');
+                messageElement.className = `message ${message.userId === userId ? 'sent' : 'received'}`;
+                messageElement.innerHTML = `
+                    <div class="message-text">${message.text}</div>
+                    <div class="message-info">${new Date(message.timestamp).toLocaleTimeString()}</div>
+                `;
+                messagesDiv.appendChild(messageElement);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
             });
             
-            document.body.appendChild(picker);
-            const rect = target.getBoundingClientRect();
-            picker.style.top = rect.bottom + 'px';
-            picker.style.left = rect.left + 'px';
-            
-            // Close picker when clicking outside
-            const closeHandler = e => {
-                if (!picker.contains(e.target)) {
-                    picker.remove();
-                    document.removeEventListener('click', closeHandler);
+            // Отправка сообщений
+            form.onsubmit = (e) => {
+                e.preventDefault();
+                const text = input.value.trim();
+                if (text) {
+                    push(privateChatRef, {
+                        text,
+                        userId,
+                        username,
+                        timestamp: Date.now()
+                    });
+                    input.value = '';
                 }
             };
-            setTimeout(() => document.addEventListener('click', closeHandler), 0);
-        }
+        };
 
-        async function toggleReaction(messageTimestamp, emoji) {
-            try {
-                const result = await new Promise((resolve, reject) => {
-                    const callbackName = 'jsonpCallback' + Date.now();
-                    window[callbackName] = function(data) {
-                        delete window[callbackName];
-                        script.remove();
-                        resolve(data);
-                    };
-                    const script = document.createElement('script');
-                    const requestBody = {
-                        action: 'toggleReaction',
-                        messageTimestamp,
-                        username,
-                        emoji
-                    };
-                    script.src = `${GOOGLE_APPS_SCRIPT_URL}?callback=${callbackName}&data=${encodeURIComponent(JSON.stringify(requestBody))}`;
-                    document.body.appendChild(script);
-                });
-
-                if (result.success) {
-                    loadMessages();
-                }
-            } catch (error) {
-                console.error('Error toggling reaction:', error);
-            }
-        }
-
-        // Voice Messages
-        document.getElementById('voiceButton').addEventListener('click', async () => {
-            if (!mediaRecorder) {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    mediaRecorder = new MediaRecorder(stream);
-                    
-                    mediaRecorder.ondataavailable = (e) => {
-                        audioChunks.push(e.data);
-                    };
-                    
-                    mediaRecorder.onstop = async () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                        const reader = new FileReader();
-                        reader.onload = async (e) => {
-                            const base64Audio = e.target.result;
-                            await sendMessage('', false, base64Audio);
-                        };
-                        reader.readAsDataURL(audioBlob);
-                        audioChunks = [];
-                    };
-                    
-                    mediaRecorder.start();
-                    document.getElementById('voiceButton').classList.add('recording');
-                } catch (err) {
-                    console.error('Error accessing microphone:', err);
-                }
-            } else {
-                mediaRecorder.stop();
-                mediaRecorder = null;
-                document.getElementById('voiceButton').classList.remove('recording');
-            }
-        });
-
-        // Message Translation
-        async function translateMessage(text, targetLang = 'en') {
-            try {
-                const result = await new Promise((resolve, reject) => {
-                    const callbackName = 'jsonpCallback' + Date.now();
-                    window[callbackName] = function(data) {
-                        delete window[callbackName];
-                        script.remove();
-                        resolve(data);
-                    };
-                    const script = document.createElement('script');
-                    const requestBody = {
-                        action: 'translateText',
-                        text,
-                        targetLang
-                    };
-                    script.src = `${GOOGLE_APPS_SCRIPT_URL}?callback=${callbackName}&data=${encodeURIComponent(JSON.stringify(requestBody))}`;
-                    document.body.appendChild(script);
-                });
-                
-                if (result.success) {
-                    return result.translatedText;
-                }
-            } catch (error) {
-                console.error('Translation error:', error);
-            }
-        }
-
-        // Message Search
-        const searchInput = document.getElementById('searchInput');
-        searchInput.addEventListener('input', () => {
-            const searchTerm = searchInput.value.toLowerCase();
-            const messageElements = document.querySelectorAll('.message');
-            
-            messageElements.forEach(msg => {
-                const content = msg.textContent.toLowerCase();
-                msg.style.display = content.includes(searchTerm) ? 'block' : 'none';
+        // Добавляем пользователя в список при входе
+        function registerUser() {
+            const userRef = dbRef(database, `users/${userId}`);
+            set(userRef, {
+                userId,
+                username,
+                lastSeen: Date.now()
             });
-        });
-
-        // File Sharing
-        document.getElementById('fileInput').addEventListener('change', async (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    const base64File = e.target.result;
-                    await sendMessage(`Shared file: ${file.name}`, false, null, base64File);
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        // Message Pinning
-        async function pinMessage(messageId) {
-            try {
-                const result = await new Promise((resolve, reject) => {
-                    const callbackName = 'jsonpCallback' + Date.now();
-                    window[callbackName] = function(data) {
-                        delete window[callbackName];
-                        script.remove();
-                        resolve(data);
-                    };
-                    const script = document.createElement('script');
-                    const requestBody = {
-                        action: 'pinMessage',
-                        messageId,
-                        username
-                    };
-                    script.src = `${GOOGLE_APPS_SCRIPT_URL}?callback=${callbackName}&data=${encodeURIComponent(JSON.stringify(requestBody))}`;
-                    document.body.appendChild(script);
-                });
-
-                if (result.success) {
-                    loadMessages();
-                }
-            } catch (error) {
-                console.error('Error pinning message:', error);
-            }
         }
 
-        function wrapText(wrapper) {
-            const input = messageInput;
-            const start = input.selectionStart;
-            const end = input.selectionEnd;
-            const text = input.value;
-            const before = text.substring(0, start);
-            const selection = text.substring(start, end);
-            const after = text.substring(end);
-            input.value = before + wrapper + selection + wrapper + after;
-            input.selectionStart = end + wrapper.length * 2;
-            input.selectionEnd = input.selectionStart;
-            input.focus();
-        }
+        // Обработчик кнопки админ-панели
+        adminButton.addEventListener('click', () => {
+            window.location.href = 'admin.html';
+        });
     </script>
 </body>
-</html> 
+</html>
+

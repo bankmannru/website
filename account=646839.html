@@ -1,264 +1,56 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
 	<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
     <script type="importmap">
       {
         "imports": {
-          "@material/web/": "https://esm.run/@material/web/"
+          "@material/web/": "https://esm.run/@material/web/",
+          "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
+          "firebase/database": "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js",
+          "firebase/auth": "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"
         }
       }
     </script>
-    <script type="module">
-      import '@material/web/all.js';
-      import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
-      document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
-    </script>
+    <script type="module" src="firebase-config.js"></script>
+    <script type="module" src="account.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Карта Салмана Крокусова</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Add sheets.js -->
-    <script src="sheets.js"></script>
-    <script>
-        let currentBalance = null;
-        let balanceCheckInterval = null;
-
-        async function loadBalance() {
-            try {
-                const userId = '646839';
-                const balance = await getBalance(userId);
-                if (balance && balance !== currentBalance) {
-                    currentBalance = balance;
-                    document.querySelector('.goodsprice').textContent = `Баланс: ${balance}МР`;
-                }
-            } catch (error) {
-                console.error('Error loading balance:', error);
-            }
-        }
-
-        async function checkBanStatusAndNotify() {
-            const userId = '646839';
-            console.log('Checking ban status for user:', userId);
-            const status = await checkBanStatus(userId);
-            console.log('Received ban status:', status);
-            
-            if (status && status.isBanned) {
-                console.log('User is banned, showing dialog');
-                const dialog = document.createElement('md-dialog');
-                dialog.setAttribute('type', 'alert');
-                dialog.innerHTML = `
-                    <div slot="headline">Аккаунт заблокирован</div>
-                    <form slot="content" id="form-id" method="dialog">
-                        <p>Ваш аккаунт был заблокирован.</p>
-                        <p>Причина: ${status.reason}</p>
-                        <p>Для разблокировки обратитесь к администратору.</p>
-                    </form>
-                    <div slot="actions">
-                        <md-text-button form="form-id" value="ok">Понятно</md-text-button>
-                    </div>
-                `;
-                document.body.appendChild(dialog);
-                
-                const result = await new Promise((resolve) => {
-                    dialog.addEventListener('closed', () => {
-                        resolve(dialog.returnValue);
-                    });
-                    dialog.show();
-                });
-                
-                if (result === 'ok') {
-                    window.location.href = 'index.html';
-                }
-                dialog.remove();
-            } else {
-                console.log('User is not banned');
-            }
-        }
-
-        function startBalanceChecking() {
-            // Initial checks
-            loadBalance();
-            checkBanStatusAndNotify();
-            // Check every 30 seconds
-            balanceCheckInterval = setInterval(() => {
-                loadBalance();
-                checkBanStatusAndNotify();
-            }, 30000);
-        }
-
-        function stopBalanceChecking() {
-            if (balanceCheckInterval) {
-                clearInterval(balanceCheckInterval);
-                balanceCheckInterval = null;
-            }
-        }
-
-        function checkPassword() {
-            const password = document.getElementById('password').value;
-            if (password === '695') {
-                document.getElementById('password-container').style.display = 'none';
-                document.getElementById('card-container').style.display = 'block';
-                checkBanStatusAndNotify(); // Check immediately after login
-                startBalanceChecking(); // Start periodic checks
-            } else {
-                const dialog = document.createElement('md-dialog');
-                dialog.setAttribute('type', 'alert');
-                dialog.innerHTML = `
-                    <div slot="headline">Ошибка!</div>
-                    <form slot="content" id="form-id" method="dialog">
-                        Неправильный код безопасности. Повторите попытку.
-                    </form>
-                    <div slot="actions">
-                        <md-text-button form="form-id" value="Хорошо">Хорошо</md-text-button>
-                    </div>
-                `;
-                document.body.appendChild(dialog);
-                dialog.show();
-            }
-        }
-
-        // Clean up when page is hidden or closed
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                stopBalanceChecking();
-            } else {
-                if (document.getElementById('card-container').style.display !== 'none') {
-                    startBalanceChecking();
-                }
-            }
-        });
-
-        async function showTransactionDialog() {
-            const dialog = document.createElement('md-dialog');
-            dialog.innerHTML = `
-                <div slot="headline">Перевод</div>
-                <form slot="content" id="transaction-form" method="dialog">
-                    <md-outlined-text-field
-                        label="ID получателя"
-                        type="text"
-                        id="recipient-id"
-                        style="width: 100%; margin-bottom: 16px;">
-                    </md-outlined-text-field>
-                    <md-outlined-text-field
-                        label="Сумма (МР)"
-                        type="number"
-                        id="amount"
-                        style="width: 100%;">
-                    </md-outlined-text-field>
-                </form>
-                <div slot="actions">
-                    <md-text-button form="transaction-form" value="cancel">Отмена</md-text-button>
-                    <md-text-button form="transaction-form" value="confirm">Перевести</md-text-button>
-                </div>
-            `;
-
-            document.body.appendChild(dialog);
-            
-            dialog.addEventListener('closed', async (event) => {
-                const result = event.detail.action;
-                
-                if (result === 'confirm') {
-                    const recipientId = document.getElementById('recipient-id').value;
-                    const amount = parseInt(document.getElementById('amount').value);
-                    
-                    if (!recipientId || !amount || amount <= 0) {
-                        showError('Пожалуйста, заполните все поля корректно');
-                        return;
-                    }
-
-                    const success = await makeTransaction('646839', recipientId, amount);
-                    
-                    if (success) {
-                        showSuccess('Перевод выполнен успешно');
-                        await loadBalance();
-                    } else {
-                        showError('Ошибка при выполнении перевода');
-                    }
-                }
-                
-                dialog.remove();
-            });
-
-            dialog.show();
-        }
-
-        function showError(message) {
-            const dialog = document.createElement('md-dialog');
-            dialog.setAttribute('type', 'alert');
-            dialog.innerHTML = `
-                <div slot="headline">Ошибка</div>
-                <form slot="content" id="form-id" method="dialog">
-                    ${message}
-                </form>
-                <div slot="actions">
-                    <md-text-button form="form-id" value="ok">Хорошо</md-text-button>
-                </div>
-            `;
-            document.body.appendChild(dialog);
-            dialog.show().then(() => dialog.remove());
-        }
-
-        function showSuccess(message) {
-            const dialog = document.createElement('md-dialog');
-            dialog.setAttribute('type', 'alert');
-            dialog.innerHTML = `
-                <div slot="headline">Успешно</div>
-                <form slot="content" id="form-id" method="dialog">
-                    ${message}
-                </form>
-                <div slot="actions">
-                    <md-text-button form="form-id" value="ok">Хорошо</md-text-button>
-                </div>
-            `;
-            document.body.appendChild(dialog);
-            dialog.show().then(() => dialog.remove());
-        }
-    </script>
 </head>
 <body>
-	<div class="content-wrapper" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
-		<div id="password-container" class="form-container" style="margin: 40px auto;">
-			<div class="form-group" style="text-align: center;">
-				<h2 class='general-text' style="color: black; margin-bottom: 20px;">Введите пароль для доступа</h2>
-				<md-outlined-text-field label="Пароль" type="password" id="password" style="width: 100%; margin-bottom: 20px;">
-				</md-outlined-text-field>
-				<md-filled-tonal-button onclick="checkPassword()">
-					Войти
-					<svg slot="icon" viewBox="0 0 48 48"><path d="M6 40V8l38 16Zm3-4.65L36.2 24 9 12.5v8.4L21.1 24 9 27Zm0 0V12.5 27Z"/></svg>
-				</md-filled-tonal-button>
-			</div>
-		</div>
+	<md-top-app-bar>
+		<md-icon-button slot="navigationIcon" onclick="window.location.href='index.html'">
+			<md-icon>arrow_back</md-icon>
+		</md-icon-button>
+		<span slot="headline">Карта Салмана Крокусова</span>
+		<md-icon-button slot="trailingIcon" onclick="window.location.href='market.html'">
+			<md-icon>shopping_cart</md-icon>
+		</md-icon-button>
+	</md-top-app-bar>
 
-		<div id="card-container" class="goodsdiv" style="display: none;">
-		<div class="product-container">
-			<img class='goodsimg' src="Cards/SalmanCrocusov.png" alt="Карта @SalmanCrocusov" />
-			<div class='goods-info'>
-				<p class='goodstext'>Салман<br>Крокусов</p>
-				<p class='goodsdesc'>Карта пользователя Салмана Крокусова</p>
-				<p class='goodsprice'>Загрузка баланса...</p>
-                <div style="display: flex; gap: 8px;">
-                    <md-filled-tonal-button onclick="window.location.href='history=646839.html'">
-                        История
-                        <svg slot="icon" viewBox="0 -960 960 960" width="24" height="24"><path d="M480-120q-138 0-240.5-91.5T122-440h82q14 104 92.5 172T480-200q117 0 198.5-81.5T760-480q0-117-81.5-198.5T480-760q-69 0-129 32t-101 88h110v80H120v-240h80v94q51-64 124.5-99T480-840q75 0 140.5 28.5t114 77q48.5 48.5 77 114T840-480q0 75-28.5 140.5t-77 114q-48.5 48.5-114 77T480-120Z"/></svg>
-                    </md-filled-tonal-button>
-                    <md-filled-tonal-button onclick="showTransactionDialog()">
-                        Перевод
-                        <svg slot="icon" viewBox="0 -960 960 960" width="24" height="24"><path d="M280-160v-80h280v80H280Zm-40-160v-80h480v80H240Zm-40-160v-80h480v80H200Zm-40-160v-80h480v80H160Z"/></svg>
-                    </md-filled-tonal-button>
-                </div>
+	<div class="content">
+		<md-elevated-card class="profile-card">
+			<div class="card-content">
+				<img class='profile-image' src="Cards/SalmanCrocusov.png" alt="Карта @SalmanCrocusov" />
+				<div class='profile-info'>
+					<h2 class="headline-medium">Салман Крокусов</h2>
+					<p class="body-large balance-text">Загрузка баланса...</p>
+					<div class="button-row">
+						<md-filled-tonal-button onclick="window.location.href='history=646839.html'">
+							История
+							<md-icon slot="icon">history</md-icon>
+						</md-filled-tonal-button>
+						<md-filled-button onclick="showTransactionDialog()">
+							Перевод
+							<md-icon slot="icon">send</md-icon>
+						</md-filled-button>
+					</div>
+				</div>
 			</div>
-		</div>
-	</div>
-</div>
-
-<div style="position: fixed; bottom: 20px; right: 20px; display: flex; gap: 10px;">
-		<md-filled-icon-button onclick="window.location.href='index.html';">
-			<md-icon><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Zm320-350Z"/></svg></md-icon>
-		</md-filled-icon-button>
-		<md-filled-icon-button onclick="window.location.href='market.html';">
-			<md-icon><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M160-720v-80h640v80H160Zm0 560v-240h-40v-80l40-200h640l40 200v80h-40v240h-80v-240H560v240H160Zm80-80h240v-160H240v160Zm-38-240h556-556Zm0 0h556l-24-120H226l-24 120Z"/></svg></md-icon>
-		</md-filled-icon-button>
+		</md-elevated-card>
 	</div>
 </body>
 </html>

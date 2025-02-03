@@ -1,15 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-    <link
-      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@7.12.15/dist/sweetalert2.all.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создание карты - Банк Маннру</title>
+    
+    <!-- Styles -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Material Web Components -->
     <script type="importmap">
       {
         "imports": {
@@ -20,93 +21,226 @@
     <script type="module">
       import '@material/web/all.js';
       import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
-  
       document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
     </script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <div class='header' style="display: flex; align-items: center; justify-content: center;">Мы набираем работников для банк Маннру. 
-      <a href="https://forms.gle/GJFTNofAoNCuxMT37" style="margin-left: 10px;">
-          <md-filled-tonal-button>
-              Подать заявку
-              <svg slot="icon" viewBox="0 0 48 48"><path d="M6 40V8l38 16Zm3-4.65L36.2 24 9 12.5v8.4L21.1 24 9 27Zm0 0V12.5 27Z"/></svg>
-            </md-filled-tonal-button>
-      </a>
-  </div>
-    <title>Купить вторую карту</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Nunito:ital,wght@0,200;1,200&family=Onest:wght@100..900&display=swap" rel="stylesheet">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+
+    <!-- Custom Components -->
+    <script type="module" src="card-creator.js"></script>
+
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .headline-large {
+            color: var(--md-sys-color-on-surface);
+            margin-bottom: 32px;
+            text-align: center;
+            font-family: 'Product Sans', sans-serif;
+        }
+
+        .card-preview {
+            margin: 32px 0;
+            display: flex;
+            justify-content: center;
+            perspective: 1000px;
+        }
+
+        .creation-form {
+            max-width: 400px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            background: var(--md-sys-color-surface-container);
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        md-outlined-text-field,
+        md-select {
+            width: 100%;
+        }
+
+        md-filled-button {
+            align-self: flex-end;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 600px) {
+            .container {
+                margin: 20px auto;
+            }
+
+            .creation-form {
+                padding: 20px;
+            }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--md-sys-color-surface-container);
+            color: var(--md-sys-color-on-surface);
+            padding: 12px 24px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 1000;
+        }
+
+        .toast.success md-icon {
+            color: var(--md-sys-color-primary);
+        }
+
+        .toast.error md-icon {
+            color: var(--md-sys-color-error);
+        }
+
+        .toast span {
+            font-size: 14px;
+            font-weight: 500;
+        }
+    </style>
 </head>
 <body>
-    <div class='goodsdiv'>
-        <div class="product-container" style="width: 100%;">
-            <img class='goodsimg' src="Маркет/testcard.png" alt="Вторая карта" />
-            <div class='goods-info'>
-                <p class='goodstext'>Вторая карта</p>
-                <p class='goodsdesc'>Взять себе вторую карту, если надо. <br>(возврат невозможен.)</p>
-                <p class='goodsprice'>1000₽</p>
-            </div>
+    <div class="container">
+        <h1 class="headline-large">Создание новой карты</h1>
+        
+        <!-- Card Preview -->
+        <div class="card-preview">
+            <bank-card
+                id="preview-card"
+                number="000 000"
+                holder="ИМЯ ФАМИЛИЯ"
+                expires="12/25"
+                theme="default">
+            </bank-card>
         </div>
+
+        <!-- Card Creation Form -->
+        <form id="card-form" class="creation-form">
+            <md-outlined-text-field
+                label="Имя и Фамилия"
+                required
+                id="holder-input">
+            </md-outlined-text-field>
+
+            <md-filled-select label="Тип карты" required id="theme-select">
+                <md-select-option value="default">
+                    <div slot="headline">Стандартная</div>
+                </md-select-option>
+                <md-select-option value="premium">
+                    <div slot="headline">Премиум</div>
+                </md-select-option>
+                <md-select-option value="gold">
+                    <div slot="headline">Золотая</div>
+                </md-select-option>
+                <md-select-option value="neon">
+                    <div slot="headline">Неоновая</div>
+                </md-select-option>
+                <md-select-option value="ocean">
+                    <div slot="headline">Океан</div>
+                </md-select-option>
+            </md-filled-select>
+
+            <md-filled-button type="submit">
+                Создать карту
+                <md-icon slot="icon">add_card</md-icon>
+            </md-filled-button>
+        </form>
     </div>
 
-    <div class="form-container">
-        <form action="https://formspree.io/f/xvggvekq" method="post" id="card_order">
-                <div class="form-group">
-                    <md-outlined-text-field label="Код безопасности карты" type="password" id="securityCode" name="securityCode" maxlength="3" style="width: 100%;">
-                    </md-outlined-text-field>
-                </div>
-                
-                <div class="form-group">
-                    <md-outlined-text-field label="Имя" type="text" id="firstName" name="firstName" required style="width: 100%;">
-                    </md-outlined-text-field>
-                </div>
+    <script type="module">
+        import { database } from './firebase-config.js';
+        import { ref, push, set } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
 
-                <div class="form-group">
-                    <md-outlined-text-field label="Фамилия" type="text" id="lastName" name="lastName" required style="width: 100%;">
-                    </md-outlined-text-field>
-                </div>
-                
-                <div class="form-group">
-                    <md-outlined-text-field label="Номер телефона" type="tel" id="phone" name="phone" required style="width: 100%;">
-                    </md-outlined-text-field>
-                </div>
+        const form = document.getElementById('card-form');
+        const previewCard = document.getElementById('preview-card');
 
-                <div class="form-group">
-                    <md-outlined-text-field label="Цвет карты" type="text" id="cardColor" name="cardColor" required style="width: 100%;">
-                    </md-outlined-text-field>
-                </div>
+        // Update preview as user types
+        document.getElementById('holder-input').addEventListener('input', (e) => {
+            previewCard.setAttribute('holder', e.target.value.toUpperCase());
+        });
 
-                <div class="form-group">
-                    <md-outlined-text-field label="Укажите аксессуары" type="textarea" id="accessories" name="accessories" rows="3" style="width: 100%;">
-                    </md-outlined-text-field>
-                </div>
+        document.getElementById('theme-select').addEventListener('change', (e) => {
+            previewCard.setAttribute('theme', e.target.value);
+        });
 
-                <div class="form-group" style="text-align: center;">
-                    <md-filled-tonal-button type="submit" name="send" style="width: 100%; max-width: 600px;">
-                        Заказ
-                        <svg slot="icon" viewBox="0 0 48 48"><path d="M6 40V8l38 16Zm3-4.65L36.2 24 9 12.5v8.4L21.1 24 9 27Zm0 0V12.5 27Z"/></svg>
-                    </md-filled-tonal-button>
-                </div>
-            </form>
-        </div>
-        <div style="position: fixed; bottom: 20px; right: 20px; display: flex; gap: 10px;">
-          <md-filled-icon-button onclick="window.location.href='index.html';">
-            <md-icon><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Zm320-350Z"/></svg></md-icon>
-          </md-filled-icon-button>
-          <md-filled-icon-button onclick="window.location.href='market.html';">
-            <md-icon><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M160-720v-80h640v80H160Zm0 560v-240h-40v-80l40-200h640l40 200v80h-40v240h-80v-240H560v240H160Zm80-80h240v-160H240v160Zm-38-240h556-556Zm0 0h556l-24-120H226l-24 120Z"/></svg></md-icon>
-          </md-filled-icon-button>
-          <md-filled-icon-button onclick="window.location.href='sitehistory.html';">
-            <md-icon><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M480-120q-138 0-240.5-91.5T122-440h82q14 104 92.5 172T480-200q117 0 198.5-81.5T760-480q0-117-81.5-198.5T480-760q-69 0-129 32t-101 88h110v80H120v-240h80v94q51-64 124.5-99T480-840q75 0 140.5 28.5t114 77q48.5 48.5 77 114T840-480q0 75-28.5 140.5t-77 114q-48.5 48.5-114 77T480-120Zm112-192L440-464v-216h80v184l128 128-56 56Z"/></md-icon>
-          </md-filled-icon-button>
-          <md-filled-icon-button onclick="window.location.href='contacts.html';">
-            <md-icon><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M480-400q33 0 56.5-23.5T560-480q0-33-23.5-56.5T480-560q-33 0-56.5 23.5T400-480q0 33 23.5 56.5T480-400ZM320-240h320v-23q0-24-13-44t-36-30q-26-11-53.5-17t-57.5-6q-30 0-57.5 6T369-337q-23 10-36 30t-13 44v23ZM720-80H240q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80Zm0-80v-446L526-800H240v640h480Zm-480 0v-640 640Z"/></md-icon>
-          </md-filled-icon-button>
-      </div>
+        function showNotification(message, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${isError ? 'error' : 'success'}`;
+            toast.innerHTML = `
+                <md-icon>${isError ? 'error' : 'check_circle'}</md-icon>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(toast);
+            
+            requestAnimationFrame(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateY(0)';
+            });
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(20px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Handle form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitButton = form.querySelector('md-filled-button');
+            submitButton.disabled = true;
+
+            try {
+                const cardData = {
+                    holder: document.getElementById('holder-input').value.toUpperCase(),
+                    theme: document.getElementById('theme-select').value,
+                    number: generateCardNumber(),
+                    securityCode: generateSecurityCode(),
+                    expires: generateExpiryDate(),
+                    createdAt: Date.now(),
+                    balance: 0
+                };
+
+                const cardsRef = ref(database, 'cards');
+                const newCardRef = push(cardsRef);
+                await set(newCardRef, cardData);
+
+                showNotification('Карта успешно создана!');
+                window.location.href = `account.html?id=${newCardRef.key}`;
+            } catch (error) {
+                console.error('Error creating card:', error);
+                showNotification('Ошибка при создании карты. Попробуйте позже.', true);
+                submitButton.disabled = false;
+            }
+        });
+
+        function generateCardNumber() {
+            return Math.floor(Math.random() * 900000) + 100000;
+        }
+
+        function generateSecurityCode() {
+            return Math.floor(Math.random() * 900) + 100;
+        }
+
+        function generateExpiryDate() {
+            const date = new Date();
+            date.setFullYear(date.getFullYear() + 3);
+            return `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear().toString().slice(-2)}`;
+        }
+    </script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 // File > Share > Publish to web > Select Sheet1 > Publish
 // Then copy the URL and extract the ID
 const SHEET_ID = '16yZfXpChwAs5eb0wy0Rj3AACxtYkuaAyK0bhv5HTz98';
-const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzpyUwaJu2FIFCEn_R4jY8-mmlFprBJoz4Z6LhVEaEg0O_AluxXoSb2DgoFFqV_WGZX/exec';
+const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbztNnVXUy0_NgbTtNLzAqIOuoHFyz4r7hK3c1phwCmcaZgqJyFbz2h6I_URf2YvyNH7/exec';
 
 async function getBalance(userId) {
     try {

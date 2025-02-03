@@ -1,0 +1,260 @@
+.bank-card {
+    width: 340px;
+    height: 200px;
+    background: linear-gradient(135deg, var(--card-primary-color), var(--card-secondary-color));
+    border-radius: 24px;
+    padding: 24px;
+    position: relative;
+    isolation: isolate;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    color: white;
+    font-family: 'Product Sans', sans-serif;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(5px);
+}
+
+/* Фоновый паттерн */
+.bank-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--card-pattern);
+    opacity: 0.1;
+    transition: opacity 0.3s ease;
+}
+
+/* Блики на карте */
+.bank-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        135deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.05) 15%,
+        rgba(255, 255, 255, 0.1) 30%,
+        transparent 60%
+    );
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* Чип карты */
+.card-chip {
+    width: 45px;
+    height: 35px;
+    background: var(--chip-gradient);
+    border-radius: 8px;
+    margin-bottom: 20px;
+    position: relative;
+    box-shadow: 
+        0 2px 4px rgba(0,0,0,0.2),
+        inset 0 1px 2px rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.card-chip::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    height: 70%;
+    background: var(--chip-gradient);
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+
+/* Номер карты */
+.card-number {
+    font-size: 24px;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+    font-family: 'Roboto Mono', monospace;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Имя владельца и срок */
+.card-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    font-size: 14px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.card-holder {
+    text-transform: uppercase;
+}
+
+.card-holder .label,
+.card-expires .label {
+    opacity: 0.8;
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.card-holder .value,
+.card-expires .value {
+    font-weight: 500;
+}
+
+/* Логотип банка */
+.bank-logo {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    font-size: 18px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Цветовые темы карт в стиле Маннру */
+.card-theme-default {
+    --card-primary-color: #ff7e5f;
+    --card-secondary-color: #feb47b;
+    --card-pattern: 
+        radial-gradient(circle at 100% 0%, rgba(255,255,255,0.2) 0%, transparent 50%),
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.1) 0, rgba(255,255,255,0.1) 5px, transparent 5px, transparent 10px);
+    --chip-gradient: linear-gradient(135deg, #ffd700, #ffa500);
+}
+
+.card-theme-premium {
+    --card-primary-color: #2c3e50;
+    --card-secondary-color: #34495e;
+    --card-pattern: 
+        radial-gradient(circle at 0% 100%, rgba(255,255,255,0.15) 0%, transparent 50%),
+        repeating-radial-gradient(circle at 50% 50%, transparent 10px, rgba(255,255,255,0.05) 20px);
+    --chip-gradient: linear-gradient(135deg, #bdc3c7, #7f8c8d);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+.card-theme-gold {
+    --card-primary-color: #c0392b;
+    --card-secondary-color: #e74c3c;
+    --card-pattern: 
+        linear-gradient(135deg, rgba(255,255,255,0.1) 25%, transparent 25%),
+        linear-gradient(225deg, rgba(255,255,255,0.1) 25%, transparent 25%),
+        linear-gradient(315deg, rgba(255,255,255,0.1) 25%, transparent 25%),
+        linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%);
+    background-size: 20px 20px;
+    --chip-gradient: linear-gradient(135deg, #f1c40f, #f39c12);
+    box-shadow: 0 8px 32px rgba(192, 57, 43, 0.3);
+}
+
+.card-theme-neon {
+    --card-primary-color: #8e44ad;
+    --card-secondary-color: #9b59b6;
+    --card-pattern: 
+        radial-gradient(circle at 50% 0%, rgba(255,255,255,0.3) 0%, transparent 70%),
+        linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
+    --chip-gradient: linear-gradient(135deg, #2ecc71, #27ae60);
+    box-shadow: 
+        0 8px 32px rgba(142, 68, 173, 0.3),
+        0 0 20px rgba(142, 68, 173, 0.2);
+}
+
+.card-theme-ocean {
+    --card-primary-color: #2980b9;
+    --card-secondary-color: #3498db;
+    --card-pattern: 
+        linear-gradient(0deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%),
+        linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
+    background-size: 20px 20px;
+    --chip-gradient: linear-gradient(135deg, #1abc9c, #16a085);
+    box-shadow: 0 8px 32px rgba(41, 128, 185, 0.3);
+}
+
+/* Улучшенная анимация при наведении */
+.bank-card:hover {
+    transform: 
+        translateY(-5px)
+        rotate3d(1, 1, 0, 15deg)
+        scale(1.02);
+    box-shadow: 
+        0 12px 40px rgba(0, 0, 0, 0.2),
+        0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+.bank-card:hover::before {
+    opacity: 0.15;
+}
+
+.bank-card:hover::after {
+    background: linear-gradient(
+        135deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.1) 15%,
+        rgba(255, 255, 255, 0.15) 30%,
+        transparent 60%
+    );
+}
+
+/* Улучшенный NFC индикатор */
+.card-nfc {
+    position: absolute;
+    top: 24px;
+    left: 80px;
+    width: 20px;
+    height: 20px;
+    opacity: 0.7;
+}
+
+.card-nfc::before,
+.card-nfc::after {
+    content: '';
+    position: absolute;
+    border: 1.5px solid rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    animation: nfcPulse 2s infinite ease-in-out;
+}
+
+.card-nfc::before {
+    inset: 0;
+}
+
+.card-nfc::after {
+    inset: 25%;
+}
+
+@keyframes nfcPulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+}
+
+/* Адаптивность */
+@media (max-width: 360px) {
+    .bank-card {
+        width: 300px;
+        height: 180px;
+        padding: 20px;
+    }
+
+    .card-number {
+        font-size: 20px;
+    }
+
+    .card-holder, .card-expires {
+        font-size: 12px;
+    }
+} 
