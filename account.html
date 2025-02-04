@@ -29,10 +29,6 @@
 
     <style>
         body {
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(to right, #ff7e5f, #feb47b);
-            min-height: 100vh;
             font-family: 'Product Sans', sans-serif;
         }
 
@@ -130,6 +126,13 @@
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.2);
             color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .transaction-icon .material-symbols-outlined {
+            font-size: 20px;
         }
 
         .transaction-details {
@@ -165,11 +168,11 @@
             backdrop-filter: blur(10px);
         }
 
-        .dialog-content {
+        md-dialog .dialog-content {
             display: flex;
             flex-direction: column;
             gap: 16px;
-            padding: 24px;
+            padding: 16px;
             min-width: 300px;
         }
 
@@ -182,11 +185,26 @@
         md-filled-button {
             --md-filled-button-container-color: rgba(255, 255, 255, 0.2);
             --md-filled-button-hover-state-layer-color: rgba(255, 255, 255, 0.1);
+            --md-filled-button-label-text-color: white;
         }
 
         md-outlined-button {
             --md-outlined-button-outline-color: rgba(255, 255, 255, 0.3);
             --md-outlined-button-hover-state-layer-color: rgba(255, 255, 255, 0.1);
+            --md-outlined-button-label-text-color: white;
+        }
+
+        md-dialog md-filled-button {
+            --md-filled-button-container-color: #6750A4;
+            --md-filled-button-hover-container-color: #7C6EAE;
+            --md-filled-button-pressed-container-color: #9183B8;
+            --md-filled-button-label-text-color: white;
+        }
+
+        md-dialog md-text-button {
+            --md-text-button-label-text-color: #6750A4;
+            --md-text-button-hover-state-layer-color: rgba(103, 80, 164, 0.08);
+            --md-text-button-pressed-state-layer-color: rgba(103, 80, 164, 0.12);
         }
 
         /* Toast */
@@ -232,16 +250,91 @@
                 text-align: center;
             }
         }
+
+        .dialog-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        /* Стили для значков в кнопках */
+        md-filled-button .material-symbols-outlined,
+        md-outlined-button .material-symbols-outlined {
+            margin-left: 8px;
+            font-size: 20px;
+        }
+
+        .active-features {
+            display: flex;
+            gap: 12px;
+        }
+
+        .active-features > div {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.2);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        #premium-badge {
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+        }
+
+        #cashback-badge {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+        }
+
+        /* Премиум стили */
+        .cashback-info {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            color: #FFD700;
+            margin-top: 4px;
+        }
+
+        .cashback-info md-icon {
+            font-size: 16px;
+        }
+
+        /* Анимация для премиум карты */
+        #user-card[theme="premium"] {
+            transition: all 0.3s ease;
+        }
+
+        #user-card[theme="premium"]:hover {
+            transform: scale(1.05) !important;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="account-header">
             <h1 class="headline-large">Личный кабинет</h1>
+            <md-filled-button id="support-button" onclick="window.location.href='support.html'">
+                Поддержка
+                <span slot="icon" class="material-symbols-outlined">support_agent</span>
+            </md-filled-button>
             <md-filled-button id="logout-button">
                 Выйти
-                <md-icon slot="icon">logout</md-icon>
+                <span class="material-symbols-outlined" slot="icon">logout</span>
             </md-filled-button>
+            <div class="active-features">
+                <div id="premium-badge" style="display: none;">
+                    <span class="material-symbols-outlined">stars</span>
+                    Premium
+                </div>
+                <div id="cashback-badge" style="display: none;">
+                    <span class="material-symbols-outlined">savings</span>
+                    5% Кэшбэк
+                </div>
+            </div>
         </div>
 
         <div class="card-section">
@@ -252,13 +345,17 @@
             <h2 class="title-large">Баланс</h2>
             <div class="balance-amount" id="balance-amount">0 ₽</div>
             <div style="display: flex; gap: 12px;">
-                <md-filled-button id="deposit-button">
-                    Пополнить
-                    <md-icon slot="icon">add</md-icon>
-                </md-filled-button>
                 <md-outlined-button id="transfer-button">
+                    <span slot="icon" class="material-symbols-outlined">send</span>
                     Перевести
-                    <md-icon slot="icon">send</md-icon>
+                </md-outlined-button>
+                <md-outlined-button id="share-button">
+                    <span slot="icon" class="material-symbols-outlined">share</span>
+                    Поделиться
+                </md-outlined-button>
+                <md-outlined-button id="qr-button">
+                    <span slot="icon" class="material-symbols-outlined">qr_code</span>
+                    QR-код
                 </md-outlined-button>
             </div>
         </div>
@@ -273,8 +370,11 @@
 
     <script type="module">
         import { database } from './firebase-config.js';
-        import { ref, get, onValue, update, push } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+        import { ref, get, onValue, update, push, set } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
         import { logout } from './auth.js';
+
+        // Делаем функцию showNotification доступной глобально
+        window.showNotification = showNotification;
 
         function showNotification(message, isError = false) {
             const toast = document.createElement('div');
@@ -287,27 +387,55 @@
             
             requestAnimationFrame(() => {
                 toast.style.opacity = '1';
-                toast.style.transform = 'translateY(0)';
+                toast.style.transform = 'translateX(-50%) translateY(0)';
             });
 
             setTimeout(() => {
                 toast.style.opacity = '0';
-                toast.style.transform = 'translateY(20px)';
+                toast.style.transform = 'translateX(-50%) translateY(20px)';
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
         }
 
-        // Get card ID from URL
+        // Get card ID from URL or localStorage
         const urlParams = new URLSearchParams(window.location.search);
-        const cardId = urlParams.get('id');
+        const cardId = urlParams.get('id') || localStorage.getItem('currentCardId');
         
         if (!cardId) {
             window.location.href = 'index.html';
+        } else {
+            // Сохраняем ID карты в localStorage
+            localStorage.setItem('currentCardId', cardId);
+        }
+
+        // Проверяем Premium статус для применения особого стиля
+        function applyPremiumStyle(cardData) {
+            const userCard = document.getElementById('user-card');
+            const now = Date.now();
+            
+            if (cardData.premium?.active && cardData.premium.expiresAt > now) {
+                // Применяем премиум стиль к карте
+                userCard.setAttribute('theme', 'premium');
+                userCard.style.transform = 'scale(1.02)';
+                userCard.style.boxShadow = '0 8px 32px rgba(255, 215, 0, 0.3)';
+                
+                // Добавляем премиум эффекты к балансу
+                const balanceAmount = document.getElementById('balance-amount');
+                balanceAmount.style.background = 'linear-gradient(45deg, #FFD700, #FFA500)';
+                balanceAmount.style.webkitBackgroundClip = 'text';
+                balanceAmount.style.webkitTextFillColor = 'transparent';
+                balanceAmount.style.textShadow = '0 2px 4px rgba(255, 215, 0, 0.3)';
+
+                // Добавляем премиум стиль к транзакциям
+                document.querySelectorAll('.transaction-item').forEach(item => {
+                    item.style.border = '1px solid rgba(255, 215, 0, 0.3)';
+                });
+            }
         }
 
         // Get card data
         const cardRef = ref(database, `cards/${cardId}`);
-        get(cardRef).then((snapshot) => {
+        onValue(cardRef, (snapshot) => {
             if (snapshot.exists()) {
                 const cardData = snapshot.val();
                 
@@ -316,31 +444,26 @@
                 userCard.setAttribute('number', cardData.number);
                 userCard.setAttribute('holder', cardData.holder);
                 userCard.setAttribute('expires', cardData.expires);
-                userCard.setAttribute('theme', cardData.theme);
+                // Тема будет установлена после проверки Premium статуса
 
                 // Update balance
-                updateBalanceDisplay(cardData.balance);
+                updateBalanceDisplay(cardData.balance || 0);
+
+                // Update transactions if they exist
+                if (cardData.transactions) {
+                    updateTransactionsList(cardData.transactions);
+                }
+
+                // Проверяем активные функции
+                checkActiveFeatures(cardData);
+                // Применяем премиум стиль если есть
+                applyPremiumStyle(cardData);
             } else {
                 window.location.href = 'index.html';
             }
-        }).catch((error) => {
+        }, (error) => {
             console.error(error);
             window.location.href = 'index.html';
-        });
-
-        // Listen for balance changes
-        onValue(ref(database, `cards/${cardId}/balance`), (snapshot) => {
-            if (snapshot.exists()) {
-                updateBalanceDisplay(snapshot.val());
-            }
-        });
-
-        // Listen for transactions
-        onValue(ref(database, `cards/${cardId}/transactions`), (snapshot) => {
-            if (snapshot.exists()) {
-                const transactions = snapshot.val();
-                updateTransactionsList(transactions);
-            }
         });
 
         function updateBalanceDisplay(balance) {
@@ -349,6 +472,7 @@
                 .format(balance);
         }
 
+        // Модифицируем функцию обновления транзакций для поддержки кэшбэка
         function updateTransactionsList(transactions) {
             const list = document.getElementById('transaction-list');
             list.innerHTML = '';
@@ -356,192 +480,253 @@
             Object.entries(transactions).reverse().forEach(([id, transaction]) => {
                 const item = document.createElement('div');
                 item.className = 'transaction-item';
+                
+                // Добавляем информацию о кэшбэке для премиум пользователей
+                let cashbackInfo = '';
+                if (transaction.cashback) {
+                    cashbackInfo = `
+                        <div class="cashback-info">
+                            <md-icon>savings</md-icon>
+                            Кэшбэк: +${new Intl.NumberFormat('ru-RU', { 
+                                style: 'currency', 
+                                currency: 'RUB' 
+                            }).format(transaction.cashback)}
+                        </div>
+                    `;
+                }
+
                 item.innerHTML = `
                     <div class="transaction-info">
                         <div class="transaction-icon">
-                            <md-icon>${transaction.type === 'deposit' ? 'add' : 'send'}</md-icon>
+                            <span class="material-symbols-outlined">${transaction.type === 'deposit' ? 'add' : 'send'}</span>
                         </div>
                         <div class="transaction-details">
                             <div class="transaction-title">${transaction.description}</div>
                             <div class="transaction-date">${new Date(transaction.timestamp).toLocaleString()}</div>
+                            ${cashbackInfo}
                         </div>
                     </div>
                     <div class="amount-${transaction.amount > 0 ? 'positive' : 'negative'}">
-                        ${transaction.amount > 0 ? '+' : ''}${new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB' }).format(transaction.amount)}
+                        ${transaction.amount > 0 ? '+' : ''}${new Intl.NumberFormat('ru-RU', { 
+                            style: 'currency', 
+                            currency: 'RUB' 
+                        }).format(transaction.amount)}
                     </div>
                 `;
                 list.appendChild(item);
             });
         }
 
-        // Handle deposit
-        document.getElementById('deposit-button').addEventListener('click', () => {
-            const dialog = document.createElement('md-dialog');
-            dialog.innerHTML = `
-                <div slot="headline">Пополнение карты</div>
-                <div slot="content" class="dialog-content">
-                    <md-outlined-text-field
-                        type="number"
-                        label="Сумма"
-                        required
-                        min="1"
-                        id="deposit-amount">
-                    </md-outlined-text-field>
-                </div>
-                <div slot="actions">
-                    <md-text-button value="cancel">Отмена</md-text-button>
-                    <md-filled-button value="confirm">Пополнить</md-filled-button>
-                </div>
-            `;
-            
-            document.body.appendChild(dialog);
-            dialog.show();
-
-            dialog.addEventListener('close', async (e) => {
-                if (e.target.returnValue === 'confirm') {
-                    const amount = Number(document.getElementById('deposit-amount').value);
-                    if (amount > 0) {
-                        try {
-                            const snapshot = await get(cardRef);
-                            const currentBalance = snapshot.val().balance || 0;
-                            
-                            const updates = {};
-                            updates[`cards/${cardId}/balance`] = currentBalance + amount;
-                            
-                            // Add transaction
-                            const transactionRef = push(ref(database, `cards/${cardId}/transactions`));
-                            updates[`cards/${cardId}/transactions/${transactionRef.key}`] = {
-                                type: 'deposit',
-                                amount: amount,
-                                description: 'Пополнение карты',
-                                timestamp: Date.now()
-                            };
-
-                            await update(ref(database), updates);
-                            showNotification('Карта успешно пополнена!');
-                        } catch (error) {
-                            console.error(error);
-                            showNotification('Ошибка при пополнении карты', true);
-                        }
-                    }
-                }
-                dialog.remove();
-            });
-        });
-
         // Handle transfer
-        document.getElementById('transfer-button').addEventListener('click', () => {
+        document.getElementById('transfer-button').addEventListener('click', async () => {
             const dialog = document.createElement('md-dialog');
             dialog.innerHTML = `
                 <div slot="headline">Перевод средств</div>
-                <div slot="content" class="dialog-content">
+                <form slot="content" method="dialog" class="dialog-content" id="transfer-form">
                     <md-outlined-text-field
-                        type="number"
+                        type="text"
                         label="Номер карты получателя"
                         required
-                        minlength="6"
-                        maxlength="6"
+                        pattern="\\d{3} \\d{3}"
+                        placeholder="123 456"
+                        helper-text="Формат: XXX XXX (три цифры, пробел, три цифры)"
                         id="recipient-number">
                     </md-outlined-text-field>
                     <md-outlined-text-field
                         type="number"
-                        label="Сумма"
+                        label="Сумма перевода"
                         required
                         min="1"
                         id="transfer-amount">
                     </md-outlined-text-field>
-                </div>
-                <div slot="actions">
-                    <md-text-button value="cancel">Отмена</md-text-button>
-                    <md-filled-button value="confirm">Перевести</md-filled-button>
-                </div>
+                    <div class="dialog-buttons">
+                        <md-text-button value="cancel" formmethod="dialog">Отмена</md-text-button>
+                        <md-filled-button value="confirm" type="submit">Перевести</md-filled-button>
+                    </div>
+                </form>
             `;
             
             document.body.appendChild(dialog);
             dialog.show();
 
-            dialog.addEventListener('close', async (e) => {
-                if (e.target.returnValue === 'confirm') {
-                    const recipientNumber = document.getElementById('recipient-number').value;
-                    const amount = Number(document.getElementById('transfer-amount').value);
-
-                    if (amount > 0) {
-                        try {
-                            // Get sender's card data
-                            const senderSnapshot = await get(cardRef);
-                            const senderData = senderSnapshot.val();
-                            const senderBalance = senderData.balance || 0;
-
-                            if (senderBalance < amount) {
-                                showNotification('Недостаточно средств', true);
-                                return;
-                            }
-
-                            // Find recipient's card
-                            const cardsSnapshot = await get(ref(database, 'cards'));
-                            let recipientId = null;
-                            let recipientData = null;
-
-                            cardsSnapshot.forEach((childSnapshot) => {
-                                const card = childSnapshot.val();
-                                if (card.number.toString() === recipientNumber.toString()) {
-                                    recipientId = childSnapshot.key;
-                                    recipientData = card;
-                                }
-                            });
-
-                            if (!recipientId) {
-                                showNotification('Карта получателя не найдена', true);
-                                return;
-                            }
-
-                            if (recipientId === cardId) {
-                                showNotification('Нельзя перевести деньги самому себе', true);
-                                return;
-                            }
-
-                            const updates = {};
-                            
-                            // Update balances
-                            updates[`cards/${cardId}/balance`] = senderBalance - amount;
-                            updates[`cards/${recipientId}/balance`] = (recipientData.balance || 0) + amount;
-
-                            // Add sender's transaction
-                            const senderTransactionRef = push(ref(database, `cards/${cardId}/transactions`));
-                            updates[`cards/${cardId}/transactions/${senderTransactionRef.key}`] = {
-                                type: 'transfer',
-                                amount: -amount,
-                                description: `Перевод на карту ${recipientNumber}`,
-                                timestamp: Date.now()
-                            };
-
-                            // Add recipient's transaction
-                            const recipientTransactionRef = push(ref(database, `cards/${recipientId}/transactions`));
-                            updates[`cards/${recipientId}/transactions/${recipientTransactionRef.key}`] = {
-                                type: 'transfer',
-                                amount: amount,
-                                description: `Перевод с карты ${senderData.number}`,
-                                timestamp: Date.now()
-                            };
-
-                            await update(ref(database), updates);
-                            showNotification('Перевод успешно выполнен!');
-                            dialog.remove();
-                        } catch (error) {
-                            console.error('Transfer error:', error);
-                            showNotification('Ошибка при выполнении перевода', true);
-                        }
-                    }
-                } else {
-                    dialog.remove();
+            const form = dialog.querySelector('#transfer-form');
+            const recipientInput = dialog.querySelector('#recipient-number');
+            const amountInput = dialog.querySelector('#transfer-amount');
+            
+            // Автоматическое форматирование номера карты
+            recipientInput.addEventListener('input', (e) => {
+                let value = e.target.value.replace(/\D/g, ''); // Оставляем только цифры
+                if (value.length > 3) {
+                    value = value.slice(0, 3) + ' ' + value.slice(3, 6);
                 }
+                e.target.value = value;
             });
+
+            let transferData = null;
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                transferData = {
+                    recipientNumber: recipientInput.value,
+                    amount: parseFloat(amountInput.value)
+                };
+                dialog.close('confirm');
+            });
+
+            const result = await new Promise(resolve => {
+                dialog.addEventListener('close', () => {
+                    resolve(dialog.returnValue);
+                    dialog.remove();
+                });
+            });
+
+            if (result === 'confirm' && transferData) {
+                const { recipientNumber, amount } = transferData;
+
+                if (isNaN(amount) || amount <= 0) {
+                    showNotification('Введите корректную сумму', true);
+                    return;
+                }
+
+                // Найти карту получателя
+                const cardsRef = ref(database, 'cards');
+                const snapshot = await get(cardsRef);
+                let recipientCard = null;
+                let recipientId = null;
+
+                // Форматируем введенный номер для сравнения (убираем пробелы)
+                const formattedRecipientNumber = recipientNumber.replace(/\s/g, '');
+
+                snapshot.forEach((childSnapshot) => {
+                    const card = childSnapshot.val();
+                    // Преобразуем оба значения в числа для сравнения
+                    if (Number(card.number) === Number(formattedRecipientNumber)) {
+                        recipientCard = card;
+                        recipientId = childSnapshot.key;
+                    }
+                });
+
+                console.log('Searching for card:', {
+                    inputNumber: recipientNumber,
+                    formattedNumber: formattedRecipientNumber,
+                    formattedNumberAsNumber: Number(formattedRecipientNumber),
+                    availableCards: Object.values(snapshot.val()).map(card => card.number),
+                    cardTypes: Object.values(snapshot.val()).map(card => typeof card.number)
+                });
+
+                if (!recipientCard) {
+                    showNotification('Карта получателя не найдена', true);
+                    return;
+                }
+
+                // Получить текущий баланс отправителя
+                const senderSnapshot = await get(ref(database, `cards/${cardId}`));
+                const senderBalance = senderSnapshot.val().balance;
+
+                if (senderBalance < amount) {
+                    showNotification('Недостаточно средств', true);
+                    return;
+                }
+
+                try {
+                    // Создаем транзакции для обоих пользователей
+                    const updates = {};
+                    
+                    // Обновляем баланс отправителя
+                    updates[`cards/${cardId}/balance`] = senderBalance - amount;
+                    
+                    // Добавляем транзакцию отправителя
+                    const senderTransactionRef = push(ref(database, `cards/${cardId}/transactions`));
+                    updates[`cards/${cardId}/transactions/${senderTransactionRef.key}`] = {
+                        amount: -amount,
+                        timestamp: Date.now(),
+                        type: 'transfer',
+                        description: `Перевод на карту ${recipientNumber}`
+                    };
+
+                    // Обновляем баланс получателя
+                    updates[`cards/${recipientId}/balance`] = recipientCard.balance + amount;
+                    
+                    // Добавляем транзакцию получателя
+                    const recipientTransactionRef = push(ref(database, `cards/${recipientId}/transactions`));
+                    updates[`cards/${recipientId}/transactions/${recipientTransactionRef.key}`] = {
+                        amount: amount,
+                        timestamp: Date.now(),
+                        type: 'transfer',
+                        description: `Перевод с карты ${senderSnapshot.val().number}`
+                    };
+
+                    // Применяем все обновления одновременно
+                    await update(ref(database), updates);
+                    
+                    showNotification('Перевод успешно выполнен');
+                } catch (error) {
+                    console.error('Transfer error:', error);
+                    showNotification('Ошибка при выполнении перевода', true);
+                }
+            }
         });
 
         // Handle logout
         document.getElementById('logout-button').addEventListener('click', () => {
             logout();
         });
+
+        // Обработчик кнопки "Поделиться"
+        document.getElementById('share-button').addEventListener('click', async () => {
+            const cardNumber = document.getElementById('user-card').getAttribute('number');
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'Номер моей карты Маннру',
+                        text: `Мой номер карты: ${cardNumber}`
+                    });
+                } catch (error) {
+                    console.log('Error sharing:', error);
+                }
+            } else {
+                // Копируем в буфер обмена если share API не поддерживается
+                navigator.clipboard.writeText(cardNumber);
+                showNotification('Номер карты скопирован в буфер обмена');
+            }
+        });
+
+        // Обработчик кнопки "QR-код"
+        document.getElementById('qr-button').addEventListener('click', () => {
+            const cardNumber = document.getElementById('user-card').getAttribute('number');
+            const dialog = document.createElement('md-dialog');
+            dialog.innerHTML = `
+                <div slot="headline">QR-код вашей карты</div>
+                <div slot="content" class="dialog-content" style="text-align: center;">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${cardNumber}" 
+                         alt="QR код карты" 
+                         style="border-radius: 8px;">
+                    <p style="margin-top: 16px; color: rgba(0,0,0,0.6);">
+                        Отсканируйте для быстрого перевода
+                    </p>
+                </div>
+                <div slot="actions">
+                    <md-text-button value="close">Закрыть</md-text-button>
+                </div>
+            `;
+            document.body.appendChild(dialog);
+            dialog.show();
+        });
+
+        // Проверяем активные функции
+        function checkActiveFeatures(cardData) {
+            const now = Date.now();
+
+            // Проверяем Premium статус
+            if (cardData.premium?.active && cardData.premium.expiresAt > now) {
+                document.getElementById('premium-badge').style.display = 'flex';
+            }
+
+            // Проверяем повышенный кэшбэк
+            if (cardData.cashback?.active && cardData.cashback.expiresAt > now) {
+                document.getElementById('cashback-badge').style.display = 'flex';
+            }
+        }
     </script>
 </body>
 </html> 

@@ -284,7 +284,9 @@
             rgba(255,255,255,0.1) 2px,
             transparent 2px, 
             transparent 8px
-        );
+        ),
+        linear-gradient(135deg, var(--card-primary-color), var(--card-secondary-color));
+    background-blend-mode: overlay, normal;
 }
 
 .pattern-dots {
@@ -292,8 +294,10 @@
         radial-gradient(
             rgba(255,255,255,0.1) 1px,
             transparent 1px
-        );
+        ),
+        linear-gradient(135deg, var(--card-primary-color), var(--card-secondary-color));
     background-size: 8px 8px;
+    background-blend-mode: overlay, normal;
 }
 
 .pattern-lines {
@@ -302,8 +306,10 @@
             transparent 0%,
             rgba(255,255,255,0.1) 50%,
             transparent 100%
-        );
+        ),
+        linear-gradient(135deg, var(--card-primary-color), var(--card-secondary-color));
     background-size: 20px 20px;
+    background-blend-mode: overlay, normal;
 }
 
 .pattern-circles {
@@ -311,15 +317,19 @@
         radial-gradient(circle at 50% 50%,
             rgba(255,255,255,0.1) 0%,
             transparent 60%
-        );
+        ),
+        linear-gradient(135deg, var(--card-primary-color), var(--card-secondary-color));
     background-size: 40px 40px;
+    background-blend-mode: overlay, normal;
 }
 
 .pattern-grid {
     background-image:
         linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
-    background-size: 20px 20px;
+        linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
+        linear-gradient(135deg, var(--card-primary-color), var(--card-secondary-color));
+    background-size: 20px 20px, 20px 20px, 100% 100%;
+    background-blend-mode: overlay, overlay, normal;
 }
 
 /* Стили чипа */
@@ -346,7 +356,6 @@
 .card-theme-custom {
     --card-primary-color: var(--custom-primary-color, #ff7e5f);
     --card-secondary-color: var(--custom-secondary-color, #feb47b);
-    --card-pattern: var(--custom-pattern, none);
 }
 
 /* Супер-карта */
@@ -573,4 +582,9 @@
 @keyframes matrixRain {
     0% { transform: translateY(0); }
     100% { transform: translateY(10px); }
+}
+
+/* Базовый градиент для всех карт */
+.bank-card {
+    background: linear-gradient(135deg, var(--card-primary-color), var(--card-secondary-color));
 } 

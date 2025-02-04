@@ -31,6 +31,34 @@
     
     <!-- Custom CSS -->
     <link href="styles.css" rel="stylesheet">
+
+    <!-- Добавляем необходимые стили -->
+    <style>
+        /* Стили для медиа-элементов */
+        .media-preview {
+            max-width: 300px;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+        
+        .voice-message {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            cursor: pointer;
+        }
+        
+        .server-list {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+    </style>
 </head>
 <body class="light-theme">
     <nav>
@@ -61,13 +89,31 @@
             </div>
             
             <div class="chat-container">
+                <div class="chat-toolbar">
+                    <md-filled-button id="clear-chat">
+                        <md-icon slot="icon">clear_all</md-icon>
+                        Очистить чат
+                    </md-filled-button>
+                    <md-filled-button id="download-chat">
+                        <md-icon slot="icon">download</md-icon>
+                        Скачать историю
+                    </md-filled-button>
+                </div>
                 <div id="messages" class="messages-area"></div>
                 
                 <div class="input-area">
                     <form onsubmit="return false;">
-                        <md-icon-button id="attach-button">
-                            <md-icon>add_photo_alternate</md-icon>
-                        </md-icon-button>
+                        <div class="media-buttons">
+                            <md-icon-button id="voice-button">
+                                <md-icon>mic</md-icon>
+                            </md-icon-button>
+                            <md-icon-button id="video-button">
+                                <md-icon>videocam</md-icon>
+                            </md-icon-button>
+                            <md-icon-button id="attach-button">
+                                <md-icon>add_photo_alternate</md-icon>
+                            </md-icon-button>
+                        </div>
                         <md-filled-text-field
                             id="message-input"
                             type="text"
@@ -77,7 +123,8 @@
                             <md-icon>send</md-icon>
                         </md-icon-button>
                     </form>
-                    <input type="file" id="file-input" accept="image/*" style="display: none">
+                    <input type="file" id="file-input" accept="image/*,video/*" style="display: none">
+                    <audio id="voice-recorder" style="display: none"></audio>
                 </div>
             </div>
         </div>
@@ -627,6 +674,140 @@
         adminButton.addEventListener('click', () => {
             window.location.href = 'admin.html';
         });
+
+        // Функция для записи голосовых сообщений
+        let mediaRecorder = null;
+        let audioChunks = [];
+
+        async function startVoiceRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    
+                    // Отправляем голосовое сообщение
+                    await sendMessage({
+                        type: 'voice',
+                        url: audioUrl,
+                        duration: Math.round(audioChunks.length / 100) // Примерная длительность
+                    });
+                };
+
+                mediaRecorder.start();
+                document.getElementById('voice-button').innerHTML = '<md-icon>stop</md-icon>';
+            } catch (error) {
+                console.error('Error starting voice recording:', error);
+                showNotification('Ошибка при записи голоса', true);
+            }
+        }
+
+        function stopVoiceRecording() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                document.getElementById('voice-button').innerHTML = '<md-icon>mic</md-icon>';
+            }
+        }
+
+        // Обработчик видео
+        document.getElementById('video-button').addEventListener('click', () => {
+            const input = document.getElementById('file-input');
+            input.accept = 'video/*';
+            input.click();
+        });
+
+        // Обработчик голосовых сообщений
+        document.getElementById('voice-button').addEventListener('click', () => {
+            if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+                startVoiceRecording();
+            } else {
+                stopVoiceRecording();
+            }
+        });
+
+        // Автоматическое создание сервера при первом сообщении
+        async function createServerIfNeeded() {
+            const serverRef = dbRef(database, 'servers/default');
+            const snapshot = await get(serverRef);
+            
+            if (!snapshot.exists()) {
+                await set(serverRef, {
+                    name: 'Основной сервер',
+                    created: serverTimestamp(),
+                    members: {}
+                });
+            }
+        }
+
+        // Модифицируем функцию отправки сообщений
+        async function sendMessage(content) {
+            try {
+                await createServerIfNeeded();
+                const messagesRef = dbRef(database, 'servers/default/messages');
+                await push(messagesRef, {
+                    content,
+                    userId,
+                    username,
+                    timestamp: serverTimestamp()
+                });
+            } catch (error) {
+                console.error('Error sending message:', error);
+                showNotification('Ошибка при отправке сообщения', true);
+            }
+        }
+
+        // Обновляем обработчик файлов
+        document.getElementById('file-input').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                try {
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        const dataUrl = e.target.result;
+                        await sendMessage({
+                            type: file.type.startsWith('video/') ? 'video' : 'image',
+                            url: dataUrl,
+                            name: file.name
+                        });
+                    };
+                    reader.readAsDataURL(file);
+                } catch (error) {
+                    console.error('Error handling file:', error);
+                    showNotification('Ошибка при обработке файла', true);
+                }
+            }
+        });
+
+        // Функция скачивания истории чата
+        async function downloadChatHistory() {
+            const messages = Array.from(document.querySelectorAll('.message'))
+                .map(msg => msg.textContent)
+                .join('\n');
+            const blob = new Blob([messages], {type: 'text/plain'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'chat-history.txt';
+            a.click();
+        }
+
+        // Функция очистки чата
+        function clearChat() {
+            if (confirm('Очистить историю чата?')) {
+                document.getElementById('messages').innerHTML = '';
+            }
+        }
+
+        // Добавляем обработчики
+        document.getElementById('download-chat').onclick = downloadChatHistory;
+        document.getElementById('clear-chat').onclick = clearChat;
     </script>
 </body>
 </html>

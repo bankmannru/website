@@ -86,6 +86,103 @@
             updateFilters();
         });
     </script>
+    <script type="module">
+        import { database } from './firebase-config.js';
+        import { ref, get, update } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+
+        window.buyProduct = async function(productType, price) {
+            // Получаем ID карты из localStorage
+            const cardId = localStorage.getItem('currentCardId');
+
+            if (!cardId) {
+                showNotification('Пожалуйста, создайте или выберите карту', true);
+                setTimeout(() => {
+                    window.location.href = 'card_order.html';
+                }, 1500);
+                return;
+            }
+
+            try {
+                // Получаем данные карты
+                const cardRef = ref(database, `cards/${cardId}`);
+                const snapshot = await get(cardRef);
+                const cardData = snapshot.val();
+
+                if (cardData.balance < price) {
+                    showNotification('Недостаточно средств', true);
+                    return;
+                }
+
+                const updates = {};
+                // Обновляем баланс
+                updates[`cards/${cardId}/balance`] = cardData.balance - price;
+
+                // Добавляем покупку в историю транзакций
+                const timestamp = Date.now();
+                updates[`cards/${cardId}/transactions/${timestamp}`] = {
+                    type: 'purchase',
+                    amount: -price,
+                    description: `Покупка ${getProductName(productType)}`,
+                    timestamp
+                };
+
+                // Активируем купленную функцию
+                switch (productType) {
+                    case 'premium':
+                        updates[`cards/${cardId}/premium`] = {
+                            active: true,
+                            activatedAt: timestamp,
+                            expiresAt: timestamp + (90 * 24 * 60 * 60 * 1000) // 90 дней
+                        };
+                        break;
+                    case 'cashback':
+                        updates[`cards/${cardId}/cashback`] = {
+                            active: true,
+                            activatedAt: timestamp,
+                            expiresAt: timestamp + (30 * 24 * 60 * 60 * 1000), // 30 дней
+                            rate: 0.05 // 5% кэшбэк
+                        };
+                        break;
+                }
+
+                await update(ref(database), updates);
+                showNotification('Покупка успешно совершена');
+
+            } catch (error) {
+                console.error('Purchase error:', error);
+                showNotification('Ошибка при совершении покупки', true);
+            }
+        }
+
+        function getProductName(type) {
+            const products = {
+                premium: 'Premium статус',
+                cashback: 'Повышенный кэшбэк'
+            };
+            return products[type] || type;
+        }
+
+        function showNotification(message, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${isError ? 'error' : 'success'}`;
+            toast.innerHTML = `
+                <md-icon>${isError ? 'error' : 'check_circle'}</md-icon>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(toast);
+            
+            requestAnimationFrame(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateX(-50%) translateY(0)';
+            });
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(-50%) translateY(20px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
     <div class='header' style="display: flex; align-items: center; justify-content: center;">Мы набираем работников для банк Маннру. 
       <a href="https://forms.gle/GJFTNofAoNCuxMT37" style="margin-left: 10px;">
           <md-filled-tonal-button>
@@ -105,6 +202,160 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Основной контейнер */
+        .page-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Переопределяем стили для контейнера продуктов */
+        .products-container {
+            width: 100%;
+            overflow-x: auto;
+            padding: 20px;
+            margin-top: 20px;
+            display: block !important; /* Принудительно переопределяем display */
+        }
+
+        .products-grid {
+            display: flex !important; /* Принудительно переопределяем display */
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            gap: 24px;
+            width: max-content; /* Позволяет контенту расширяться */
+            padding: 20px;
+        }
+
+        .product-card {
+            width: 300px !important;
+            min-width: 300px !important;
+            flex: 0 0 auto !important;
+            margin: 0 !important;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 24px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .product-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            height: 100%;
+            justify-content: space-between;
+        }
+
+        .goodsimg {
+            width: 140px;
+            height: 140px;
+            object-fit: contain;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:hover .goodsimg {
+            transform: scale(1.05);
+        }
+
+        .goodstext {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0;
+            color: white;
+            text-align: center;
+        }
+
+        .goodsdesc {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+            margin: 0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .goodsprice {
+            font-size: 24px;
+            font-weight: 700;
+            color: #4CAF50;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        md-filled-tonal-button {
+            --md-filled-tonal-button-container-color: rgba(255, 255, 255, 0.1);
+            --md-filled-tonal-button-hover-container-color: rgba(255, 255, 255, 0.2);
+            width: 100%;
+            height: 40px;
+            --md-filled-tonal-button-label-text-color: white;
+        }
+
+        md-chip-set {
+            margin: 0;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .market-filters {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        md-outlined-select,
+        md-outlined-text-field {
+            --md-outlined-field-outline-color: rgba(255, 255, 255, 0.2);
+            --md-outlined-field-label-text-color: rgba(255, 255, 255, 0.7);
+            --md-outlined-field-hover-outline-color: rgba(255, 255, 255, 0.3);
+            --md-outlined-field-focus-outline-color: white;
+            min-width: 200px;
+        }
+
+        /* Стилизация скроллбара */
+        .products-container::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .products-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .products-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+
+        .products-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        @media (max-width: 600px) {
+            .market-filters {
+                flex-direction: column;
+            }
+            .filters-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .product-card {
+                width: 260px !important;
+                min-width: 260px !important;
+            }
+        }
+    </style>
 </head>
 <body>
   <md-chip-set style="margin-top: 10px; margin-left: 10px;">
@@ -115,30 +366,52 @@
     <md-filter-chip label="Новинки"></md-filter-chip>
 </md-chip-set>
     <div class="products-container">
-        <div class='product-card'>
-            <div class='product-container'>
+        <div class="products-grid">
+            <div class='product-card'>
                 <div class="product-content">
-                    <img class='goodsimg' src="Маркет/testcard.png">
-                    <p class='goodstext'>Карта</p>
-                    <p class='goodsdesc'>Заказать карту.<br>Фильтры: Карты, Свыше 1000МР, До 1000МР</p>
-                    <p class='goodsprice'>0МР (первая), 1000МР (вторая)</p>
-                    <md-filled-tonal-button onclick="window.location.href='card_order.html'">
+                    <img class='goodsimg' src="Маркет/premium.png">
+                    <p class='goodstext'>Premium статус</p>
+                    <p class='goodsdesc'>Получите особый статус и эксклюзивный дизайн карты</p>
+                    <p class='goodsprice'>2000МР</p>
+                    <md-filled-tonal-button onclick="buyProduct('premium', 2000)" trailing-icon>
                         Купить
-                        <svg slot="icon" viewBox="0 0 48 48"><path d="M14.35 43.95q-1.5 0-2.55-1.05-1.05-1.05-1.05-2.55 0-1.5 1.05-2.55 1.05-1.05 2.55-1.05 1.5 0 2.55 1.05 1.05 1.05 1.05 2.55 0 1.5-1.05 2.55-1.05 1.05-2.55 1.05Zm20 0q-1.5 0-2.55-1.05-1.05-1.05-1.05-2.55 0-1.5 1.05-2.55 1.05-1.05 2.55-1.05 1.5 0 2.55 1.05 1.05 1.05 1.05 2.55 0 1.5-1.05 2.55-1.05 1.05-2.55 1.05Zm-22.6-33 5.5 11.4h14.4l6.25-11.4Zm-1.5-3H39.7q1.15 0 1.75 1.05.6 1.05 0 2.1L34.7 23.25q-.55.95-1.425 1.525t-1.925.575H16.2l-2.8 5.2h24.55v3h-24.1q-2.1 0-3.025-1.4-.925-1.4.025-3.15l3.2-5.9L6.45 7h-3.9V4H8.4Zm7 14.4h14.4Z"/></svg>
+                        <md-icon slot="trailing-icon">shopping_cart</md-icon>
                     </md-filled-tonal-button>
                 </div>
             </div>
-        </div>
-        <div class='product-card'>
-            <div class='product-container'>
+            <div class='product-card'>
                 <div class="product-content">
-                    <img class='goodsimg' src="Маркет/testcard.png">
-                    <p class='goodstext'>Тестовый товар</p>
-                    <p class='goodsdesc'>Тестовый товар для проверки фильтров.<br>Фильтры: Новинки, До 1000₽</p>
+                    <img class='goodsimg' src="Маркет/cashback.png">
+                    <p class='goodstext'>Кэшбэк 5%</p>
+                    <p class='goodsdesc'>Повышенный кэшбэк на все покупки на 30 дней</p>
                     <p class='goodsprice'>500МР</p>
-                    <md-filled-tonal-button>
+                    <md-filled-tonal-button onclick="buyProduct('cashback', 500)" trailing-icon>
                         Купить
-                        <svg slot="icon" viewBox="0 0 48 48"><path d="M14.35 43.95q-1.5 0-2.55-1.05-1.05-1.05-1.05-2.55 0-1.5 1.05-2.55 1.05-1.05 2.55-1.05 1.5 0 2.55 1.05 1.05 1.05 1.05 2.55 0 1.5-1.05 2.55-1.05 1.05-2.55 1.05Zm20 0q-1.5 0-2.55-1.05-1.05-1.05-1.05-2.55 0-1.5 1.05-2.55 1.05-1.05 2.55-1.05 1.5 0 2.55 1.05 1.05 1.05 1.05 2.55 0 1.5-1.05 2.55-1.05 1.05-2.55 1.05Zm-22.6-33 5.5 11.4h14.4l6.25-11.4Zm-1.5-3H39.7q1.15 0 1.75 1.05.6 1.05 0 2.1L34.7 23.25q-.55.95-1.425 1.525t-1.925.575H16.2l-2.8 5.2h24.55v3h-24.1q-2.1 0-3.025-1.4-.925-1.4.025-3.15l3.2-5.9L6.45 7h-3.9V4H8.4Zm7 14.4h14.4Z"/></svg>
+                        <md-icon slot="trailing-icon">shopping_cart</md-icon>
+                    </md-filled-tonal-button>
+                </div>
+            </div>
+            <div class='product-card'>
+                <div class="product-content">
+                    <img class='goodsimg' src="Маркет/custom_design.png">
+                    <p class='goodstext'>Матричная карта</p>
+                    <p class='goodsdesc'>Эксклюзивный матричный дизайн карты</p>
+                    <p class='goodsprice'>1000МР</p>
+                    <md-filled-tonal-button onclick="buyProduct('matrix_card', 1000)" trailing-icon>
+                        Купить
+                        <md-icon slot="trailing-icon">shopping_cart</md-icon>
+                    </md-filled-tonal-button>
+                </div>
+            </div>
+            <div class='product-card'>
+                <div class="product-content">
+                    <img class='goodsimg' src="Маркет/insurance.png">
+                    <p class='goodstext'>Страховка</p>
+                    <p class='goodsdesc'>Защита карты от мошенников на 6 месяцев</p>
+                    <p class='goodsprice'>750МР</p>
+                    <md-filled-tonal-button onclick="buyProduct('insurance', 750)" trailing-icon>
+                        Купить
+                        <md-icon slot="trailing-icon">shopping_cart</md-icon>
                     </md-filled-tonal-button>
                 </div>
             </div>
@@ -158,5 +431,9 @@
         <md-icon><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M480-400q33 0 56.5-23.5T560-480q0-33-23.5-56.5T480-560q-33 0-56.5 23.5T400-480q0 33 23.5 56.5T480-400ZM320-240h320v-23q0-24-13-44t-36-30q-26-11-53.5-17t-57.5-6q-30 0-57.5 6T369-337q-23 10-36 30t-13 44v23ZM720-80H240q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80Zm0-80v-446L526-800H240v640h480Zm-480 0v-640 640Z"/></md-icon>
       </md-filled-icon-button>
   </div>
+    <script type="module">
+        // Импортируем иконки Material Design
+        import '@material/web/icon/icon.js';
+    </script>
 </body>
 </html>

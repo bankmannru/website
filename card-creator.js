@@ -26,6 +26,16 @@ export class BankCard extends HTMLElement {
         const pattern = this.getAttribute('pattern') || 'none';
         const chipStyle = this.getAttribute('chip-style') || 'classic';
 
+        // Очищаем предыдущие стили
+        this.style.removeProperty('--custom-primary-color');
+        this.style.removeProperty('--custom-secondary-color');
+
+        // Создаем список классов
+        const classes = ['bank-card', `card-theme-${theme}`];
+        if (pattern && pattern !== 'none') {
+            classes.push(`pattern-${pattern}`);
+        }
+
         if (theme === 'custom' && primaryColor && secondaryColor) {
             this.style.setProperty('--custom-primary-color', primaryColor);
             this.style.setProperty('--custom-secondary-color', secondaryColor);
@@ -34,7 +44,7 @@ export class BankCard extends HTMLElement {
         this.shadowRoot.innerHTML = `
             <link rel="stylesheet" href="card-styles.css">
             <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
-            <div class="bank-card card-theme-${theme} pattern-${pattern}">
+            <div class="${classes.join(' ')}">
                 <div class="bank-logo">MANNRU BANK</div>
                 <div class="card-chip chip-${chipStyle}"></div>
                 <div class="card-nfc"></div>

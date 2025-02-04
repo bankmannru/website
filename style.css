@@ -997,5 +997,50 @@ bottom: 0%;
     color: var(--md-sys-color-error);
 }
 
+/* Добавляем современные эффекты */
+.glass-effect {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* Улучшенные анимации */
+.hover-effect {
+    transition: all 0.2s ease;
+}
+
+.hover-effect:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.15);
+}
+
+/* Адаптивный дизайн */
+@media (max-width: 768px) {
+    .container {
+        padding: 16px;
+    }
+    
+    .chats-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Улучшенные уведомления */
+.toast {
+    animation: toastAppear 0.3s ease-out;
+}
+
+@keyframes toastAppear {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 
 

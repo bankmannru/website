@@ -28,55 +28,79 @@
     <script type="module" src="card-creator.js"></script>
 
     <style>
+
+        body {
+            margin: 0;
+            padding: 24px;
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            color: var(--md-sys-color-on-background);
+            font-family: 'Roboto', sans-serif;
+            min-height: 100vh;
+        }
+
         .container {
             max-width: 800px;
-            margin: 40px auto;
-            padding: 0 20px;
+            margin: 0 auto;
+            padding: 24px;
         }
 
         .headline-large {
-            color: var(--md-sys-color-on-surface);
-            margin-bottom: 32px;
+            margin: 0 0 48px 0;
+            color: white;
+            font-size: 32px;
+            font-weight: 400;
             text-align: center;
-            font-family: 'Product Sans', sans-serif;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
         .card-preview {
-            margin: 32px 0;
+            margin-bottom: 32px;
             display: flex;
             justify-content: center;
             perspective: 1000px;
         }
 
         .creation-form {
-            max-width: 400px;
-            margin: 0 auto;
             display: flex;
             flex-direction: column;
             gap: 24px;
-            background: var(--md-sys-color-surface-container);
-            padding: 32px;
-            border-radius: 16px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        md-outlined-text-field,
-        md-select {
-            width: 100%;
-        }
-
-        md-filled-button {
-            align-self: flex-end;
+            background: white;
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            border-radius: 28px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 0 auto;
         }
 
         /* Адаптивность */
         @media (max-width: 600px) {
+            body {
+                padding: 0;
+                min-height: 100dvh;
+            }
+            
             .container {
-                margin: 20px auto;
+                margin: 0;
+                padding: 16px;
+                min-height: 100dvh;
+                display: flex;
+                flex-direction: column;
             }
 
             .creation-form {
                 padding: 20px;
+                flex: 1;
+                margin: 0;
+                border-radius: 28px 28px 0 0;
+            }
+
+            .headline-large {
+                margin-bottom: 24px;
+            }
+
+            .card-preview {
+                margin-bottom: 24px;
             }
         }
 
@@ -114,11 +138,11 @@
         .color-pickers {
             display: flex;
             gap: 16px;
-            margin-bottom: 16px;
+            flex-wrap: wrap;
         }
 
         .color-picker {
-            flex: 1;
+            flex: 1 1 200px;
             display: flex;
             flex-direction: column;
             gap: 8px;
@@ -126,7 +150,8 @@
 
         .color-picker label {
             font-size: 14px;
-            color: var(--md-sys-color-on-surface-variant);
+            color: rgba(0, 0, 0, 0.6);
+            margin-bottom: 4px;
         }
 
         .color-picker input[type="color"] {
@@ -135,6 +160,55 @@
             border: none;
             border-radius: 8px;
             cursor: pointer;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .slider-container {
+            position: relative;
+            padding: 8px 0;
+            width: 100%;
+        }
+
+        .md-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #f0f9ff;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 1;
+            margin-top: -8px;
+        }
+
+        .slider-value {
+            position: absolute;
+            top: -24px;
+            left: var(--slider-progress, 10%);
+            transform: translateX(-50%);
+            background: #f0f9ff;
+            color: #6366f1;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+
+        .slider-container::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 50%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;а
+            transform: translateY(-50%);
         }
     </style>
 </head>
@@ -151,7 +225,7 @@
                 expires="12/25"
                 theme="default">
             </bank-card>
-        </div>
+    </div>
 
         <!-- Card Creation Form -->
         <form id="card-form" class="creation-form">
@@ -225,70 +299,14 @@
             <md-filled-button type="submit">
                 Создать карту
             </md-filled-button>
-        </form>
-                </div>
+            </form>
+        </div>
 
     <script>
         // Глобальная функция обновления предпросмотра
         function updatePreview() {
             const holder = document.getElementById('holder-input').value.toUpperCase() || 'ИМЯ ФАМИЛИЯ';
             let theme = document.getElementById('theme-select').value;
-            
-            // Объект с секретными кодами и их описаниями
-            const secretCodes = {
-                'SUPERNOVA': {
-                    theme: 'supernova',
-                    icon: 'stars',
-                    message: '🌟 Активирована супер-карта! 🌟'
-                },
-                'SANDBOX': {
-                    theme: 'sandbox',
-                    icon: 'beach_access',
-                    message: '🏖️ Активирована песочная карта! 🏖️'
-                },
-                'NEON': {
-                    theme: 'neon',
-                    icon: 'bolt',
-                    message: '⚡ Активирована неоновая карта! ⚡'
-                },
-                'HOLO': {
-                    theme: 'holo',
-                    icon: 'gradient',
-                    message: '🌈 Активирована голографическая карта! 🌈'
-                },
-                'MATRIX': {
-                    theme: 'matrix',
-                    icon: 'code',
-                    message: '🖥️ Активирована матричная карта! 🖥️'
-                }
-            };
-
-            // Проверяем на секретные коды
-            if (secretCodes[holder]) {
-                const code = secretCodes[holder];
-                theme = code.theme;
-                
-                // Показываем уведомление об активации
-                const toast = document.createElement('div');
-                toast.className = 'toast success';
-                toast.innerHTML = `
-                    <md-icon>${code.icon}</md-icon>
-                    <span>${code.message}</span>
-                `;
-                document.body.appendChild(toast);
-                
-                requestAnimationFrame(() => {
-                    toast.style.opacity = '1';
-                    toast.style.transform = 'translateY(0)';
-                });
-
-                setTimeout(() => {
-                    toast.style.opacity = '0';
-                    toast.style.transform = 'translateY(20px)';
-                    setTimeout(() => toast.remove(), 300);
-                }, 3000);
-            }
-
             const primaryColor = document.getElementById('primary-color').value;
             const secondaryColor = document.getElementById('secondary-color').value;
             const pattern = document.getElementById('pattern-select').value;
@@ -311,6 +329,52 @@
         const form = document.getElementById('card-form');
         const previewCard = document.getElementById('preview-card');
 
+        // Обработка отправки формы
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            try {
+                // Получаем данные формы
+                const cardData = {
+                    holder: document.getElementById('holder-input').value.toUpperCase(),
+                    theme: document.getElementById('theme-select').value,
+                    primaryColor: document.getElementById('primary-color').value,
+                    secondaryColor: document.getElementById('secondary-color').value,
+                    pattern: document.getElementById('pattern-select').value,
+                    chipStyle: document.getElementById('chip-style').value,
+                    number: Math.floor(100000 + Math.random() * 900000), // Генерируем 6-значный номер
+                    expires: generateExpiryDate(),
+                    balance: 0,
+                    createdAt: new Date().toISOString()
+                };
+
+                // Сохраняем в базу данных
+                const cardsRef = ref(database, 'cards');
+                const newCardRef = push(cardsRef);
+                await set(newCardRef, cardData);
+
+                // Сохраняем ID карты в localStorage
+                localStorage.setItem('currentCardId', newCardRef.key);
+
+                // Показываем уведомление об успехе
+                showNotification('Карта успешно создана');
+
+                // Перенаправляем на страницу аккаунта
+                setTimeout(() => {
+                    window.location.href = `account.html?id=${newCardRef.key}`;
+                }, 1500);
+            } catch (error) {
+                console.error('Error creating card:', error);
+                showNotification('Ошибка при создании карты', true);
+            }
+        });
+
+        function generateExpiryDate() {
+            const date = new Date();
+            date.setFullYear(date.getFullYear() + 3);
+            return `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear().toString().slice(-2)}`;
+        }
+
         function showNotification(message, isError = false) {
             const toast = document.createElement('div');
             toast.className = `toast ${isError ? 'error' : 'success'}`;
@@ -322,59 +386,14 @@
             
             requestAnimationFrame(() => {
                 toast.style.opacity = '1';
-                toast.style.transform = 'translateY(0)';
+                toast.style.transform = 'translateX(-50%) translateY(0)';
             });
 
             setTimeout(() => {
                 toast.style.opacity = '0';
-                toast.style.transform = 'translateY(20px)';
+                toast.style.transform = 'translateX(-50%) translateY(20px)';
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
-        }
-
-        // Handle form submission
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const submitButton = form.querySelector('md-filled-button');
-            submitButton.disabled = true;
-
-            try {
-                const cardData = {
-                    holder: document.getElementById('holder-input').value.toUpperCase(),
-                    theme: document.getElementById('theme-select').value,
-                    number: generateCardNumber(),
-                    securityCode: generateSecurityCode(),
-                    expires: generateExpiryDate(),
-                    createdAt: Date.now(),
-                    balance: 0
-                };
-
-                const cardsRef = ref(database, 'cards');
-                const newCardRef = push(cardsRef);
-                await set(newCardRef, cardData);
-
-                showNotification('Карта успешно создана!');
-                window.location.href = `account.html?id=${newCardRef.key}`;
-            } catch (error) {
-                console.error('Error creating card:', error);
-                showNotification('Ошибка при создании карты. Попробуйте позже.', true);
-                submitButton.disabled = false;
-            }
-        });
-
-        function generateCardNumber() {
-            return Math.floor(Math.random() * 900000) + 100000;
-        }
-
-        function generateSecurityCode() {
-            return Math.floor(Math.random() * 900) + 100;
-        }
-
-        function generateExpiryDate() {
-            const date = new Date();
-            date.setFullYear(date.getFullYear() + 3);
-            return `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear().toString().slice(-2)}`;
         }
     </script>
 </body>

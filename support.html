@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Поддержка - Банк Маннру</title>
+    
+    <!-- Styles -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Material Web Components -->
+    <script type="importmap">
+        {
+            "imports": {
+                "@material/web/": "https://esm.run/@material/web/"
+            }
+        }
+    </script>
+    <script type="module">
+        import '@material/web/all.js';
+        import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
+        document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+    </script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 24px;
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            min-height: 100vh;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .support-header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .chat-container {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+            border-radius: 16px;
+        }
+
+        .messages {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 24px;
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 16px;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            animation: messageAppear 0.3s ease-out;
+        }
+
+        .message.support {
+            flex-direction: row-reverse;
+        }
+
+        .message-content {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: white;
+            max-width: 70%;
+        }
+
+        .support .message-content {
+            background: rgba(103, 80, 164, 0.3);
+        }
+
+        .message-time {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 4px;
+        }
+
+        .message-form {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        md-outlined-text-field {
+            flex: 1;
+            --md-outlined-text-field-container-color: rgba(255, 255, 255, 0.1);
+            --md-outlined-text-field-label-text-color: rgba(255, 255, 255, 0.8);
+            --md-outlined-text-field-input-text-color: white;
+        }
+
+        .priority-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .priority-high {
+            background: rgba(244, 67, 54, 0.3);
+            color: #ffcdd2;
+        }
+
+        .priority-medium {
+            background: rgba(255, 152, 0, 0.3);
+            color: #ffe0b2;
+        }
+
+        .priority-low {
+            background: rgba(76, 175, 80, 0.3);
+            color: #c8e6c9;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+
+        .status-open {
+            background: rgba(76, 175, 80, 0.3);
+            color: #c8e6c9;
+        }
+
+        .status-closed {
+            background: rgba(158, 158, 158, 0.3);
+            color: #f5f5f5;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 16px;
+            }
+
+            .message-content {
+                max-width: 85%;
+            }
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        md-filled-button {
+            --md-filled-button-container-color: rgba(255, 255, 255, 0.2);
+            --md-filled-button-hover-state-layer-color: rgba(255, 255, 255, 0.1);
+            --md-filled-button-label-text-color: white;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            color: #333;
+            padding: 12px 24px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.success md-icon {
+            color: #4caf50;
+        }
+
+        .toast.error md-icon {
+            color: #f44336;
+        }
+
+        @keyframes messageAppear {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .typing-indicator {
+            padding: 8px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="support-header">
+            <div class="header-content">
+                <h1>Поддержка</h1>
+                <md-filled-button onclick="window.location.href='account.html'">
+                    <span slot="icon" class="material-symbols-outlined">arrow_back</span>
+                    Вернуться в кабинет
+                </md-filled-button>
+            </div>
+            <p>Здесь вы можете общаться с поддержкой и следить за статусом ваших обращений.</p>
+        </div>
+
+        <div class="chat-container">
+            <div class="messages" id="messages">
+                <!-- Messages will be added here -->
+            </div>
+
+            <form id="message-form" class="message-form">
+                <md-outlined-text-field
+                    type="text"
+                    label="Ваше сообщение"
+                    id="message-input"
+                    required>
+                </md-outlined-text-field>
+                <md-filled-button type="submit">
+                    Отправить
+                    <span slot="icon" class="material-symbols-outlined">send</span>
+                </md-filled-button>
+            </form>
+        </div>
+
+        <div class="support-container">
+            <div class="quick-replies">
+                <md-filled-button onclick="sendQuickReply('Здравствуйте! Чем могу помочь?')">
+                    Приветствие
+                </md-filled-button>
+                <md-filled-button onclick="sendQuickReply('Спасибо за обращение! Проблема решена?')">
+                    Завершение
+                </md-filled-button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { database } from './firebase-config.js';
+        import { ref, push, onValue, serverTimestamp, get, set } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+
+        const cardId = localStorage.getItem('currentCardId');
+        if (!cardId) {
+            window.location.href = 'index.html';
+        }
+
+        const messagesDiv = document.getElementById('messages');
+        const messageForm = document.getElementById('message-form');
+        const messageInput = document.getElementById('message-input');
+
+        // Слушаем сообщения
+        const messagesRef = ref(database, `support_chats/${cardId}/messages`);
+        onValue(messagesRef, (snapshot) => {
+            messagesDiv.innerHTML = '';
+            
+            if (snapshot.exists()) {
+                const messages = snapshot.val();
+                Object.entries(messages).forEach(([id, msg]) => {
+                    const messageEl = document.createElement('div');
+                    messageEl.className = `message ${msg.from === 'support' ? 'support' : 'user'}`;
+                    
+                    let priorityBadge = '';
+                    if (msg.priority) {
+                        priorityBadge = `
+                            <div class="priority-badge priority-${msg.priority}">
+                                ${msg.priority.charAt(0).toUpperCase() + msg.priority.slice(1)} Priority
+                            </div>
+                        `;
+                    }
+
+                    messageEl.innerHTML = `
+                        <div class="message-content">
+                            ${priorityBadge}
+                            <div>${msg.text}</div>
+                            <div class="message-time">
+                                ${new Date(msg.timestamp).toLocaleString()}
+                            </div>
+                        </div>
+                    `;
+                    messagesDiv.appendChild(messageEl);
+                });
+                
+                // Прокручиваем к последнему сообщению
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }
+        });
+
+        // Отправка сообщения
+        messageForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const text = messageInput.value.trim();
+            if (!text) return;
+
+            try {
+                // Создаем чат, если его еще нет
+                const chatRef = ref(database, `support_chats/${cardId}`);
+                const chatSnapshot = await get(chatRef);
+                if (!chatSnapshot.exists()) {
+                    await set(chatRef, {
+                        created: Date.now(),
+                        status: 'active'
+                    });
+                }
+
+                const messagesRef = ref(database, `support_chats/${cardId}/messages`);
+                await push(messagesRef, {
+                    text,
+                    from: 'user',
+                    timestamp: Date.now(),
+                    status: 'sent'
+                });
+
+                messageInput.value = '';
+            } catch (error) {
+                console.error('Error sending message:', error);
+                showNotification('Ошибка при отправке сообщения', true);
+            }
+        });
+
+        function showNotification(message, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${isError ? 'error' : 'success'}`;
+            toast.innerHTML = `
+                <md-icon>${isError ? 'error' : 'check_circle'}</md-icon>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(toast);
+            
+            requestAnimationFrame(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateX(-50%) translateY(0)';
+            });
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(-50%) translateY(20px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        async function sendQuickReply(text) {
+            document.getElementById('message-input').value = text;
+            await sendMessage();
+        }
+
+        function saveDraft() {
+            const text = document.getElementById('message-input').value;
+            localStorage.setItem('support-draft', text);
+        }
+
+        window.onload = () => {
+            const draft = localStorage.getItem('support-draft');
+            if (draft) {
+                document.getElementById('message-input').value = draft;
+            }
+        }
+
+        setInterval(saveDraft, 30000);
+    </script>
+</body>
+</html> 
