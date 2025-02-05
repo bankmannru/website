@@ -5,7 +5,7 @@ export class BankCard extends HTMLElement {
     }
 
     static get observedAttributes() {
-        return ['number', 'holder', 'expires', 'theme', 'primary-color', 'secondary-color', 'pattern', 'chip-style'];
+        return ['number', 'holder', 'expires', 'theme', 'pattern', 'chip-style'];
     }
 
     connectedCallback() {
@@ -21,30 +21,35 @@ export class BankCard extends HTMLElement {
         const holder = this.getAttribute('holder') || 'CARD HOLDER';
         const expires = this.getAttribute('expires') || '12/25';
         const theme = this.getAttribute('theme') || 'default';
-        const primaryColor = this.getAttribute('primary-color');
-        const secondaryColor = this.getAttribute('secondary-color');
         const pattern = this.getAttribute('pattern') || 'none';
         const chipStyle = this.getAttribute('chip-style') || 'classic';
 
-        // Очищаем предыдущие стили
-        this.style.removeProperty('--custom-primary-color');
-        this.style.removeProperty('--custom-secondary-color');
-
         // Создаем список классов
-        const classes = ['bank-card', `card-theme-${theme}`];
+        const classes = ['bank-card'];
         if (pattern && pattern !== 'none') {
             classes.push(`pattern-${pattern}`);
         }
 
-        if (theme === 'custom' && primaryColor && secondaryColor) {
-            this.style.setProperty('--custom-primary-color', primaryColor);
-            this.style.setProperty('--custom-secondary-color', secondaryColor);
+        // Определяем стили для карты
+        let backgroundStyle = '';
+        if (theme === 'custom') {
+            const primaryColor = this.style.getPropertyValue('--card-primary-color');
+            const secondaryColor = this.style.getPropertyValue('--card-secondary-color');
+            if (primaryColor && secondaryColor) {
+                backgroundStyle = `background: linear-gradient(135deg, ${primaryColor}, ${secondaryColor}) !important;`;
+            }
         }
 
         this.shadowRoot.innerHTML = `
             <link rel="stylesheet" href="card-styles.css">
-            <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
-            <div class="${classes.join(' ')}">
+            ${theme === 'custom' ? `
+                <style>
+                    .bank-card[theme="custom"] {
+                        ${backgroundStyle}
+                    }
+                </style>
+            ` : ''}
+            <div class="${classes.join(' ')}" theme="${theme}">
                 <div class="bank-logo">MANNRU BANK</div>
                 <div class="card-chip chip-${chipStyle}"></div>
                 <div class="card-nfc"></div>

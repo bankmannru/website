@@ -357,6 +357,61 @@
                         print(`Ошибка: ${error.message}`, 'error');
                     }
                 }
+            },
+            setcardcolor: {
+                desc: 'Установить цвета карты: setcardcolor <cardId> <primaryColor> <secondaryColor>',
+                exec: async (cardId, primaryColor, secondaryColor) => {
+                    if (!cardId || !primaryColor || !secondaryColor) {
+                        print('Укажите номер карты и цвета (HEX или название)', 'error');
+                        return;
+                    }
+                    try {
+                        const cardRef = ref(database, `cards/${cardId}`);
+                        const snapshot = await get(cardRef);
+                        if (snapshot.exists()) {
+                            const card = snapshot.val();
+                            await set(cardRef, { 
+                                ...card, 
+                                theme: 'custom',
+                                customColors: {
+                                    primary: primaryColor,
+                                    secondary: secondaryColor
+                                }
+                            });
+                            print(`Цвета карты ${cardId} обновлены:`, 'success');
+                            print(`Основной: ${primaryColor}`, 'info');
+                            print(`Дополнительный: ${secondaryColor}`, 'info');
+                        } else {
+                            print('Карта не найдена', 'error');
+                        }
+                    } catch (error) {
+                        print(`Ошибка: ${error.message}`, 'error');
+                    }
+                }
+            },
+            resetcardcolor: {
+                desc: 'Сбросить цвета карты на стандартные: resetcardcolor <cardId>',
+                exec: async (cardId) => {
+                    if (!cardId) {
+                        print('Укажите номер карты', 'error');
+                        return;
+                    }
+                    try {
+                        const cardRef = ref(database, `cards/${cardId}`);
+                        const snapshot = await get(cardRef);
+                        if (snapshot.exists()) {
+                            const card = snapshot.val();
+                            const { customColors, ...updatedCard } = card;
+                            updatedCard.theme = 'default';
+                            await set(cardRef, updatedCard);
+                            print(`Цвета карты ${cardId} сброшены на стандартные`, 'success');
+                        } else {
+                            print('Карта не найдена', 'error');
+                        }
+                    } catch (error) {
+                        print(`Ошибка: ${error.message}`, 'error');
+                    }
+                }
             }
         };
 

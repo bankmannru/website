@@ -61,6 +61,9 @@
             perspective: 1000px;
             display: flex;
             justify-content: center;
+            margin: 48px 0;
+            width: 100%;
+            min-height: 220px;
         }
 
         .balance-section {
@@ -108,6 +111,8 @@
             border-radius: 8px;
             transition: all 0.3s ease;
             border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: background-color 0.2s;
         }
 
         .transaction-item:hover {
@@ -240,6 +245,18 @@
                 padding: 10px;
             }
 
+            /* Адаптивный размер карты */
+            .card-section bank-card {
+                transform: scale(0.85);
+                transform-origin: center;
+                margin: -24px 0;
+            }
+
+            .card-section {
+                margin: 24px 0;
+                min-height: 180px;
+            }
+
             .balance-amount {
                 font-size: 36px;
             }
@@ -248,6 +265,49 @@
                 flex-direction: column;
                 gap: 16px;
                 text-align: center;
+            }
+
+            /* Адаптивные кнопки */
+            .balance-section > div {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            md-outlined-button {
+                flex: 1 1 calc(50% - 6px);
+                min-width: 0;
+            }
+
+            /* Фиксим диалог на мобильных */
+            md-dialog#transaction-details-dialog {
+                position: fixed;
+                inset: 0;
+                margin: auto;
+                width: calc(100% - 32px);
+                max-height: calc(100vh - 64px);
+            }
+
+            /* Адаптивные отступы в диалоге */
+            #transaction-details-dialog .dialog-content {
+                padding: 16px;
+            }
+
+            #transaction-details-dialog .dialog-header {
+                padding: 12px 16px;
+            }
+
+            /* Уменьшаем размер шрифта для мобильных */
+            .transaction-title {
+                font-size: 14px;
+            }
+
+            .transaction-date {
+                font-size: 11px;
+            }
+
+            .amount-positive,
+            .amount-negative {
+                font-size: 14px;
             }
         }
 
@@ -311,16 +371,132 @@
         #user-card[theme="premium"]:hover {
             transform: scale(1.05) !important;
         }
+
+        .message-of-day {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 16px 24px;
+            margin: 16px 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .message-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+            font-size: 16px;
+        }
+        
+        .message-content md-icon {
+            color: white;
+            opacity: 0.9;
+        }
+
+        /* Стили для диалога с деталями транзакции */
+        .dialog-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: var(--md-sys-color-surface-container);
+            border-bottom: 1px solid var(--md-sys-color-outline-variant);
+            cursor: move;
+        }
+        
+        .dialog-title {
+            font-size: 20px;
+            font-weight: 500;
+            color: var(--md-sys-color-on-surface);
+        }
+        
+        .dialog-content {
+            padding: 24px;
+        }
+        
+        .transaction-detail-item {
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .transaction-detail-item .label {
+            color: var(--md-sys-color-on-surface-variant);
+            font-size: 14px;
+        }
+        
+        .transaction-detail-item span:not(.label) {
+            color: var(--md-sys-color-on-surface);
+            font-size: 16px;
+        }
+
+        /* Стили для диалога транзакций */
+        md-dialog#transaction-details-dialog {
+            --md-dialog-container-color: rgba(30, 30, 30, 0.95);
+            --md-dialog-container-shape: 16px;
+            position: fixed;
+            inset: 0;
+            margin: auto;
+            min-width: 320px;
+            max-width: 90vw;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --md-dialog-content-color: white;
+        }
+
+        #transaction-details-dialog .dialog-header {
+            background: rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: -24px -24px 24px -24px;
+        }
+
+        #transaction-details-dialog .dialog-title {
+            color: white;
+            font-size: 20px;
+            font-weight: 500;
+        }
+
+        #transaction-details-dialog .dialog-content {
+            padding: 24px;
+            color: white;
+        }
+
+        #transaction-details-dialog .transaction-detail-item {
+            margin-bottom: 20px;
+        }
+
+        #transaction-details-dialog .transaction-detail-item:last-child {
+            margin-bottom: 0;
+        }
+
+        #transaction-details-dialog .transaction-detail-item .label {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        #transaction-details-dialog .transaction-detail-item span:not(.label) {
+            color: white;
+            font-size: 16px;
+        }
+
+        #transaction-details-dialog md-icon-button {
+            --md-icon-button-icon-color: white;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="account-header">
             <h1 class="headline-large">Личный кабинет</h1>
-            <md-filled-button id="support-button" onclick="window.location.href='support.html'">
-                Поддержка
-                <span slot="icon" class="material-symbols-outlined">support_agent</span>
-            </md-filled-button>
             <md-filled-button id="logout-button">
                 Выйти
                 <span class="material-symbols-outlined" slot="icon">logout</span>
@@ -339,6 +515,13 @@
 
         <div class="card-section">
             <bank-card id="user-card"></bank-card>
+        </div>
+
+        <div class="message-of-day">
+            <div class="message-content">
+                <md-icon>tips_and_updates</md-icon>
+                <span id="daily-message">Загрузка сообщения...</span>
+            </div>
         </div>
 
         <div class="balance-section">
@@ -366,6 +549,38 @@
                 <!-- Transactions will be added here -->
             </div>
         </div>
+
+        <!-- Добавляем диалог для деталей транзакции -->
+        <md-dialog id="transaction-details-dialog" style="display: none;">
+            <div slot="content" class="dialog-content">
+                <div class="dialog-header" id="dialog-drag-handle">
+                    <span class="dialog-title">Детали операции</span>
+                    <md-icon-button onclick="document.getElementById('transaction-details-dialog').close()">
+                        <md-icon>close</md-icon>
+                    </md-icon-button>
+                </div>
+                <div class="transaction-detail-item">
+                    <span class="label">Описание:</span>
+                    <span id="detail-description"></span>
+                </div>
+                <div class="transaction-detail-item">
+                    <span class="label">Сумма:</span>
+                    <span id="detail-amount"></span>
+                </div>
+                <div class="transaction-detail-item">
+                    <span class="label">Дата и время:</span>
+                    <span id="detail-datetime"></span>
+                </div>
+                <div class="transaction-detail-item">
+                    <span class="label">ID операции:</span>
+                    <span id="detail-id"></span>
+                </div>
+                <div id="detail-cashback" class="transaction-detail-item" style="display: none;">
+                    <span class="label">Кэшбэк:</span>
+                    <span id="detail-cashback-amount"></span>
+                </div>
+            </div>
+        </md-dialog>
     </div>
 
     <script type="module">
@@ -375,6 +590,103 @@
 
         // Делаем функцию showNotification доступной глобально
         window.showNotification = showNotification;
+
+        // Инициализация карты
+        function initializeCard() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const cardId = urlParams.get('id') || localStorage.getItem('currentCardId');
+            
+            if (!cardId) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Загружаем данные карты
+            const cardRef = ref(database, `cards/${cardId}`);
+            onValue(cardRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const cardData = snapshot.val();
+                    
+                    // Сохраняем ID карты в localStorage
+                    localStorage.setItem('currentCardId', cardId);
+                    localStorage.setItem('cardNumber', cardData.number || cardId);
+                    
+                    // Создаем или обновляем компонент карты
+                    const cardElement = document.getElementById('user-card');
+                    if (cardElement) {
+                        // Применяем кастомные цвета если они есть
+                        if (cardData.theme === 'custom') {
+                            // Проверяем, где хранятся цвета (поддержка старого и нового формата)
+                            const primaryColor = cardData.customColors?.primary || cardData.primaryColor;
+                            const secondaryColor = cardData.customColors?.secondary || cardData.secondaryColor;
+                            
+                            // Сначала устанавливаем цвета
+                            cardElement.style.setProperty('--card-primary-color', primaryColor);
+                            cardElement.style.setProperty('--card-secondary-color', secondaryColor);
+                            // Затем устанавливаем тему
+                            cardElement.setAttribute('theme', 'custom');
+                        } else {
+                            // Очищаем кастомные цвета перед установкой стандартной темы
+                            cardElement.style.removeProperty('--card-primary-color');
+                            cardElement.style.removeProperty('--card-secondary-color');
+                            cardElement.setAttribute('theme', cardData.theme || 'default');
+                        }
+                        
+                        cardElement.setAttribute('number', cardData.number || cardId);
+                        cardElement.setAttribute('holder', cardData.holder || 'CARD HOLDER');
+                        cardElement.setAttribute('expires', cardData.expires || '12/25');
+                        // Принудительно обновляем после всех изменений
+                        setTimeout(() => cardElement.render(), 0);
+                    }
+
+                    // Обновляем баланс
+                    const balanceElement = document.querySelector('.balance-amount');
+                    if (balanceElement) {
+                        balanceElement.textContent = `${cardData.balance || 0} МР`;
+                    }
+
+                    // Update transactions if they exist
+                    if (cardData.transactions) {
+                        updateTransactionsList(cardData.transactions);
+                    }
+
+                    // Проверяем активные функции
+                    checkActiveFeatures(cardData);
+                } else {
+                    window.location.href = 'index.html';
+                }
+            }, (error) => {
+                console.error(error);
+                window.location.href = 'index.html';
+            });
+        }
+
+        // Запускаем инициализацию при загрузке страницы
+        document.addEventListener('DOMContentLoaded', initializeCard);
+        document.addEventListener('DOMContentLoaded', loadDailyMessage);
+
+        // Загрузка сообщения дня
+        async function loadDailyMessage() {
+            const messages = [
+                "Не забудьте проверить наши специальные предложения в маркете!",
+                "Копите баллы и получайте больше привилегий с картой Premium",
+                "Безопасность прежде всего - регулярно меняйте пароль",
+                "Приглашайте друзей и получайте бонусы за каждого нового клиента",
+                "У нас появились новые партнёры! Проверьте условия кэшбэка",
+                "Планируйте покупки заранее и экономьте с нашими акциями",
+                "Установите лимиты на траты для лучшего контроля бюджета",
+                "Подключите уведомления, чтобы не пропустить важные операции",
+                "Участвуйте в наших опросах и помогайте нам стать лучше",
+                "Храните средства с умом - откройте накопительный счёт"
+            ];
+            
+            // Выбираем сообщение на основе текущей даты
+            const today = new Date();
+            const messageIndex = (today.getFullYear() + today.getMonth() + today.getDate()) % messages.length;
+            
+            const messageElement = document.getElementById('daily-message');
+            messageElement.textContent = messages[messageIndex];
+        }
 
         function showNotification(message, isError = false) {
             const toast = document.createElement('div');
@@ -397,82 +709,6 @@
             }, 3000);
         }
 
-        // Get card ID from URL or localStorage
-        const urlParams = new URLSearchParams(window.location.search);
-        const cardId = urlParams.get('id') || localStorage.getItem('currentCardId');
-        
-        if (!cardId) {
-            window.location.href = 'index.html';
-        } else {
-            // Сохраняем ID карты в localStorage
-            localStorage.setItem('currentCardId', cardId);
-        }
-
-        // Проверяем Premium статус для применения особого стиля
-        function applyPremiumStyle(cardData) {
-            const userCard = document.getElementById('user-card');
-            const now = Date.now();
-            
-            if (cardData.premium?.active && cardData.premium.expiresAt > now) {
-                // Применяем премиум стиль к карте
-                userCard.setAttribute('theme', 'premium');
-                userCard.style.transform = 'scale(1.02)';
-                userCard.style.boxShadow = '0 8px 32px rgba(255, 215, 0, 0.3)';
-                
-                // Добавляем премиум эффекты к балансу
-                const balanceAmount = document.getElementById('balance-amount');
-                balanceAmount.style.background = 'linear-gradient(45deg, #FFD700, #FFA500)';
-                balanceAmount.style.webkitBackgroundClip = 'text';
-                balanceAmount.style.webkitTextFillColor = 'transparent';
-                balanceAmount.style.textShadow = '0 2px 4px rgba(255, 215, 0, 0.3)';
-
-                // Добавляем премиум стиль к транзакциям
-                document.querySelectorAll('.transaction-item').forEach(item => {
-                    item.style.border = '1px solid rgba(255, 215, 0, 0.3)';
-                });
-            }
-        }
-
-        // Get card data
-        const cardRef = ref(database, `cards/${cardId}`);
-        onValue(cardRef, (snapshot) => {
-            if (snapshot.exists()) {
-                const cardData = snapshot.val();
-                
-                // Update card display
-                const userCard = document.getElementById('user-card');
-                userCard.setAttribute('number', cardData.number);
-                userCard.setAttribute('holder', cardData.holder);
-                userCard.setAttribute('expires', cardData.expires);
-                // Тема будет установлена после проверки Premium статуса
-
-                // Update balance
-                updateBalanceDisplay(cardData.balance || 0);
-
-                // Update transactions if they exist
-                if (cardData.transactions) {
-                    updateTransactionsList(cardData.transactions);
-                }
-
-                // Проверяем активные функции
-                checkActiveFeatures(cardData);
-                // Применяем премиум стиль если есть
-                applyPremiumStyle(cardData);
-            } else {
-                window.location.href = 'index.html';
-            }
-        }, (error) => {
-            console.error(error);
-            window.location.href = 'index.html';
-        });
-
-        function updateBalanceDisplay(balance) {
-            document.getElementById('balance-amount').textContent = 
-                new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB' })
-                .format(balance);
-        }
-
-        // Модифицируем функцию обновления транзакций для поддержки кэшбэка
         function updateTransactionsList(transactions) {
             const list = document.getElementById('transaction-list');
             list.innerHTML = '';
@@ -481,16 +717,16 @@
                 const item = document.createElement('div');
                 item.className = 'transaction-item';
                 
+                // Добавляем обработчик клика для показа деталей
+                item.addEventListener('click', () => showTransactionDetails(id, transaction));
+                
                 // Добавляем информацию о кэшбэке для премиум пользователей
                 let cashbackInfo = '';
                 if (transaction.cashback) {
                     cashbackInfo = `
                         <div class="cashback-info">
                             <md-icon>savings</md-icon>
-                            Кэшбэк: +${new Intl.NumberFormat('ru-RU', { 
-                                style: 'currency', 
-                                currency: 'RUB' 
-                            }).format(transaction.cashback)}
+                            Кэшбэк: +${new Intl.NumberFormat('ru-RU').format(transaction.cashback)} МР
                         </div>
                     `;
                 }
@@ -507,19 +743,82 @@
                         </div>
                     </div>
                     <div class="amount-${transaction.amount > 0 ? 'positive' : 'negative'}">
-                        ${transaction.amount > 0 ? '+' : ''}${new Intl.NumberFormat('ru-RU', { 
-                            style: 'currency', 
-                            currency: 'RUB' 
-                        }).format(transaction.amount)}
+                        ${transaction.amount > 0 ? '+' : ''}${new Intl.NumberFormat('ru-RU').format(transaction.amount)} МР
                     </div>
                 `;
                 list.appendChild(item);
             });
         }
 
+        // Функция для показа деталей транзакции
+        function showTransactionDetails(id, transaction) {
+            const dialog = document.getElementById('transaction-details-dialog');
+            dialog.style.display = ''; // Убираем display: none перед показом
+            
+            // Заполняем данные
+            document.getElementById('detail-description').textContent = transaction.description;
+            document.getElementById('detail-amount').textContent = new Intl.NumberFormat('ru-RU').format(transaction.amount) + ' МР';
+            document.getElementById('detail-datetime').textContent = new Date(transaction.timestamp).toLocaleString();
+            document.getElementById('detail-id').textContent = id;
+            
+            // Показываем кэшбэк если есть
+            const cashbackElement = document.getElementById('detail-cashback');
+            if (transaction.cashback) {
+                cashbackElement.style.display = 'flex';
+                document.getElementById('detail-cashback-amount').textContent = 
+                    new Intl.NumberFormat('ru-RU').format(transaction.cashback) + ' МР';
+            } else {
+                cashbackElement.style.display = 'none';
+            }
+            
+            dialog.show();
+            
+            // Добавляем возможность перетаскивания
+            makeDraggable(dialog, document.getElementById('dialog-drag-handle'));
+            
+            // Добавляем обработчик закрытия
+            dialog.addEventListener('closed', () => {
+                dialog.style.display = 'none';
+            }, { once: true });
+        }
+        
+        // Функция для перетаскивания диалога
+        function makeDraggable(element, handle) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            
+            handle.onmousedown = dragMouseDown;
+            
+            function dragMouseDown(e) {
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+            
+            function elementDrag(e) {
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                element.style.top = (element.offsetTop - pos2) + "px";
+                element.style.left = (element.offsetLeft - pos1) + "px";
+            }
+            
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+        }
+
         // Handle transfer
         document.getElementById('transfer-button').addEventListener('click', async () => {
             const dialog = document.createElement('md-dialog');
+            // Проверяем премиум статус для дополнительных функций
+            const cardData = await get(ref(database, `cards/${localStorage.getItem('currentCardId')}`));
+            const isPremium = cardData.val()?.theme === 'premium';
+            
             dialog.innerHTML = `
                 <div slot="headline">Перевод средств</div>
                 <form slot="content" method="dialog" class="dialog-content" id="transfer-form">
@@ -539,13 +838,27 @@
                         min="1"
                         id="transfer-amount">
                     </md-outlined-text-field>
+                    ${isPremium ? `
+                    <div style="margin-top: 16px;">
+                        <md-checkbox id="use-cashback">Использовать накопленный кешбэк</md-checkbox>
+                        <div style="color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 4px;">
+                            Доступно: <span id="available-cashback">0</span> МР
+                        </div>
+                    </div>
+                    ` : ''}
                     <div class="dialog-buttons">
                         <md-text-button value="cancel" formmethod="dialog">Отмена</md-text-button>
                         <md-filled-button value="confirm" type="submit">Перевести</md-filled-button>
                     </div>
                 </form>
             `;
-            
+
+            // Если премиум, показываем доступный кешбэк
+            if (isPremium) {
+                const cashbackSpan = dialog.querySelector('#available-cashback');
+                cashbackSpan.textContent = cardData.val().totalCashback || 0;
+            }
+
             document.body.appendChild(dialog);
             dialog.show();
 
@@ -582,87 +895,79 @@
 
             if (result === 'confirm' && transferData) {
                 const { recipientNumber, amount } = transferData;
-
-                if (isNaN(amount) || amount <= 0) {
-                    showNotification('Введите корректную сумму', true);
-                    return;
-                }
-
-                // Найти карту получателя
-                const cardsRef = ref(database, 'cards');
-                const snapshot = await get(cardsRef);
-                let recipientCard = null;
-                let recipientId = null;
-
-                // Форматируем введенный номер для сравнения (убираем пробелы)
-                const formattedRecipientNumber = recipientNumber.replace(/\s/g, '');
-
-                snapshot.forEach((childSnapshot) => {
-                    const card = childSnapshot.val();
-                    // Преобразуем оба значения в числа для сравнения
-                    if (Number(card.number) === Number(formattedRecipientNumber)) {
-                        recipientCard = card;
-                        recipientId = childSnapshot.key;
-                    }
-                });
-
-                console.log('Searching for card:', {
-                    inputNumber: recipientNumber,
-                    formattedNumber: formattedRecipientNumber,
-                    formattedNumberAsNumber: Number(formattedRecipientNumber),
-                    availableCards: Object.values(snapshot.val()).map(card => card.number),
-                    cardTypes: Object.values(snapshot.val()).map(card => typeof card.number)
-                });
-
-                if (!recipientCard) {
-                    showNotification('Карта получателя не найдена', true);
-                    return;
-                }
-
-                // Получить текущий баланс отправителя
-                const senderSnapshot = await get(ref(database, `cards/${cardId}`));
-                const senderBalance = senderSnapshot.val().balance;
-
-                if (senderBalance < amount) {
-                    showNotification('Недостаточно средств', true);
-                    return;
-                }
-
+                const useCashback = isPremium && dialog.querySelector('#use-cashback')?.checked;
+                
                 try {
-                    // Создаем транзакции для обоих пользователей
-                    const updates = {};
+                    const senderRef = ref(database, `cards/${localStorage.getItem('currentCardId')}`);
+                    const recipientRef = ref(database, `cards/${recipientNumber.replace(' ', '')}`);
                     
-                    // Обновляем баланс отправителя
-                    updates[`cards/${cardId}/balance`] = senderBalance - amount;
+                    const [senderSnapshot, recipientSnapshot] = await Promise.all([
+                        get(senderRef),
+                        get(recipientRef)
+                    ]);
                     
-                    // Добавляем транзакцию отправителя
-                    const senderTransactionRef = push(ref(database, `cards/${cardId}/transactions`));
-                    updates[`cards/${cardId}/transactions/${senderTransactionRef.key}`] = {
-                        amount: -amount,
-                        timestamp: Date.now(),
-                        type: 'transfer',
-                        description: `Перевод на карту ${recipientNumber}`
-                    };
+                    if (!recipientSnapshot.exists()) {
+                        throw new Error('Карта получателя не найдена');
+                    }
+                    
+                    const sender = senderSnapshot.val();
+                    const recipient = recipientSnapshot.val();
+                    
+                    // Рассчитываем кешбэк
+                    let cashbackAmount = 0;
+                    if (sender.theme === 'premium') {
+                        // Премиум получает 5% кешбэка
+                        cashbackAmount = amount * 0.05;
+                    }
+                    if (sender.cashbackEnabled) {
+                        // Дополнительный кешбэк 2%
+                        cashbackAmount += amount * 0.02;
+                    }
+                    
+                    // Если используем накопленный кешбэк
+                    let finalAmount = amount;
+                    if (useCashback && sender.totalCashback) {
+                        finalAmount = Math.max(0, amount - (sender.totalCashback || 0));
+                    }
 
-                    // Обновляем баланс получателя
-                    updates[`cards/${recipientId}/balance`] = recipientCard.balance + amount;
+                    // Проверяем баланс
+                    if (sender.balance < finalAmount) {
+                        throw new Error('Недостаточно средств');
+                    }
                     
-                    // Добавляем транзакцию получателя
-                    const recipientTransactionRef = push(ref(database, `cards/${recipientId}/transactions`));
-                    updates[`cards/${recipientId}/transactions/${recipientTransactionRef.key}`] = {
-                        amount: amount,
-                        timestamp: Date.now(),
-                        type: 'transfer',
-                        description: `Перевод с карты ${senderSnapshot.val().number}`
-                    };
-
-                    // Применяем все обновления одновременно
-                    await update(ref(database), updates);
+                    // Обновляем балансы
+                    await update(senderRef, {
+                        balance: sender.balance - finalAmount,
+                        totalCashback: (sender.totalCashback || 0) + cashbackAmount - (useCashback ? sender.totalCashback : 0),
+                        transactions: {
+                            ...(sender.transactions || {}),
+                            [Date.now()]: {
+                                type: 'transfer',
+                                amount: -amount,
+                                description: `Перевод на карту ${recipientNumber}`,
+                                timestamp: Date.now(),
+                                cashback: cashbackAmount,
+                                usedCashback: useCashback ? sender.totalCashback : 0
+                            }
+                        }
+                    });
+                    
+                    await update(recipientRef, {
+                        balance: recipient.balance + amount,
+                        transactions: {
+                            ...(recipient.transactions || {}),
+                            [Date.now()]: {
+                                type: 'deposit',
+                                amount: amount,
+                                description: `Перевод с карты ${sender.number}`,
+                                timestamp: Date.now()
+                            }
+                        }
+                    });
                     
                     showNotification('Перевод успешно выполнен');
                 } catch (error) {
-                    console.error('Transfer error:', error);
-                    showNotification('Ошибка при выполнении перевода', true);
+                    showNotification(error.message, true);
                 }
             }
         });

@@ -1,7 +1,7 @@
 .bank-card {
     width: 340px;
     height: 200px;
-    background: linear-gradient(135deg, var(--card-primary-color), var(--card-secondary-color));
+    background: linear-gradient(135deg, #6200ea, #3700b3) !important;
     border-radius: 24px;
     padding: 24px;
     position: relative;
@@ -16,6 +16,17 @@
     transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
     border: 1px solid rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(5px);
+}
+
+/* Матричная тема */
+.bank-card[theme="matrix"] {
+    background: #000 !important;
+}
+
+/* Премиум тема */
+.bank-card[theme="premium"] {
+    background: linear-gradient(135deg, #FFD700, #FFA500) !important;
+    box-shadow: 0 8px 32px rgba(255, 215, 0, 0.3);
 }
 
 /* Фоновый паттерн */
@@ -584,7 +595,10 @@
     100% { transform: translateY(10px); }
 }
 
-/* Базовый градиент для всех карт */
-.bank-card {
-    background: linear-gradient(135deg, var(--card-primary-color), var(--card-secondary-color));
+/* Стили для кастомной темы */
+.bank-card[theme="custom"] {
+    background: linear-gradient(135deg, 
+        var(--card-primary-color), 
+        var(--card-secondary-color)
+    ) !important;
 } 
