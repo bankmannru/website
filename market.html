@@ -143,6 +143,40 @@
                             rate: 0.05 // 5% кэшбэк
                         };
                         break;
+                    case 'instant_transfer':
+                        updates[`cards/${cardId}/features/instantTransfer`] = {
+                            active: true,
+                            activatedAt: timestamp,
+                            expiresAt: timestamp + (30 * 24 * 60 * 60 * 1000) // 30 дней
+                        };
+                        break;
+                    case 'analytics':
+                        updates[`cards/${cardId}/features/analytics`] = {
+                            active: true,
+                            activatedAt: timestamp,
+                            expiresAt: timestamp + (60 * 24 * 60 * 60 * 1000) // 60 дней
+                        };
+                        break;
+                    case 'auto_savings':
+                        updates[`cards/${cardId}/features/autoSavings`] = {
+                            active: true,
+                            activatedAt: timestamp,
+                            rate: 0.05 // 5% от входящих переводов
+                        };
+                        break;
+                    case 'custom_theme':
+                        updates[`cards/${cardId}/features/customTheme`] = {
+                            active: true,
+                            activatedAt: timestamp
+                        };
+                        break;
+                    case 'notifications':
+                        updates[`cards/${cardId}/features/notifications`] = {
+                            active: true,
+                            activatedAt: timestamp,
+                            expiresAt: timestamp + (90 * 24 * 60 * 60 * 1000) // 90 дней
+                        };
+                        break;
                 }
 
                 await update(ref(database), updates);
@@ -410,6 +444,66 @@
                     <p class='goodsdesc'>Защита карты от мошенников на 6 месяцев</p>
                     <p class='goodsprice'>750МР</p>
                     <md-filled-tonal-button onclick="buyProduct('insurance', 750)" trailing-icon>
+                        Купить
+                        <md-icon slot="trailing-icon">shopping_cart</md-icon>
+                    </md-filled-tonal-button>
+                </div>
+            </div>
+            <div class='product-card'>
+                <div class="product-content">
+                    <img class='goodsimg' src="Маркет/instant_transfer.png">
+                    <p class='goodstext'>Мгновенные переводы</p>
+                    <p class='goodsdesc'>Отключение задержки при переводах на 30 дней</p>
+                    <p class='goodsprice'>300МР</p>
+                    <md-filled-tonal-button onclick="buyProduct('instant_transfer', 300)" trailing-icon>
+                        Купить
+                        <md-icon slot="trailing-icon">shopping_cart</md-icon>
+                    </md-filled-tonal-button>
+                </div>
+            </div>
+            <div class='product-card'>
+                <div class="product-content">
+                    <img class='goodsimg' src="Маркет/analytics.png">
+                    <p class='goodstext'>Аналитика трат</p>
+                    <p class='goodsdesc'>Подробная статистика расходов на 60 дней</p>
+                    <p class='goodsprice'>800МР</p>
+                    <md-filled-tonal-button onclick="buyProduct('analytics', 800)" trailing-icon>
+                        Купить
+                        <md-icon slot="trailing-icon">shopping_cart</md-icon>
+                    </md-filled-tonal-button>
+                </div>
+            </div>
+            <div class='product-card'>
+                <div class="product-content">
+                    <img class='goodsimg' src="Маркет/auto_savings.png">
+                    <p class='goodstext'>Автокопилка</p>
+                    <p class='goodsdesc'>Автоматическое накопление 5% от входящих переводов</p>
+                    <p class='goodsprice'>600МР</p>
+                    <md-filled-tonal-button onclick="buyProduct('auto_savings', 600)" trailing-icon>
+                        Купить
+                        <md-icon slot="trailing-icon">shopping_cart</md-icon>
+                    </md-filled-tonal-button>
+                </div>
+            </div>
+            <div class='product-card'>
+                <div class="product-content">
+                    <img class='goodsimg' src="Маркет/custom_theme.png">
+                    <p class='goodstext'>Кастомная тема</p>
+                    <p class='goodsdesc'>Возможность создать свой дизайн карты</p>
+                    <p class='goodsprice'>1500МР</p>
+                    <md-filled-tonal-button onclick="buyProduct('custom_theme', 1500)" trailing-icon>
+                        Купить
+                        <md-icon slot="trailing-icon">shopping_cart</md-icon>
+                    </md-filled-tonal-button>
+                </div>
+            </div>
+            <div class='product-card'>
+                <div class="product-content">
+                    <img class='goodsimg' src="Маркет/notifications.png">
+                    <p class='goodstext'>Push-уведомления</p>
+                    <p class='goodsdesc'>Мгновенные уведомления о всех операциях на 90 дней</p>
+                    <p class='goodsprice'>400МР</p>
+                    <md-filled-tonal-button onclick="buyProduct('notifications', 400)" trailing-icon>
                         Купить
                         <md-icon slot="trailing-icon">shopping_cart</md-icon>
                     </md-filled-tonal-button>
