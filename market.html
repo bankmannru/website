@@ -1,652 +1,396 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    <script type="importmap">
-      {
-        "imports": {
-          "@material/web/": "https://esm.run/@material/web/"
-        }
-      }
-    </script>
-    <script type="module">
-      import '@material/web/all.js';
-      import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
-  
-      document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
-    </script>
-    <script src="settings.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const chipSet = document.querySelector('md-chip-set');
-            const products = document.querySelectorAll('.goodsdiv');
-            
-            function updateFilters() {
-                const selectedFilters = Array.from(chipSet.querySelectorAll('md-filter-chip[selected]'))
-                    .map(chip => chip.getAttribute('label'));
-                
-                products.forEach(product => {
-                    const description = product.querySelector('.goodsdesc').textContent;
-                    const price = product.querySelector('.goodsprice').textContent;
-                    
-                    if (selectedFilters.includes('Все')) {
-                        product.style.display = 'block';
-                        return;
-                    }
-                    
-                    const matches = selectedFilters.some(filter => {
-                        if (filter === 'До 1000₽') {
-                            const priceValue = parseInt(price.replace(/[^\d]/g, ''));
-                            return priceValue <= 1000;
-                        }
-                        if (filter === 'Свыше 1000₽') {
-                            const priceValue = parseInt(price.replace(/[^\d]/g, ''));
-                            return priceValue > 1000;
-                        }
-                        return description.includes(filter);
-                    });
-                    
-                    product.style.display = matches ? 'block' : 'none';
-                });
-            }
-            
-            chipSet.addEventListener('click', (e) => {
-                const chip = e.target.closest('md-filter-chip');
-                if (!chip) return;
-                
-                // Toggle the clicked chip
-                if (chip.hasAttribute('selected')) {
-                    chip.removeAttribute('selected');
-                } else {
-                    chip.setAttribute('selected', '');
-                }
-                
-                if (chip.getAttribute('label') === 'Все') {
-                    // If "Все" is selected, deselect others
-                    chipSet.querySelectorAll('md-filter-chip').forEach(c => {
-                        if (c !== chip) c.removeAttribute('selected');
-                    });
-                } else {
-                    // If another filter is selected, deselect "Все"
-                    const allChip = chipSet.querySelector('md-filter-chip[label="Все"]');
-                    if (allChip) allChip.removeAttribute('selected');
-                }
-                
-                // If no filters are selected, select "Все"
-                const selectedChips = chipSet.querySelectorAll('md-filter-chip[selected]');
-                if (selectedChips.length === 0) {
-                    const allChip = chipSet.querySelector('md-filter-chip[label="Все"]');
-                    if (allChip) allChip.setAttribute('selected', '');
-                }
-                
-                updateFilters();
-            });
-            
-            // Initial filter state
-            updateFilters();
-        });
-    </script>
-    <script type="module">
-        import { database } from './firebase-config.js';
-        import { ref, get, update } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
-
-        window.buyProduct = async function(productType, price) {
-            // Получаем ID карты из localStorage
-            const cardId = localStorage.getItem('currentCardId');
-
-            if (!cardId) {
-                showNotification('Пожалуйста, создайте или выберите карту', true);
-                setTimeout(() => {
-                    window.location.href = 'card_order.html';
-                }, 1500);
-                return;
-            }
-
-            try {
-                // Получаем данные карты
-                const cardRef = ref(database, `cards/${cardId}`);
-                const snapshot = await get(cardRef);
-                const cardData = snapshot.val();
-
-                if (!cardData) {
-                    showNotification('Карта не найдена', true);
-                    return;
-                }
-
-                // Проверяем баланс (убеждаемся, что это число)
-                const currentBalance = Number(cardData.balance) || 0;
-                if (currentBalance < price) {
-                    showNotification('Недостаточно средств', true);
-                    return;
-                }
-
-                // Создаем объект обновлений
-                const updates = {};
-                
-                // Обновляем баланс (убеждаемся, что это число)
-                const newBalance = currentBalance - price;
-                updates[`cards/${cardId}/balance`] = newBalance;
-
-                // Добавляем покупку в историю транзакций
-                const timestamp = Date.now();
-                updates[`cards/${cardId}/transactions/${timestamp}`] = {
-                    type: 'purchase',
-                    amount: -price,
-                    description: `Покупка ${getProductName(productType)}`,
-                    timestamp
-                };
-
-                // Активируем купленную функцию
-                switch (productType) {
-                    case 'premium':
-                        updates[`cards/${cardId}/premium`] = {
-                            active: true,
-                            activatedAt: timestamp,
-                            expiresAt: timestamp + (90 * 24 * 60 * 60 * 1000) // 90 дней
-                        };
-                        break;
-                    case 'cashback':
-                        updates[`cards/${cardId}/cashback`] = {
-                            active: true,
-                            activatedAt: timestamp,
-                            expiresAt: timestamp + (30 * 24 * 60 * 60 * 1000), // 30 дней
-                            rate: 0.05 // 5% кэшбэк
-                        };
-                        break;
-                    case 'neon_card':
-                    case 'hologram_card':
-                    case 'matrix_card':
-                    case 'animated_card':
-                        updates[`cards/${cardId}/design`] = {
-                            type: productType.replace('_card', ''),
-                            activatedAt: timestamp,
-                            animation: true
-                        };
-                        break;
-                    case 'custom_number':
-                        showCustomNumberDialog(cardId, newBalance, price, timestamp);
-                        return;
-                    case 'nickname':
-                        showNicknameDialog(cardId, newBalance, price, timestamp);
-                        return;
-                    case 'card_effects':
-                        updates[`cards/${cardId}/effects`] = {
-                            active: true,
-                            type: 'sparkle',
-                            activatedAt: timestamp
-                        };
-                        break;
-                    case 'insurance':
-                        updates[`cards/${cardId}/insurance`] = {
-                            active: true,
-                            activatedAt: timestamp,
-                            expiresAt: timestamp + (180 * 24 * 60 * 60 * 1000) // 180 дней
-                        };
-                        break;
-                }
-
-                await update(ref(database), updates);
-                showNotification('Покупка успешно совершена');
-
-            } catch (error) {
-                console.error('Purchase error:', error);
-                showNotification('Ошибка при совершении покупки', true);
-            }
-        }
-
-        function getProductName(type) {
-            const products = {
-                premium: 'Premium статус',
-                cashback: 'Повышенный кэшбэк'
-            };
-            return products[type] || type;
-        }
-
-        function showNotification(message, isError = false) {
-            const toast = document.createElement('div');
-            toast.className = `toast ${isError ? 'error' : 'success'}`;
-            toast.innerHTML = `
-                <md-icon>${isError ? 'error' : 'check_circle'}</md-icon>
-                <span>${message}</span>
-            `;
-            document.body.appendChild(toast);
-            
-            requestAnimationFrame(() => {
-                toast.style.opacity = '1';
-                toast.style.transform = 'translateX(-50%) translateY(0)';
-            });
-
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateX(-50%) translateY(20px)';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-    </script>
-    <div class='header' id="hiring-banner" style="display: none; align-items: center; justify-content: center;">Мы набираем работников для банк Маннру. 
-      <a href="https://forms.gle/GJFTNofAoNCuxMT37" style="margin-left: 10px;">
-          <md-filled-tonal-button style="background-color: #a5c8ff; color: #003060;">
-              Подать заявку
-              <svg slot="icon" viewBox="0 0 48 48"><path d="M6 40V8l38 16Zm3-4.65L36.2 24 9 12.5v8.4L21.1 24 9 27Zm0 0V12.5 27Z"/></svg>
-            </md-filled-tonal-button>
-      </a>
-  </div>
-    <h1 class='head'>Маркет</h1>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Маркет</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Nunito:ital,wght@0,200;1,200&family=Onest:wght@100..900&display=swap" rel="stylesheet">
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+    <title>Маркет - Банк Маннру</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    
+    <!-- Material Design -->
+    <script type="importmap">
+        {
+            "imports": {
+                "@material/web/": "https://esm.run/@material/web/"
+            }
+        }
+    </script>
+    <script type="module">
+        import '@material/web/all.js';
+    </script>
+
     <style>
-        /* Основной контейнер */
-        .page-container {
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: #FF7F50;
+            color: white;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .market-container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
         }
 
-        /* Переопределяем стили для контейнера продуктов */
-        .products-container {
-            width: 100%;
-            overflow-x: auto;
-            padding: 20px;
-            margin-top: 20px;
-            display: block !important; /* Принудительно переопределяем display */
-        }
-
-        .products-grid {
-            display: flex !important; /* Принудительно переопределяем display */
-            flex-direction: row !important;
-            flex-wrap: nowrap !important;
-            gap: 24px;
-            width: max-content; /* Позволяет контенту расширяться */
-            padding: 20px;
-        }
-
-        .product-card {
-            width: 300px !important;
-            min-width: 300px !important;
-            flex: 0 0 auto !important;
-            margin: 0 !important;
+        /* Заголовок маркета */
+        .market-header {
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
             padding: 24px;
-            height: 100%;
+            border-radius: 16px;
+            margin-bottom: 24px;
             display: flex;
-            flex-direction: column;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .product-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 16px;
-            height: 100%;
             justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        .goodsimg {
-            width: 140px;
-            height: 140px;
-            object-fit: contain;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 12px;
-            transition: transform 0.3s ease;
-        }
-
-        .product-card:hover .goodsimg {
-            transform: scale(1.05);
-        }
-
-        .goodstext {
-            font-size: 20px;
-            font-weight: 600;
+        .market-header h1 {
             margin: 0;
-            color: white;
-            text-align: center;
+            font-size: 24px;
         }
 
-        .goodsdesc {
-            text-align: center;
+        /* Фильтры */
+        .market-filters {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 16px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Сетка товаров */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+            padding: 24px;
+        }
+
+        /* Карточка товара */
+        .product-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .product-title {
+            font-size: 18px;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .product-description {
+            font-size: 14px;
             color: rgba(255, 255, 255, 0.8);
             margin: 0;
-            font-size: 14px;
-            line-height: 1.5;
         }
 
-        .goodsprice {
-            font-size: 24px;
+        .product-price {
+            font-size: 20px;
             font-weight: 700;
             color: #4CAF50;
-            margin: 0;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        md-filled-tonal-button {
-            --md-filled-tonal-button-container-color: rgba(255, 255, 255, 0.1);
-            --md-filled-tonal-button-hover-container-color: rgba(255, 255, 255, 0.2);
-            width: 100%;
-            height: 40px;
-            --md-filled-tonal-button-label-text-color: white;
+        /* Диалог создания товара */
+        #createItemDialog {
+            --md-dialog-container-color: rgba(30, 30, 30, 0.95);
+            --md-dialog-headline-color: white;
+            --md-dialog-supporting-text-color: rgba(255, 255, 255, 0.7);
+            --md-sys-color-outline: rgba(255, 255, 255, 0.2);
         }
 
-        md-chip-set {
-            margin: 0;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            backdrop-filter: blur(10px);
-        }
-
-        .market-filters {
+        .dialog-content {
+            padding: 24px;
             display: flex;
-            gap: 16px;
-            margin-bottom: 24px;
+            flex-direction: column;
+            gap: 20px;
+            min-width: 400px;
         }
 
-        md-outlined-select,
-        md-outlined-text-field {
-            --md-outlined-field-outline-color: rgba(255, 255, 255, 0.2);
-            --md-outlined-field-label-text-color: rgba(255, 255, 255, 0.7);
-            --md-outlined-field-hover-outline-color: rgba(255, 255, 255, 0.3);
-            --md-outlined-field-focus-outline-color: white;
-            min-width: 200px;
+        #createItemDialog md-filled-text-field,
+        #createItemDialog md-filled-select {
+            width: 100%;
+            --md-filled-field-container-color: rgba(255, 255, 255, 0.1);
+            --md-filled-field-label-text-color: rgba(255, 255, 255, 0.7);
+            --md-filled-field-input-text-color: white;
         }
 
-        /* Стилизация скроллбара */
-        .products-container::-webkit-scrollbar {
-            height: 8px;
+        /* Уведомления */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1000;
+            animation: notification 0.3s ease-out;
         }
 
-        .products-container::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-        }
-
-        .products-container::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 4px;
-        }
-
-        .products-container::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.4);
-        }
-
-        @media (max-width: 600px) {
-            .market-filters {
-                flex-direction: column;
+        @keyframes notification {
+            from {
+                transform: translateX(-50%) translateY(100px);
+                opacity: 0;
             }
-            .filters-container {
-                flex-direction: column;
-                align-items: stretch;
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
             }
-            .product-card {
-                width: 260px !important;
-                min-width: 260px !important;
+        }
+
+        .notification.error {
+            background: rgba(244, 67, 54, 0.9);
+        }
+
+        .notification.success {
+            background: rgba(76, 175, 80, 0.9);
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .market-container {
+                padding: 10px;
+            }
+
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .dialog-content {
+                min-width: auto;
             }
         }
     </style>
 </head>
 <body>
-  <md-chip-set style="margin-top: 10px; margin-left: 10px;">
-    <md-filter-chip label="Все" selected></md-filter-chip>
-    <md-filter-chip label="Карты"></md-filter-chip>
-    <md-filter-chip label="До 1000МР"></md-filter-chip>
-    <md-filter-chip label="Свыше 1000МР"></md-filter-chip>
-    <md-filter-chip label="Новинки"></md-filter-chip>
-</md-chip-set>
-    <div class="products-container">
-        <div class="products-grid">
-            <div class='product-card'>
-                <div class="product-content">
-                    <img class='goodsimg' src="Маркет/premium.png">
-                    <p class='goodstext'>Premium статус</p>
-                    <p class='goodsdesc'>Получите особый статус и эксклюзивный дизайн карты</p>
-                    <p class='goodsprice'>2000МР</p>
-                    <md-filled-tonal-button onclick="buyProduct('premium', 2000)" trailing-icon>
-                        Купить
-                        <md-icon slot="trailing-icon">shopping_cart</md-icon>
-                    </md-filled-tonal-button>
-                </div>
-            </div>
-            <div class='product-card'>
-                <div class="product-content">
-                    <img class='goodsimg' src="Маркет/cashback.png">
-                    <p class='goodstext'>Кэшбэк 5%</p>
-                    <p class='goodsdesc'>Повышенный кэшбэк на все покупки на 30 дней</p>
-                    <p class='goodsprice'>500МР</p>
-                    <md-filled-tonal-button onclick="buyProduct('cashback', 500)" trailing-icon>
-                        Купить
-                        <md-icon slot="trailing-icon">shopping_cart</md-icon>
-                    </md-filled-tonal-button>
-                </div>
-            </div>
-            <div class='product-card'>
-                <div class="product-content">
-                    <img class='goodsimg' src="Маркет/custom_design.png">
-                    <p class='goodstext'>Матричная карта</p>
-                    <p class='goodsdesc'>Эксклюзивный матричный дизайн карты</p>
-                    <p class='goodsprice'>1000МР</p>
-                    <md-filled-tonal-button onclick="buyProduct('matrix_card', 1000)" trailing-icon>
-                        Купить
-                        <md-icon slot="trailing-icon">shopping_cart</md-icon>
-                    </md-filled-tonal-button>
-                </div>
-            </div>
-            <div class='product-card'>
-                <div class="product-content">
-                    <img class='goodsimg' src="Маркет/insurance.png">
-                    <p class='goodstext'>Страховка</p>
-                    <p class='goodsdesc'>Защита карты от мошенников на 6 месяцев</p>
-                    <p class='goodsprice'>750МР</p>
-                    <md-filled-tonal-button onclick="buyProduct('insurance', 750)" trailing-icon>
-                        Купить
-                        <md-icon slot="trailing-icon">shopping_cart</md-icon>
-                    </md-filled-tonal-button>
-                </div>
-            </div>
-            <div class='product-card'>
-                <div class="product-content">
-                    <img class='goodsimg' src="Маркет/neon_card.png">
-                    <p class='goodstext'>Неоновая карта</p>
-                    <p class='goodsdesc'>Светящийся неоновый дизайн карты с анимацией</p>
-                    <p class='goodsprice'>1500МР</p>
-                    <md-filled-tonal-button onclick="buyProduct('neon_card', 1500)" trailing-icon>
-                        Купить
-                        <md-icon slot="trailing-icon">shopping_cart</md-icon>
-                    </md-filled-tonal-button>
-                </div>
-            </div>
-            <div class='product-card'>
-                <div class="product-content">
-                    <img class='goodsimg' src="Маркет/hologram_card.png">
-                    <p class='goodstext'>Голографическая карта</p>
-                    <p class='goodsdesc'>Переливающийся голографический эффект</p>
-                    <p class='goodsprice'>2500МР</p>
-                    <md-filled-tonal-button onclick="buyProduct('hologram_card', 2500)" trailing-icon>
-                        Купить
-                        <md-icon slot="trailing-icon">shopping_cart</md-icon>
-                    </md-filled-tonal-button>
-                </div>
-            </div>
-            <div class='product-card'>
-                <div class="product-content">
-                    <img class='goodsimg' src="Маркет/custom_number.png">
-                    <p class='goodstext'>Выбор номера</p>
-                    <p class='goodsdesc'>Возможность выбрать красивый номер карты</p>
-                    <p class='goodsprice'>1000МР</p>
-                    <md-filled-tonal-button onclick="buyProduct('custom_number', 1000)" trailing-icon>
-                        Купить
-                        <md-icon slot="trailing-icon">shopping_cart</md-icon>
-                    </md-filled-tonal-button>
-                </div>
-            </div>
-            <div class='product-card'>
-                <div class="product-content">
-                    <img class='goodsimg' src="Маркет/animated_card.png">
-                    <p class='goodstext'>Анимированная карта</p>
-                    <p class='goodsdesc'>Движущиеся элементы на дизайне карты</p>
-                    <p class='goodsprice'>3000МР</p>
-                    <md-filled-tonal-button onclick="buyProduct('animated_card', 3000)" trailing-icon>
-                        Купить
-                        <md-icon slot="trailing-icon">shopping_cart</md-icon>
-                    </md-filled-tonal-button>
-                </div>
-            </div>
-            <div class='product-card'>
-                <div class="product-content">
-                    <img class='goodsimg' src="Маркет/nickname.png">
-                    <p class='goodstext'>Никнейм на карте</p>
-                    <p class='goodsdesc'>Добавьте свой никнейм на карту</p>
-                    <p class='goodsprice'>500МР</p>
-                    <md-filled-tonal-button onclick="buyProduct('nickname', 500)" trailing-icon>
-                        Купить
-                        <md-icon slot="trailing-icon">shopping_cart</md-icon>
-                    </md-filled-tonal-button>
-                </div>
-            </div>
-            <div class='product-card'>
-                <div class="product-content">
-                    <img class='goodsimg' src="Маркет/card_effects.png">
-                    <p class='goodstext'>Эффекты карты</p>
-                    <p class='goodsdesc'>Специальные эффекты при использовании карты</p>
-                    <p class='goodsprice'>1200МР</p>
-                    <md-filled-tonal-button onclick="buyProduct('card_effects', 1200)" trailing-icon>
-                        Купить
-                        <md-icon slot="trailing-icon">shopping_cart</md-icon>
-                    </md-filled-tonal-button>
-                </div>
-            </div>
+    <div class="head">Маркет</div>
+    <div class="market-container">
+        <!-- Заголовок -->
+        <div class="market-header">
+            <h1>Маркет</h1>
+            <md-filled-button id="createItemButton">
+                <md-icon slot="icon">add</md-icon>
+                Создать объявление
+            </md-filled-button>
+        </div>
+
+        <!-- Фильтры -->
+        <div class="market-filters">
+            <md-chip-set>
+                <md-filter-chip label="Все" selected></md-filter-chip>
+                <md-filter-chip label="Premium"></md-filter-chip>
+                <md-filter-chip label="Эффекты"></md-filter-chip>
+                <md-filter-chip label="Дизайны"></md-filter-chip>
+                <md-filter-chip label="До 1000 МР"></md-filter-chip>
+                <md-filter-chip label="Свыше 1000 МР"></md-filter-chip>
+            </md-chip-set>
+        </div>
+
+        <!-- Сетка товаров -->
+        <div class="products-grid" id="productsGrid">
+            <!-- Товары будут добавлены через JavaScript -->
         </div>
     </div>
-    <div style="position: fixed; bottom: 20px; right: 20px; display: flex; gap: 10px;">
-      <md-filled-icon-button onclick="window.location.href='index.html';">
-        <md-icon><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Zm320-350Z"/></svg></md-icon>
-      </md-filled-icon-button>
-      <md-filled-icon-button onclick="window.location.href='market.html';">
-        <md-icon><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M160-720v-80h640v80H160Zm0 560v-240h-40v-80l40-200h640l40 200v80h-40v240h-80v-240H560v240H160Zm80-80h240v-160H240v160Zm-38-240h556-556Zm0 0h556l-24-120H226l-24 120Z"/></svg></md-icon>
-      </md-filled-icon-button>
-      <md-filled-icon-button onclick="window.location.href='sitehistory.html';">
-        <md-icon><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M480-120q-138 0-240.5-91.5T122-440h82q14 104 92.5 172T480-200q117 0 198.5-81.5T760-480q0-117-81.5-198.5T480-760q-69 0-129 32t-101 88h110v80H120v-240h80v94q51-64 124.5-99T480-840q75 0 140.5 28.5t114 77q48.5 48.5 77 114T840-480q0 75-28.5 140.5t-77 114q-48.5 48.5-114 77T480-120Zm112-192L440-464v-216h80v184l128 128-56 56Z"/></md-icon>
-      </md-filled-icon-button>
-      <md-filled-icon-button onclick="window.location.href='contacts.html';">
-        <md-icon><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M480-400q33 0 56.5-23.5T560-480q0-33-23.5-56.5T480-560q-33 0-56.5 23.5T400-480q0 33 23.5 56.5T480-400ZM320-240h320v-23q0-24-13-44t-36-30q-26-11-53.5-17t-57.5-6q-30 0-57.5 6T369-337q-23 10-36 30t-13 44v23ZM720-80H240q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80Zm0-80v-446L526-800H240v640h480Zm-480 0v-640 640Z"/></md-icon>
-      </md-filled-icon-button>
-  </div>
-    <script type="module">
-        // Импортируем иконки Material Design
-        import '@material/web/icon/icon.js';
-    </script>
+
+    <!-- Диалог создания товара -->
+    <md-dialog id="createItemDialog">
+        <div slot="headline">Создать объявление</div>
+        <div slot="content" class="dialog-content">
+            <md-filled-text-field
+                label="Название товара"
+                id="itemName"
+                required>
+            </md-filled-text-field>
+            
+            <md-filled-text-field
+                label="Цена (МР)"
+                id="itemPrice"
+                type="number"
+                min="1"
+                required>
+            </md-filled-text-field>
+            
+            <md-filled-text-field
+                label="Описание"
+                id="itemDescription"
+                type="text"
+                rows="3"
+                multiline
+                required>
+            </md-filled-text-field>
+            
+            <md-filled-text-field
+                label="URL изображения"
+                id="itemImage"
+                type="url">
+            </md-filled-text-field>
+            
+            <md-filled-select
+                label="Категория"
+                id="itemCategory"
+                required>
+                <md-select-option value="premium">Premium</md-select-option>
+                <md-select-option value="effects">Эффекты</md-select-option>
+                <md-select-option value="designs">Дизайны</md-select-option>
+                <md-select-option value="other">Другое</md-select-option>
+            </md-filled-select>
+        </div>
+        <div slot="actions">
+            <md-text-button id="cancelButton">Отмена</md-text-button>
+            <md-filled-button id="createButton">Создать</md-filled-button>
+        </div>
+    </md-dialog>
+
     <script type="module">
         import { database } from './firebase-config.js';
-        import { ref, onValue } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+        import { ref, get, set, push, onValue } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
 
-        const hiringBannerRef = ref(database, 'settings/hiringBannerEnabled');
-        onValue(hiringBannerRef, (snapshot) => {
-            const bannerEnabled = snapshot.val();
-            const banner = document.getElementById('hiring-banner');
-            banner.style.display = bannerEnabled ? 'flex' : 'none';
+        // Функция показа уведомлений
+        function showNotification(message, isError = false) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${isError ? 'error' : 'success'}`;
+            notification.innerHTML = `
+                <md-icon>${isError ? 'error' : 'check_circle'}</md-icon>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+
+        // Загрузка товаров
+        function loadProducts() {
+            const productsRef = ref(database, 'market/items');
+            onValue(productsRef, (snapshot) => {
+                const products = snapshot.val() || {};
+                const grid = document.getElementById('productsGrid');
+                grid.innerHTML = '';
+
+                Object.entries(products).forEach(([id, product]) => {
+                    const card = document.createElement('div');
+                    card.className = 'product-card';
+                    card.innerHTML = `
+                        <img src="${product.image}" class="product-image" alt="${product.name}">
+                        <h3 class="product-title">${product.name}</h3>
+                        <p class="product-description">${product.description}</p>
+                        <p class="product-price">${product.price} МР</p>
+                        <md-filled-tonal-button onclick="buyProduct('${id}', ${product.price})">
+                            Купить
+                            <md-icon slot="trailing-icon">shopping_cart</md-icon>
+                        </md-filled-tonal-button>
+                    `;
+                    grid.appendChild(card);
+                });
+            });
+        }
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProducts();
+
+            const dialog = document.getElementById('createItemDialog');
+            const createButton = document.getElementById('createItemButton');
+            const dialogCreateButton = document.getElementById('createButton');
+            const dialogCancelButton = document.getElementById('cancelButton');
+
+            // Открытие диалога
+            createButton?.addEventListener('click', () => dialog?.show());
+
+            // Обработка кнопки "Создать" в диалоге
+            dialogCreateButton?.addEventListener('click', async () => {
+                try {
+                    const name = document.getElementById('itemName')?.value;
+                    const price = Number(document.getElementById('itemPrice')?.value);
+                    const description = document.getElementById('itemDescription')?.value;
+                    const image = document.getElementById('itemImage')?.value;
+                    const category = document.getElementById('itemCategory')?.value;
+
+                    if (!name || !price || !description || !category) {
+                        throw new Error('Заполните все обязательные поля');
+                    }
+
+                    const sellerId = localStorage.getItem('currentCardId');
+                    if (!sellerId) {
+                        throw new Error('Необходимо войти в аккаунт');
+                    }
+
+                    const itemRef = push(ref(database, 'market/items'));
+                    await set(itemRef, {
+                        name,
+                        price,
+                        description,
+                        image: image || 'default-item.png',
+                        category,
+                        sellerId,
+                        type: 'user',
+                        createdAt: Date.now()
+                    });
+
+                    showNotification('Товар успешно создан!');
+                    dialog.close();
+                    location.reload();
+                } catch (error) {
+                    console.error('Ошибка:', error);
+                    showNotification(error.message, true);
+                }
+            });
+
+            // Обработка кнопки "Отмена" в диалоге
+            dialogCancelButton?.addEventListener('click', () => {
+                dialog.close();
+            });
         });
-    </script>
-    <script>
-        function showCustomNumberDialog(cardId, newBalance, price, timestamp) {
-            const dialog = document.createElement('md-dialog');
-            dialog.innerHTML = `
-                <div slot="headline">Выберите номер карты</div>
-                <div slot="content" class="dialog-content">
-                    <md-outlined-text-field
-                        label="Введите желаемый номер"
-                        type="text"
-                        maxlength="3"
-                        pattern="[0-9]*"
-                        id="custom-number-input">
-                    </md-outlined-text-field>
-                    <p style="color: rgba(0,0,0,0.6);">Введите 3 цифры для номера карты</p>
-                </div>
-                <div slot="actions">
-                    <md-text-button value="cancel">Отмена</md-text-button>
-                    <md-text-button value="confirm">Подтвердить</md-text-button>
-                </div>
-            `;
-            
-            document.body.appendChild(dialog);
-            dialog.show();
-            
-            dialog.addEventListener('close', async (e) => {
-                if (e.target.returnValue === 'confirm') {
-                    const number = document.getElementById('custom-number-input').value;
-                    if (number.length === 3 && /^\d+$/.test(number)) {
-                        const updates = {
-                            [`cards/${cardId}/balance`]: newBalance,
-                            [`cards/${cardId}/number`]: number,
-                            [`cards/${cardId}/transactions/${timestamp}`]: {
-                                type: 'purchase',
-                                amount: -price,
-                                description: 'Покупка выбора номера карты',
-                                timestamp
-                            }
-                        };
-                        await update(ref(database), updates);
-                        showNotification('Номер карты успешно изменен');
-                    }
-                }
-                dialog.remove();
-            });
-        }
 
-        function showNicknameDialog(cardId, newBalance, price, timestamp) {
-            const dialog = document.createElement('md-dialog');
-            dialog.innerHTML = `
-                <div slot="headline">Добавить никнейм на карту</div>
-                <div slot="content" class="dialog-content">
-                    <md-outlined-text-field
-                        label="Введите никнейм"
-                        type="text"
-                        maxlength="15"
-                        id="nickname-input">
-                    </md-outlined-text-field>
-                    <p style="color: rgba(0,0,0,0.6);">До 15 символов</p>
-                </div>
-                <div slot="actions">
-                    <md-text-button value="cancel">Отмена</md-text-button>
-                    <md-text-button value="confirm">Подтвердить</md-text-button>
-                </div>
-            `;
-            
-            document.body.appendChild(dialog);
-            dialog.show();
-            
-            dialog.addEventListener('close', async (e) => {
-                if (e.target.returnValue === 'confirm') {
-                    const nickname = document.getElementById('nickname-input').value;
-                    if (nickname) {
-                        const updates = {
-                            [`cards/${cardId}/balance`]: newBalance,
-                            [`cards/${cardId}/nickname`]: nickname,
-                            [`cards/${cardId}/transactions/${timestamp}`]: {
-                                type: 'purchase',
-                                amount: -price,
-                                description: 'Покупка никнейма на карту',
-                                timestamp
-                            }
-                        };
-                        await update(ref(database), updates);
-                        showNotification('Никнейм успешно добавлен на карту');
-                    }
+        // Функция покупки товара
+        window.buyProduct = async function(productId, price) {
+            try {
+                const cardId = localStorage.getItem('currentCardId');
+                if (!cardId) {
+                    throw new Error('Необходимо войти в аккаунт');
                 }
-                dialog.remove();
-            });
-        }
+
+                const cardRef = ref(database, `cards/${cardId}`);
+                const snapshot = await get(cardRef);
+                const card = snapshot.val();
+
+                if (!card || card.balance < price) {
+                    throw new Error('Недостаточно средств');
+                }
+
+                // Здесь добавить логику покупки товара
+                showNotification('Товар успешно куплен!');
+            } catch (error) {
+                showNotification(error.message, true);
+            }
+        };
     </script>
 </body>
 </html>
