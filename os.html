@@ -251,6 +251,11 @@
                                   <h3>Математика</h3>
                                   <p>Решайте примеры на время</p>
                               </div>
+                              <div class="earning-card" onclick="createWindow('integrator')">
+                                  <md-icon>integration_instructions</md-icon>
+                                  <h3>Number Integrator</h3>
+                                  <p>Интегрируйте числа для заработка</p>
+                              </div>
                           </div>
                       </div>
                   `;
@@ -813,16 +818,37 @@
                   break;
               case 'memory':
                   title = 'Память';
-                  const currentCardId = localStorage.getItem('currentCardId');
-                  content = `<iframe src="memory.html?cardId=${currentCardId}" style="width:100%;height:100%;border:none;"></iframe>`;
+                  const memoryCardId = localStorage.getItem('currentCardId');
+                  content = `<iframe src="memory.html?currentCardId=${memoryCardId}" style="width:100%;height:100%;border:none;"></iframe>`;
                   window.style.width = '800px';
                   window.style.height = '600px';
                   break;
               case 'math':
                   title = 'Математика';
-                  const cardId = localStorage.getItem('currentCardId');
-                  content = `<iframe src="math.html?cardId=${cardId}" style="width:100%;height:100%;border:none;"></iframe>`;
+                  const mathCardId = localStorage.getItem('currentCardId');
+                  content = `<iframe src="math.html?currentCardId=${mathCardId}" style="width:100%;height:100%;border:none;"></iframe>`;
                   window.style.width = '800px';
+                  window.style.height = '600px';
+                  break;
+              case 'integrator':
+                  title = 'Number Integrator';
+                  const integratorCardId = localStorage.getItem('currentCardId');
+                  console.log('Открытие Number Integrator:', {
+                      currentCardId: integratorCardId,
+                      localStorage: {
+                          currentCardId: localStorage.getItem('currentCardId'),
+                          currentCard: localStorage.getItem('currentCard')
+                      }
+                  });
+                  
+                  if (!integratorCardId) {
+                      alert('Пожалуйста, войдите в аккаунт в банке!');
+                      return;
+                  }
+                  
+                  // Напрямую формируем URL с параметрами
+                  content = `<iframe src="integrator.html?currentCardId=${encodeURIComponent(integratorCardId)}" style="width:100%;height:100%;border:none;"></iframe>`;
+                  window.style.width = '400px';
                   window.style.height = '600px';
                   break;
           }
