@@ -9,14 +9,14 @@
     
     <!-- Material Design -->
     <script type="importmap">
-        {
-            "imports": {
-                "@material/web/": "https://esm.run/@material/web/"
-            }
+      {
+        "imports": {
+          "@material/web/": "https://esm.run/@material/web/"
         }
+      }
     </script>
     <script type="module">
-        import '@material/web/all.js';
+      import '@material/web/all.js';
     </script>
 
     <style>
@@ -83,6 +83,8 @@
             gap: 16px;
             transition: transform 0.2s, box-shadow 0.2s;
             border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 100%;
+            box-sizing: border-box;
         }
 
         .product-card:hover {
@@ -101,12 +103,15 @@
             font-size: 18px;
             font-weight: 500;
             margin: 0;
+            word-break: break-word;
         }
 
         .product-description {
             font-size: 14px;
             color: rgba(255, 255, 255, 0.8);
             margin: 0;
+            word-break: break-word;
+            overflow-wrap: break-word;
         }
 
         .product-price {
@@ -178,44 +183,85 @@
         /* Адаптивность */
         @media (max-width: 768px) {
             .market-container {
-                padding: 10px;
+                padding: 8px;
+                width: 100%;
+                box-sizing: border-box;
             }
 
             .products-grid {
                 grid-template-columns: 1fr;
-                padding: 12px;
-            }
-
-            .dialog-content {
-                min-width: auto;
-                width: 100%;
-                padding: 16px;
-            }
-
-            #createItemDialog {
-                margin: 16px;
-                max-width: calc(100vw - 32px);
+                padding: 8px;
+                gap: 16px;
             }
 
             .product-card {
-                margin-bottom: 16px;
+                padding: 16px;
+                margin: 0;
+            }
+
+            .product-image {
+                height: 160px;
+            }
+
+            .product-title {
+                font-size: 16px;
+            }
+
+            .product-description {
+                font-size: 13px;
+                max-height: 60px;
+                overflow: hidden;
+                display: -webkit-box;
+                -webkit-line-clamp: 3;
+                -webkit-box-orient: vertical;
+            }
+
+            .product-price {
+                font-size: 18px;
+            }
+
+            md-filled-tonal-button {
+                width: 100%;
             }
 
             .market-header {
                 flex-direction: column;
                 gap: 16px;
                 text-align: center;
+                padding: 16px;
+                margin-bottom: 16px;
             }
 
             .market-filters {
                 overflow-x: auto;
-                padding: 12px;
+                padding: 8px;
+                margin-bottom: 16px;
             }
 
             md-chip-set {
                 display: flex;
                 gap: 8px;
                 padding-bottom: 4px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+
+            md-chip-set::-webkit-scrollbar {
+                display: none;
+            }
+
+            #createItemDialog {
+                --md-dialog-container-padding: 16px;
+                width: 100%;
+                max-width: 100%;
+                margin: 0;
+                border-radius: 16px;
+            }
+
+            .dialog-content {
+                padding: 16px;
+                gap: 16px;
             }
         }
     </style>
@@ -235,20 +281,20 @@
         <!-- Фильтры -->
         <div class="market-filters">
             <md-chip-set>
-                <md-filter-chip label="Все" selected></md-filter-chip>
+    <md-filter-chip label="Все" selected></md-filter-chip>
                 <md-filter-chip label="Premium"></md-filter-chip>
                 <md-filter-chip label="Эффекты"></md-filter-chip>
                 <md-filter-chip label="Дизайны"></md-filter-chip>
                 <md-filter-chip label="До 1000 МР"></md-filter-chip>
                 <md-filter-chip label="Свыше 1000 МР"></md-filter-chip>
-            </md-chip-set>
-        </div>
+</md-chip-set>
+                </div>
 
         <!-- Сетка товаров -->
         <div class="products-grid" id="productsGrid">
             <!-- Товары будут добавлены через JavaScript -->
-        </div>
-    </div>
+                </div>
+            </div>
 
     <!-- Диалог создания товара -->
     <md-dialog id="createItemDialog">
@@ -305,11 +351,11 @@
                 <md-select-option value="designs">Дизайны</md-select-option>
                 <md-select-option value="other">Другое</md-select-option>
             </md-filled-select>
-        </div>
+    </div>
         <div slot="actions">
-            <md-text-button value="cancel">Отмена</md-text-button>
-            <md-filled-button value="create">Создать</md-filled-button>
-        </div>
+            <md-text-button id="cancelButton">Отмена</md-text-button>
+            <md-filled-button id="createButton">Создать</md-filled-button>
+  </div>
     </md-dialog>
 
     <script type="module">
@@ -363,14 +409,14 @@
 
             const dialog = document.getElementById('createItemDialog');
             const createButton = document.getElementById('createItemButton');
+            const dialogCreateButton = document.getElementById('createButton');
+            const dialogCancelButton = document.getElementById('cancelButton');
 
             // Открытие диалога
             createButton?.addEventListener('click', () => dialog?.show());
 
-            // Обработка действий диалога
-            dialog?.addEventListener('closed', async (e) => {
-                if (e.detail.action !== 'create') return;
-                
+            // Обработка кнопки "Создать"
+            dialogCreateButton?.addEventListener('click', async () => {
                 try {
                     const name = document.getElementById('itemName')?.value;
                     const price = Number(document.getElementById('itemPrice')?.value);
@@ -400,12 +446,17 @@
                     });
 
                     showNotification('Товар успешно создан!');
+                    dialog.close();
                     location.reload();
                 } catch (error) {
                     console.error('Ошибка:', error);
                     showNotification(error.message, true);
-                    dialog.show(); // Показываем диалог снова в случае ошибки
                 }
+            });
+
+            // Обработка кнопки "Отмена"
+            dialogCancelButton?.addEventListener('click', () => {
+                dialog.close();
             });
         });
 
