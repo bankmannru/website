@@ -589,6 +589,70 @@
                                   transparent 20%);
             pointer-events: none;
         }
+
+        .transaction-amount.negative {
+            color: var(--md-sys-color-error);
+        }
+
+        .messages-section {
+            margin-bottom: 20px;
+        }
+
+        .messages-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .message-item {
+            background: var(--md-sys-color-surface-variant);
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+            position: relative;
+        }
+
+        .message-item:hover {
+            background: var(--md-sys-color-surface-variant-hover);
+        }
+
+        .message-item.unread {
+            background: var(--md-sys-color-primary-container);
+        }
+
+        .message-item.unread:hover {
+            background: var(--md-sys-color-primary-container-hover);
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            color: var(--md-sys-color-on-surface-variant);
+        }
+
+        .message-subject {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .message-body {
+            color: var(--md-sys-color-on-surface-variant);
+            font-size: 0.9em;
+        }
+
+        .unread-badge {
+            background: var(--md-sys-color-error);
+            color: var(--md-sys-color-on-error);
+            padding: 2px 6px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-left: 8px;
+        }
     </style>
     <script>
         // Добавляем отслеживание движения мыши для эффекта sparkle
@@ -634,63 +698,83 @@
             </div>
         </div>
 
-        <div class="balance-section">
-            <h2 class="title-large">Баланс</h2>
-            <div class="balance-amount" id="balance-amount">0 ₽</div>
-            <div style="display: flex; gap: 12px;">
-                <md-outlined-button id="transfer-button">
-                    <span slot="icon" class="material-symbols-outlined">send</span>
-                    Перевести
-                </md-outlined-button>
-                <md-outlined-button id="share-button">
-                    <span slot="icon" class="material-symbols-outlined">share</span>
-                    Поделиться
-                </md-outlined-button>
-                <md-outlined-button id="qr-button">
-                    <span slot="icon" class="material-symbols-outlined">qr_code</span>
-                    QR-код
-                </md-outlined-button>
+        <div class="account-content">
+            <div class="account-header">
+                <h2>Личный кабинет</h2>
             </div>
-        </div>
+            <!-- Добавляем вкладку с почтой -->
+            <div class="account-section messages-section">
+                <h3>
+                    <md-icon>mail</md-icon>
+                    Почта
+                    <span id="unreadCount" class="unread-badge"></span>
+                </h3>
+                <div id="messagesList" class="messages-list">
+                    <!-- Сообщения будут добавлены через JavaScript -->
+                </div>
+            </div>
+            
+            <div class="account-section">
+                <h3>
+                    <md-icon>account_balance_wallet</md-icon>
+                    Баланс
+                </h3>
+                <div class="balance-amount" id="balance-amount">0 ₽</div>
+                <div style="display: flex; gap: 12px;">
+                    <md-outlined-button id="transfer-button">
+                        <span slot="icon" class="material-symbols-outlined">send</span>
+                        Перевести
+                    </md-outlined-button>
+                    <md-outlined-button id="share-button">
+                        <span slot="icon" class="material-symbols-outlined">share</span>
+                        Поделиться
+                    </md-outlined-button>
+                    <md-outlined-button id="qr-button">
+                        <span slot="icon" class="material-symbols-outlined">qr_code</span>
+                        QR-код
+                    </md-outlined-button>
+                </div>
+            </div>
 
-        <div class="transactions-section">
-            <h2 class="title-large">История операций</h2>
-            <div class="transaction-list" id="transaction-list">
-                <!-- Transactions will be added here -->
+            <div class="transactions-section">
+                <h2 class="title-large">История операций</h2>
+                <div class="transaction-list" id="transaction-list">
+                    <!-- Transactions will be added here -->
+                </div>
             </div>
-        </div>
 
-        <!-- Добавляем диалог для деталей транзакции -->
-        <md-dialog id="transaction-details-dialog" style="display: none;">
-            <div slot="content" class="dialog-content">
-                <div class="dialog-header" id="dialog-drag-handle">
-                    <span class="dialog-title">Детали операции</span>
-                    <md-icon-button onclick="document.getElementById('transaction-details-dialog').close()">
-                        <md-icon>close</md-icon>
-                    </md-icon-button>
+            <!-- Добавляем диалог для деталей транзакции -->
+            <md-dialog id="transaction-details-dialog" style="display: none;">
+                <div slot="content" class="dialog-content">
+                    <div class="dialog-header" id="dialog-drag-handle">
+                        <span class="dialog-title">Детали операции</span>
+                        <md-icon-button onclick="document.getElementById('transaction-details-dialog').close()">
+                            <md-icon>close</md-icon>
+                        </md-icon-button>
+                    </div>
+                    <div class="transaction-detail-item">
+                        <span class="label">Описание:</span>
+                        <span id="detail-description"></span>
+                    </div>
+                    <div class="transaction-detail-item">
+                        <span class="label">Сумма:</span>
+                        <span id="detail-amount"></span>
+                    </div>
+                    <div class="transaction-detail-item">
+                        <span class="label">Дата и время:</span>
+                        <span id="detail-datetime"></span>
+                    </div>
+                    <div class="transaction-detail-item">
+                        <span class="label">ID операции:</span>
+                        <span id="detail-id"></span>
+                    </div>
+                    <div id="detail-cashback" class="transaction-detail-item" style="display: none;">
+                        <span class="label">Кэшбэк:</span>
+                        <span id="detail-cashback-amount"></span>
+                    </div>
                 </div>
-                <div class="transaction-detail-item">
-                    <span class="label">Описание:</span>
-                    <span id="detail-description"></span>
-                </div>
-                <div class="transaction-detail-item">
-                    <span class="label">Сумма:</span>
-                    <span id="detail-amount"></span>
-                </div>
-                <div class="transaction-detail-item">
-                    <span class="label">Дата и время:</span>
-                    <span id="detail-datetime"></span>
-                </div>
-                <div class="transaction-detail-item">
-                    <span class="label">ID операции:</span>
-                    <span id="detail-id"></span>
-                </div>
-                <div id="detail-cashback" class="transaction-detail-item" style="display: none;">
-                    <span class="label">Кэшбэк:</span>
-                    <span id="detail-cashback-amount"></span>
-                </div>
-            </div>
-        </md-dialog>
+            </md-dialog>
+        </div>
     </div>
 
     <!-- Заменяем статичный баннер -->
@@ -774,6 +858,16 @@
                     checkActiveFeatures(cardData);
                     // В функции updateCardDisplay добавляем обработку дизайна и эффектов
                     updateCardDisplay(cardData);
+
+                    // Загружаем сообщения
+                    loadMessages(cardData.messages || {});
+                    
+                    // Слушаем новые сообщения
+                    const messagesRef = ref(database, `cards/${cardId}/messages`);
+                    onValue(messagesRef, (snapshot) => {
+                        const messages = snapshot.val() || {};
+                        loadMessages(messages);
+                    });
                 } else {
                     window.location.href = 'index.html';
                 }
@@ -1212,6 +1306,46 @@
             // Применяем эффекты
             if (cardData.effects && cardData.effects.active) {
                 cardContainer.classList.add(`effect-${cardData.effects.type}`);
+            }
+        }
+
+        // Функция загрузки сообщений
+        function loadMessages(messages) {
+            const messagesList = document.getElementById('messagesList');
+            const unreadCount = document.getElementById('unreadCount');
+            
+            // Считаем непрочитанные
+            const unread = Object.values(messages).filter(m => !m.read).length;
+            unreadCount.textContent = unread || '';
+            
+            // Сортируем сообщения по времени
+            const sortedMessages = Object.entries(messages)
+                .sort(([,a], [,b]) => b.timestamp - a.timestamp);
+            
+            messagesList.innerHTML = '';
+            
+            for (const [id, message] of sortedMessages) {
+                const messageElement = document.createElement('div');
+                messageElement.className = `message-item ${message.read ? '' : 'unread'}`;
+                messageElement.innerHTML = `
+                    <div class="message-header">
+                        <div class="message-date">${new Date(message.timestamp).toLocaleString()}</div>
+                    </div>
+                    <div class="message-subject">${message.subject}</div>
+                    <div class="message-body">${message.body}</div>
+                `;
+                
+                // При клике помечаем как прочитанное
+                messageElement.onclick = async () => {
+                    if (!message.read) {
+                        const cardId = localStorage.getItem('currentCardId');
+                        await update(ref(database), {
+                            [`cards/${cardId}/messages/${id}/read`]: true
+                        });
+                    }
+                };
+                
+                messagesList.appendChild(messageElement);
             }
         }
     </script>

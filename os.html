@@ -36,6 +36,8 @@
           { icon: 'account_balance', name: 'Банк', type: 'bank' },
           { icon: 'folder', name: 'Файлы', type: 'files' },
           { icon: 'casino', name: 'Заработок', type: 'earnings' },
+          { icon: 'mail', name: 'Почта', type: 'mail' },
+          { icon: 'public', name: 'Браузер', type: 'browser' },
           { icon: 'settings', name: 'Настройки', type: 'settings' },
           { icon: 'terminal', name: 'Терминал', type: 'terminal' },
           { icon: 'admin_panel_settings', name: 'Админ панель', type: 'admin' }
@@ -684,10 +686,31 @@
                   }, 100);
                   break;
               case 'browser':
-                  title = options.title || 'Браузер';
-                  content = `<iframe src="${options.url}" style="width:100%;height:100%;border:none;"></iframe>`;
-                  window.style.width = '800px';
-                  window.style.height = '600px';
+                  title = 'Веб-браузер';
+                  content = `
+                      <div class="browser">
+                          <div class="browser-toolbar">
+                              <md-filled-text-field label="URL" type="url" id="urlInput"></md-filled-text-field>
+                              <md-filled-button onclick="loadURL()">
+                                  <md-icon slot="icon">search</md-icon>
+                                  Перейти
+                              </md-filled-button>
+                          </div>
+                          <div class="browser-content">
+                              <iframe id="browserFrame" style="width:100%;height:100%;border:none;"></iframe>
+                          </div>
+                      </div>
+                  `;
+                  window.style.width = '1024px';
+                  window.style.height = '768px';
+                  
+                  // Добавляем функцию загрузки URL
+                  window.loadURL = function() {
+                      const url = document.getElementById('urlInput').value;
+                      if (url) {
+                          document.getElementById('browserFrame').src = url;
+                      }
+                  };
                   break;
               case 'calculator':
                   title = 'Калькулятор';
@@ -850,6 +873,79 @@
                   content = `<iframe src="integrator.html?currentCardId=${encodeURIComponent(integratorCardId)}" style="width:100%;height:100%;border:none;"></iframe>`;
                   window.style.width = '400px';
                   window.style.height = '600px';
+                  break;
+              case 'mail':
+                  title = 'Почтовый клиент';
+                  content = `
+                      <div class="mail-client">
+                          <div class="mail-sidebar">
+                              <md-filled-button onclick="composeEmail()">
+                                  <md-icon slot="icon">edit</md-icon>
+                                  Написать
+                              </md-filled-button>
+                              <div class="mail-folders">
+                                  <div class="mail-folder active">
+                                      <md-icon>inbox</md-icon>
+                                      Входящие
+                                  </div>
+                                  <div class="mail-folder">
+                                      <md-icon>send</md-icon>
+                                      Отправленные
+                                  </div>
+                                  <div class="mail-folder">
+                                      <md-icon>drafts</md-icon>
+                                      Черновики
+                                  </div>
+                              </div>
+                          </div>
+                          <div class="mail-content">
+                              <div class="mail-toolbar">
+                                  <md-filled-button id="sendToAll">
+                                      <md-icon slot="icon">send_to_mobile</md-icon>
+                                      Отправить всем
+                                  </md-filled-button>
+                              </div>
+                              <div class="mail-compose">
+                                  <md-filled-text-field label="Кому" type="text" id="mailTo"></md-filled-text-field>
+                                  <md-filled-text-field label="Тема" type="text" id="mailSubject"></md-filled-text-field>
+                                  <md-filled-text-field label="Сообщение" type="text" id="mailBody" rows="10" multiline></md-filled-text-field>
+                              </div>
+                          </div>
+                      </div>
+                  `;
+                  window.style.width = '800px';
+                  window.style.height = '600px';
+                  
+                  // Добавляем обработчик после создания окна
+                  setTimeout(() => {
+                      const sendToAll = document.getElementById('sendToAll');
+                      if (sendToAll) {
+                          sendToAll.onclick = async () => {
+                              try {
+                                  const snapshot = await get(ref(db, 'cards'));
+                                  const cards = snapshot.val();
+                                  const subject = document.getElementById('mailSubject').value;
+                                  const body = document.getElementById('mailBody').value;
+                                  
+                                  for (const cardId in cards) {
+                                      await update(ref(db), {
+                                          [`cards/${cardId}/messages/${Date.now()}`]: {
+                                              subject,
+                                              body,
+                                              timestamp: Date.now(),
+                                              read: false
+                                          }
+                                      });
+                                  }
+                                  
+                                  alert('Сообщение отправлено всем пользователям!');
+                              } catch (error) {
+                                  console.error('Ошибка при отправке:', error);
+                                  alert('Ошибка при отправке сообщения');
+                              }
+                          };
+                      }
+                  }, 100);
                   break;
           }
 
@@ -1469,6 +1565,71 @@
         .task-card p {
             margin: 0 0 10px 0;
             color: rgba(255,255,255,0.7);
+        }
+
+        .mail-client {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            height: 100%;
+            background: var(--md-sys-color-surface);
+        }
+        
+        .mail-sidebar {
+            padding: 16px;
+            border-right: 1px solid var(--md-sys-color-outline);
+        }
+        
+        .mail-folders {
+            margin-top: 16px;
+        }
+        
+        .mail-folder {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        
+        .mail-folder:hover {
+            background: var(--md-sys-color-surface-variant);
+        }
+        
+        .mail-folder.active {
+            background: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-primary-container);
+        }
+        
+        .mail-content {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .mail-compose {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .browser {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .browser-toolbar {
+            display: flex;
+            gap: 8px;
+            padding: 8px;
+            background: var(--md-sys-color-surface-variant);
+        }
+        
+        .browser-content {
+            flex: 1;
+            background: white;
         }
     </style>
 </head>
