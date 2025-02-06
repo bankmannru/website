@@ -788,8 +788,8 @@
     </div>
 
     <script type="module">
-        import { database } from './firebase-config.js';
-        import { ref, get, onValue, update, push, set } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+        import '@material/web/all.js';
+        import { getDatabase, ref, get, update, onValue } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
         import { logout } from './auth.js';
 
         // Делаем функцию showNotification доступной глобально
