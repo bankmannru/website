@@ -297,14 +297,17 @@
                 Object.entries(products).forEach(([id, product]) => {
                     const card = document.createElement('div');
                     card.className = 'product-card';
+                    const isCustomProduct = product.type === 'user';
                     card.innerHTML = `
-                        <img src="${product.image}" class="product-image" alt="${product.name}">
+                        <img src="${product.image || 'default-item.png'}" class="product-image" alt="${product.name}" onerror="this.src='default-item.png'">
                         <h3 class="product-title">${product.name}</h3>
                         <p class="product-description">${product.description}</p>
                         <p class="product-price">${product.price} МР</p>
-                        <md-filled-tonal-button onclick="buyProduct('${id}', ${product.price})">
-                            Купить
-                            <md-icon slot="trailing-icon">shopping_cart</md-icon>
+                        <md-filled-tonal-button onclick="buyProduct('${id}', ${product.price}, '${product.sellerId}', ${isCustomProduct}, '${product.name}')">
+                            ${isCustomProduct ? 'Связаться с продавцом' : 'Купить'}
+                            <md-icon slot="trailing-icon">
+                                ${isCustomProduct ? 'chat' : 'shopping_cart'}
+                            </md-icon>
                         </md-filled-tonal-button>
                     `;
                     grid.appendChild(card);
@@ -351,6 +354,7 @@
                         category,
                         sellerId,
                         type: 'user',
+                        isCustomProduct: true,
                         createdAt: Date.now()
                     });
 
@@ -364,17 +368,26 @@
             });
 
             // Обработка кнопки "Отмена" в диалоге
-            dialogCancelButton?.addEventListener('click', () => {
-                dialog.close();
+            dialog?.addEventListener('closed', (e) => {
+                if (e.detail.action === 'create') {
+                    dialogCreateButton.click();
+                }
             });
+
+            dialogCancelButton?.addEventListener('click', () => dialog.close());
         });
 
         // Функция покупки товара
-        window.buyProduct = async function(productId, price) {
+        window.buyProduct = async function(productId, price, sellerId, isCustomProduct, productName) {
             try {
                 const cardId = localStorage.getItem('currentCardId');
                 if (!cardId) {
                     throw new Error('Необходимо войти в аккаунт');
+                }
+
+                if (isCustomProduct) {
+                    window.location.href = `chat.html?recipientId=${sellerId}&productId=${productId}&price=${price}&showBuyButton=true&initialMessage=${encodeURIComponent(`Здравствуйте! Я хочу купить ваш товар "${productName}" за ${price} МР.`)}`;
+                    return;
                 }
 
                 const cardRef = ref(database, `cards/${cardId}`);
@@ -385,8 +398,39 @@
                     throw new Error('Недостаточно средств');
                 }
 
-                // Здесь добавить логику покупки товара
-                showNotification('Товар успешно куплен!');
+                // Обновляем балансы
+                const sellerRef = ref(database, `cards/${sellerId}`);
+                const sellerSnapshot = await get(sellerRef);
+                const seller = sellerSnapshot.val();
+                
+                if (!seller) {
+                    throw new Error('Продавец не найден');
+                }
+                
+                // Обновляем балансы
+                await set(ref(database, `cards/${cardId}/balance`), card.balance - price);
+                await set(ref(database, `cards/${sellerId}/balance`), (seller.balance || 0) + price);
+                
+                // Записываем транзакции
+                await set(ref(database, `cards/${cardId}/transactions/${Date.now()}`), {
+                    type: 'purchase',
+                    amount: -price,
+                    description: `Покупка товара "${productName}"`,
+                    timestamp: Date.now()
+                });
+                
+                await set(ref(database, `cards/${sellerId}/transactions/${Date.now()}`), {
+                    type: 'sale',
+                    amount: price,
+                    description: `Продажа товара "${productName}"`,
+                    timestamp: Date.now()
+                });
+                
+                // Удаляем товар из маркета
+                await set(ref(database, `market/items/${productId}`), null);
+                
+                showNotification('Товар успешно куплен! Деньги переведены продавцу.');
+                setTimeout(() => location.reload(), 2000);
             } catch (error) {
                 showNotification(error.message, true);
             }

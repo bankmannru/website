@@ -254,6 +254,12 @@
                     <input type="file" id="file-input" accept="image/*,video/*" style="display: none">
                     <audio id="voice-recorder" style="display: none"></audio>
                 </div>
+                <div id="buyButtonContainer" style="display: none; padding: 16px; text-align: center;">
+                    <md-filled-button id="buyButton">
+                        <md-icon slot="icon">shopping_cart</md-icon>
+                        Купить товар
+                    </md-filled-button>
+                </div>
             </div>
         </div>
     </div>
@@ -989,6 +995,71 @@
         // Добавляем обработчики
         document.getElementById('download-chat').onclick = downloadChatHistory;
         document.getElementById('clear-chat').onclick = clearChat;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Получаем параметры из URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const recipientId = urlParams.get('recipientId');
+            const productId = urlParams.get('productId');
+            const price = Number(urlParams.get('price'));
+            const showBuyButton = urlParams.get('showBuyButton') === 'true';
+            
+            // Показываем кнопку покупки если это чат о товаре
+            if (showBuyButton && productId && price) {
+                const buyButtonContainer = document.getElementById('buyButtonContainer');
+                const buyButton = document.getElementById('buyButton');
+                buyButtonContainer.style.display = 'block';
+                
+                buyButton.addEventListener('click', async () => {
+                    try {
+                        const buyerId = localStorage.getItem('currentCardId');
+                        if (!buyerId) {
+                            throw new Error('Необходимо войти в аккаунт');
+                        }
+                        
+                        // Проверяем баланс покупателя
+                        const buyerRef = dbRef(database, `cards/${buyerId}`);
+                        const buyerSnapshot = await get(buyerRef);
+                        const buyer = buyerSnapshot.val();
+                        
+                        if (!buyer || buyer.balance < price) {
+                            throw new Error('Недостаточно средств');
+                        }
+                        
+                        // Переводим деньги продавцу
+                        const sellerRef = dbRef(database, `cards/${recipientId}`);
+                        const sellerSnapshot = await get(sellerRef);
+                        const seller = sellerSnapshot.val();
+                        
+                        if (!seller) {
+                            throw new Error('Продавец не найден');
+                        }
+                        
+                        // Обновляем балансы
+                        await set(dbRef(database, `cards/${buyerId}/balance`), buyer.balance - price);
+                        await set(dbRef(database, `cards/${recipientId}/balance`), (seller.balance || 0) + price);
+                        await set(dbRef(database, `cards/${buyerId}/transactions/${Date.now()}`), {
+                            type: 'purchase',
+                            amount: -price,
+                            description: 'Покупка пользовательского товара',
+                            timestamp: Date.now()
+                        });
+                        await set(dbRef(database, `cards/${recipientId}/transactions/${Date.now()}`), {
+                            type: 'sale',
+                            amount: price,
+                            description: 'Продажа пользовательского товара',
+                            timestamp: Date.now()
+                        });
+                        
+                        alert('Товар успешно куплен!');
+                        buyButtonContainer.style.display = 'none';
+                    } catch (error) {
+                        console.error('Ошибка при покупке:', error);
+                        alert(error.message);
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>
