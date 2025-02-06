@@ -17,7 +17,7 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <div class='header' style="display: flex; align-items: center; justify-content: center;">Мы набираем работников для банк Маннру. 
+    <div class='header' id="hiring-banner" style="display: none; align-items: center; justify-content: center;">Мы набираем работников для банк Маннру. 
         <a href="https://forms.gle/GJFTNofAoNCuxMT37" style="margin-left: 10px;">
             <md-filled-tonal-button>
                 Подать заявку
@@ -75,5 +75,16 @@
         <md-icon><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M480-400q33 0 56.5-23.5T560-480q0-33-23.5-56.5T480-560q-33 0-56.5 23.5T400-480q0 33 23.5 56.5T480-400ZM320-240h320v-23q0-24-13-44t-36-30q-26-11-53.5-17t-57.5-6q-30 0-57.5 6T369-337q-23 10-36 30t-13 44v23ZM720-80H240q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80Zm0-80v-446L526-800H240v640h480Zm-480 0v-640 640Z"/></md-icon>
       </md-filled-icon-button>
   </div>
+  <script type="module">
+    import { database } from './firebase-config.js';
+    import { ref, onValue } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+
+    const hiringBannerRef = ref(database, 'settings/hiringBannerEnabled');
+    onValue(hiringBannerRef, (snapshot) => {
+        const bannerEnabled = snapshot.val();
+        const banner = document.getElementById('hiring-banner');
+        banner.style.display = bannerEnabled ? 'flex' : 'none';
+    });
+  </script>
 </body>
 </html>

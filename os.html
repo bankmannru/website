@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MannruOS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <script type="importmap">
+      {
+        "imports": {
+          "@material/web/": "https://esm.run/@material/web/"
+        }
+      }
+    </script>
+    <script type="module">
+      import '@material/web/all.js';
+      import { getDatabase, ref, get, update, remove, child } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+      import { database } from './firebase-config.js';
+
+      // Используем уже инициализированную базу данных
+      const db = database;
+
+      // Делаем функции глобальными
+      window.createWindow = createWindow;
+      window.closeWindow = closeWindow;
+      window.minimizeWindow = minimizeWindow;
+      window.maximizeWindow = maximizeWindow;
+
+      // Весь остальной JavaScript код...
+      let windows = [];
+      let activeWindow = null;
+      let windowZIndex = 1000;
+      
+      // Иконки рабочего стола
+      const desktopIcons = [
+          { icon: 'account_balance', name: 'Банк', type: 'bank' },
+          { icon: 'folder', name: 'Файлы', type: 'files' },
+          { icon: 'casino', name: 'Заработок', type: 'earnings' },
+          { icon: 'settings', name: 'Настройки', type: 'settings' },
+          { icon: 'terminal', name: 'Терминал', type: 'terminal' },
+          { icon: 'admin_panel_settings', name: 'Админ панель', type: 'admin' }
+      ];
+      
+      // Создаем иконки
+      desktopIcons.forEach(icon => {
+          const iconElement = document.createElement('div');
+          iconElement.className = 'desktop-icon';
+          iconElement.innerHTML = `
+              <md-icon>${icon.icon}</md-icon>
+              <span>${icon.name}</span>
+          `;
+          iconElement.onclick = () => createWindow(icon.type);
+          desktop.appendChild(iconElement);
+      });
+
+      // Обработчик кнопки меню
+      startButton.onclick = () => {
+          startMenu.classList.toggle('visible');
+      };
+
+      // Закрываем меню при клике вне его
+      document.addEventListener('click', (e) => {
+          if (!e.target.closest('#startMenu') && !e.target.closest('#startButton')) {
+              startMenu.classList.remove('visible');
+          }
+      });
+
+      function createWindow(type, options = {}) {
+          startMenu.classList.remove('visible');
+          
+          const window = document.createElement('div');
+          window.className = 'window';
+          window.style.left = `${Math.max(50, Math.min(document.documentElement.clientWidth - 400, 50 + windows.length * 30))}px`;
+          window.style.top = `${Math.max(50, Math.min(document.documentElement.clientHeight - 300, 50 + windows.length * 30))}px`;
+          window.style.zIndex = windowZIndex++;
+
+          // Добавляем маркеры для изменения размера
+          const resizeHandles = ['top', 'bottom', 'left', 'right', 'top-left', 'top-right', 'bottom-left', 'bottom-right'];
+          resizeHandles.forEach(position => {
+              const handle = document.createElement('div');
+              handle.className = `resize-handle ${position}`;
+              window.appendChild(handle);
+
+              let startX, startY, startWidth, startHeight, startLeft, startTop;
+
+              handle.addEventListener('mousedown', (e) => {
+                  e.preventDefault();
+                  window.classList.add('resizing');
+                  startX = e.clientX;
+                  startY = e.clientY;
+                  startWidth = window.offsetWidth;
+                  startHeight = window.offsetHeight;
+                  startLeft = window.offsetLeft;
+                  startTop = window.offsetTop;
+
+                  const resizeMove = (e) => {
+                      const deltaX = e.clientX - startX;
+                      const deltaY = e.clientY - startY;
+
+                      if (position.includes('right')) {
+                          window.style.width = `${Math.max(300, startWidth + deltaX)}px`;
+                      }
+                      if (position.includes('bottom')) {
+                          window.style.height = `${Math.max(200, startHeight + deltaY)}px`;
+                      }
+                      if (position.includes('left')) {
+                          const newWidth = Math.max(300, startWidth - deltaX);
+                          window.style.width = `${newWidth}px`;
+                          window.style.left = `${startLeft + startWidth - newWidth}px`;
+                      }
+                      if (position.includes('top')) {
+                          const newHeight = Math.max(200, startHeight - deltaY);
+                          window.style.height = `${newHeight}px`;
+                          window.style.top = `${startTop + startHeight - newHeight}px`;
+                      }
+                  };
+
+                  const resizeEnd = () => {
+                      window.classList.remove('resizing');
+                      document.removeEventListener('mousemove', resizeMove);
+                      document.removeEventListener('mouseup', resizeEnd);
+                  };
+
+                  document.addEventListener('mousemove', resizeMove);
+                  document.addEventListener('mouseup', resizeEnd);
+              });
+          });
+
+          let title, content;
+          switch(type) {
+              case 'bank':
+                  title = 'Банк Маннру';
+                  content = '<iframe src="account.html" style="width:100%;height:100%;border:none;"></iframe>';
+                  window.style.width = '800px';
+                  window.style.height = '600px';
+                  break;
+              case 'files':
+                  title = 'Файловый менеджер';
+                  content = `
+                      <div class="file-manager">
+                          <div class="sidebar">
+                              <div class="start-menu-item">
+                                  <md-icon>folder_open</md-icon>
+                                  <span>bankmannru/website</span>
+                              </div>
+                          </div>
+                          <div class="files-list">
+                          </div>
+                      </div>
+                  `;
+                  window.style.width = '700px';
+                  window.style.height = '500px';
+
+                  // Добавляем функциональность после создания окна
+                  setTimeout(async () => {
+                      const filesList = window.querySelector('.files-list');
+                      
+                      // Список файлов из репозитория
+                      const repoFiles = [
+                          { name: 'account.html', type: 'html' },
+                          { name: 'admin.html', type: 'html' },
+                          { name: 'card_order.html', type: 'html' },
+                          { name: 'chat.html', type: 'html' },
+                          { name: 'contacts.html', type: 'html' },
+                          { name: 'index.html', type: 'html' },
+                          { name: 'login.html', type: 'html' },
+                          { name: 'market.html', type: 'html' },
+                          { name: 'shell.html', type: 'html' },
+                          { name: 'sitehistory.html', type: 'html' },
+                          { name: 'testfile.html', type: 'html' },
+                          { name: 'admin.css', type: 'css' },
+                          { name: 'card-styles.css', type: 'css' },
+                          { name: 'style.css', type: 'css' },
+                          { name: 'styles.css', type: 'css' },
+                          { name: 'account.js', type: 'js' },
+                          { name: 'admin.js', type: 'js' },
+                          { name: 'auth.js', type: 'js' },
+                          { name: 'card-creator.js', type: 'js' },
+                          { name: 'executor.js', type: 'js' },
+                          { name: 'firebase-config.js', type: 'js' },
+                          { name: 'service-worker.js', type: 'js' },
+                          { name: 'theme.js', type: 'js' },
+                          { name: 'validation.js', type: 'js' },
+                          { name: 'README.md', type: 'md' }
+                      ];
+
+                      // Иконки для разных типов файлов
+                      const fileIcons = {
+                          html: 'html',
+                          css: 'css',
+                          js: 'javascript',
+                          md: 'description'
+                      };
+
+                      // Создаем элементы файлов
+                      repoFiles.forEach(file => {
+                          const fileElement = document.createElement('div');
+                          fileElement.className = 'file-item';
+                          fileElement.innerHTML = `
+                              <md-icon>${fileIcons[file.type]}</md-icon>
+                              <span>${file.name}</span>
+                          `;
+                          
+                          // Добавляем обработчик клика для HTML файлов
+                          if (file.type === 'html') {
+                              fileElement.onclick = () => {
+                                  createWindow('browser', {
+                                      url: `https://raw.githubusercontent.com/bankmannru/website/main/${file.name}`,
+                                      title: file.name
+                                  });
+                              };
+                          }
+                          
+                          filesList.appendChild(fileElement);
+                      });
+                  }, 100);
+                  break;
+              case 'earnings':
+                  title = 'Центр заработка';
+                  content = `
+                      <div style="padding: 20px;">
+                          <h2>Способы заработка Маннрублей</h2>
+                          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; margin-top: 20px;">
+                              <div class="earning-card" onclick="createWindow('pulltabs')">
+                                  <md-icon>casino</md-icon>
+                                  <h3>Pull the Tabs</h3>
+                                  <p>Испытайте удачу и выиграйте до 1000 МР</p>
+                              </div>
+                              <div class="earning-card" onclick="createWindow('quiz')">
+                                  <md-icon>quiz</md-icon>
+                                  <h3>Викторина</h3>
+                                  <p>Отвечайте на вопросы и зарабатывайте МР</p>
+                              </div>
+                              <div class="earning-card" onclick="createWindow('tasks')">
+                                  <md-icon>task</md-icon>
+                                  <h3>Задания</h3>
+                                  <p>Выполняйте задания для получения МР</p>
+                              </div>
+                              <div class="earning-card" onclick="createWindow('memory')">
+                                  <md-icon>grid_view</md-icon>
+                                  <h3>Память</h3>
+                                  <p>Найдите пары и получите награду</p>
+                              </div>
+                              <div class="earning-card" onclick="createWindow('typing')">
+                                  <md-icon>keyboard</md-icon>
+                                  <h3>Печать</h3>
+                                  <p>Тренируйте скорость печати за МР</p>
+                              </div>
+                              <div class="earning-card" onclick="createWindow('math')">
+                                  <md-icon>calculate</md-icon>
+                                  <h3>Математика</h3>
+                                  <p>Решайте примеры на время</p>
+                              </div>
+                          </div>
+                      </div>
+                  `;
+                  window.style.width = '800px';
+                  window.style.height = '600px';
+                  break;
+              case 'quiz':
+                  title = 'Викторина';
+                  content = `
+                      <div style="padding: 20px; text-align: center;">
+                          <h2>Викторина Маннру</h2>
+                          <div id="quiz-content">
+                              <div id="quiz-question" style="font-size: 20px; margin: 20px 0;"></div>
+                              <div id="quiz-options" style="display: grid; gap: 10px;">
+                              </div>
+                          </div>
+                          <div id="quiz-result" style="margin-top: 20px;"></div>
+                      </div>
+                  `;
+                  window.style.width = '600px';
+                  window.style.height = '400px';
+
+                  setTimeout(() => {
+                      const questions = [
+                          {
+                              question: 'Что такое Маннру?',
+                              options: ['Банк', 'Магазин', 'Социальная сеть', 'Игра'],
+                              correct: 0
+                          },
+                          {
+                              question: 'В каком году основан Маннру?',
+                              options: ['2020', '2021', '2022', '2023'],
+                              correct: 2
+                          },
+                          // Добавьте больше вопросов
+                      ];
+
+                      let currentQuestion = 0;
+                      let score = 0;
+
+                      function showQuestion() {
+                          const question = questions[currentQuestion];
+                          document.getElementById('quiz-question').textContent = question.question;
+                          const options = document.getElementById('quiz-options');
+                          options.innerHTML = '';
+                          
+                          question.options.forEach((option, index) => {
+                              const button = document.createElement('md-filled-button');
+                              button.textContent = option;
+                              button.onclick = () => checkAnswer(index);
+                              options.appendChild(button);
+                          });
+                      }
+
+                      function checkAnswer(answer) {
+                          const question = questions[currentQuestion];
+                          if (answer === question.correct) {
+                              score += 100;
+                              document.getElementById('quiz-result').innerHTML = 'Правильно! +100 МР';
+                          } else {
+                              document.getElementById('quiz-result').innerHTML = 'Неправильно!';
+                          }
+
+                          currentQuestion++;
+                          if (currentQuestion < questions.length) {
+                              setTimeout(showQuestion, 1000);
+                          } else {
+                              finishQuiz();
+                          }
+                      }
+
+                      async function finishQuiz() {
+                          if (score > 0) {
+                              // Обновляем баланс карты
+                              const cardId = localStorage.getItem('currentCard');
+                              if (cardId) {
+                                  const snapshot = await get(ref(db, `cards/${cardId}`));
+                                  const card = snapshot.val();
+                                  await update(ref(db), {
+                                      [`cards/${cardId}/balance`]: (card.balance || 0) + score,
+                                      [`cards/${cardId}/transactions/${Date.now()}`]: {
+                                          type: 'quiz',
+                                          amount: score,
+                                          description: 'Выигрыш в викторине',
+                                          timestamp: Date.now()
+                                      }
+                                  });
+                              }
+                          }
+                          document.getElementById('quiz-content').innerHTML = `
+                              <h3>Викторина завершена!</h3>
+                              <p>Вы заработали: ${score} МР</p>
+                              <md-filled-button onclick="createWindow('quiz')">
+                                  Играть снова
+                              </md-filled-button>
+                          `;
+                      }
+
+                      showQuestion();
+                  }, 100);
+                  break;
+              case 'tasks':
+                  title = 'Задания';
+                  content = `
+                      <div style="padding: 20px;">
+                          <h2>Доступные задания</h2>
+                          <div id="tasks-list" style="display: grid; gap: 15px; margin-top: 20px;">
+                              <div class="task-card">
+                                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                                      <div>
+                                          <h3>Ежедневный вход</h3>
+                                          <p>Войдите в систему</p>
+                                          <div>Награда: 50 МР</div>
+                                      </div>
+                                      <md-filled-button onclick="completeTask('daily_login', 50)">
+                                          Получить
+                                      </md-filled-button>
+                                  </div>
+                              </div>
+                              <div class="task-card">
+                                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                                      <div>
+                                          <h3>Первая транзакция</h3>
+                                          <p>Совершите перевод</p>
+                                          <div>Награда: 100 МР</div>
+                                      </div>
+                                      <md-filled-button onclick="completeTask('first_transaction', 100)">
+                                          Получить
+                                      </md-filled-button>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  `;
+                  window.style.width = '600px';
+                  window.style.height = '400px';
+                  break;
+              case 'game':
+                  title = 'Pull the Tabs';
+                  content = '<iframe src="pull-tabs.html" style="width:100%;height:100%;border:none;"></iframe>';
+                  window.style.width = '800px';
+                  window.style.height = '600px';
+                  break;
+              case 'settings':
+                  title = 'Настройки';
+                  content = `
+                      <div style="padding:16px">
+                          <h3>Настройки системы</h3>
+                          <md-filled-button>
+                              <md-icon slot="icon">palette</md-icon>
+                              Изменить тему
+                          </md-filled-button>
+                      </div>
+                  `;
+                  window.style.width = '400px';
+                  window.style.height = '300px';
+                  break;
+              case 'terminal':
+                  title = 'Терминал';
+                  content = `
+                      <div style="background:#000;height:100%;padding:8px;font-family:monospace;">
+                          <div>Welcome to MannruOS Terminal</div>
+                          <div>$ <span class="cursor">_</span></div>
+                      </div>
+                  `;
+                  window.style.width = '500px';
+                  window.style.height = '300px';
+                  break;
+              case 'admin':
+                  title = 'Панель администратора';
+                  content = `
+                      <div style="padding: 20px;">
+                          <div class="admin-tabs">
+                              <md-filled-button id="cardsTab" class="active">Карты</md-filled-button>
+                              <md-filled-button id="transactionsTab">Транзакции</md-filled-button>
+                              <md-filled-button id="logsTab">Логи</md-filled-button>
+                              <md-filled-button id="settingsTab">Настройки</md-filled-button>
+                          </div>
+                          <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+                              <div style="flex: 1;">
+                                  <h3>Управление картами</h3>
+                                  <div class="admin-cards" style="height: 300px; overflow: auto; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
+                                      <!-- Карты будут добавлены через JavaScript -->
+                                  </div>
+                              </div>
+                              <div style="flex: 1;">
+                                  <h3>Детали карты</h3>
+                                  <div class="card-details" style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
+                                      <div style="margin-bottom: 10px;">
+                                          <label>ID карты:</label>
+                                          <div id="cardId" style="color: #4CAF50;"></div>
+                                      </div>
+                                      <div style="margin-bottom: 10px;">
+                                          <label>Владелец:</label>
+                                          <input type="text" id="cardOwner" style="background: rgba(255,255,255,0.1); border: none; color: white; padding: 5px; border-radius: 4px; width: 100%;">
+                                      </div>
+                                      <div style="margin-bottom: 10px;">
+                                          <label>Статус:</label>
+                                          <select id="cardStatus" style="background: rgba(255,255,255,0.1); border: none; color: white; padding: 5px; border-radius: 4px; width: 100%;">
+                                              <option value="active">Активна</option>
+                                              <option value="frozen">Заморожена</option>
+                                              <option value="blocked">Заблокирована</option>
+                                          </select>
+                                      </div>
+                                      <div style="margin-bottom: 10px;">
+                                          <label>Баланс:</label>
+                                          <div style="display: flex; gap: 10px; align-items: center;">
+                                              <input type="number" id="cardBalance" style="background: rgba(255,255,255,0.1); border: none; color: white; padding: 5px; border-radius: 4px;">
+                                              <md-filled-button id="updateBalance">
+                                                  Обновить
+                                              </md-filled-button>
+                                          </div>
+                                      </div>
+                                      <div style="margin-bottom: 10px;">
+                                          <label>Добавить транзакцию:</label>
+                                          <div style="display: grid; gap: 10px; margin-top: 5px;">
+                                              <input type="number" id="transactionAmount" placeholder="Сумма" style="background: rgba(255,255,255,0.1); border: none; color: white; padding: 5px; border-radius: 4px;">
+                                              <input type="text" id="transactionDescription" placeholder="Описание" style="background: rgba(255,255,255,0.1); border: none; color: white; padding: 5px; border-radius: 4px;">
+                                              <select id="transactionType" style="background: rgba(255,255,255,0.1); border: none; color: white; padding: 5px; border-radius: 4px;">
+                                                  <option value="deposit">Пополнение</option>
+                                                  <option value="withdraw">Списание</option>
+                                                  <option value="transfer">Перевод</option>
+                                                  <option value="payment">Оплата</option>
+                                                  <option value="refund">Возврат</option>
+                                              </select>
+                                              <md-filled-button id="addTransaction">
+                                                  Добавить транзакцию
+                                              </md-filled-button>
+                                          </div>
+                                      </div>
+                                      <div style="margin-bottom: 10px;">
+                                          <label>Транзакции:</label>
+                                          <div id="transactions" style="max-height: 200px; overflow: auto;">
+                                          </div>
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+                          <div style="margin-top: 20px;">
+                              <h3>Действия</h3>
+                              <div style="display: flex; gap: 10px;">
+                                  <md-filled-button id="createCard">
+                                      <md-icon slot="icon">add</md-icon>
+                                      Создать карту
+                                  </md-filled-button>
+                                  <md-filled-button id="freezeCard">
+                                      <md-icon slot="icon">block</md-icon>
+                                      Заблокировать карту
+                                  </md-filled-button>
+                                  <md-filled-button id="deleteCard">
+                                      <md-icon slot="icon">delete</md-icon>
+                                      Удалить карту
+                                  </md-filled-button>
+                                  <md-filled-button id="exportData">
+                                      <md-icon slot="icon">download</md-icon>
+                                      Экспорт данных
+                                  </md-filled-button>
+                              </div>
+                          </div>
+                      </div>
+                  `;
+                  window.style.width = '800px';
+                  window.style.height = '600px';
+
+                  // Добавляем функциональность после создания окна
+                  setTimeout(async () => {
+                      const adminCards = window.querySelector('.admin-cards');
+                      const cardBalance = window.querySelector('#cardBalance');
+                      const cardId = window.querySelector('#cardId');
+                      const cardOwner = window.querySelector('#cardOwner');
+                      const cardStatus = window.querySelector('#cardStatus');
+                      const transactions = window.querySelector('#transactions');
+                      const updateBalance = window.querySelector('#updateBalance');
+                      const freezeCard = window.querySelector('#freezeCard');
+                      const deleteCard = window.querySelector('#deleteCard');
+                      const createCard = window.querySelector('#createCard');
+                      const exportData = window.querySelector('#exportData');
+                      const addTransaction = window.querySelector('#addTransaction');
+
+                      // Загружаем список карт
+                      const loadCards = async () => {
+                          const snapshot = await get(ref(db, 'cards'));
+                          const cards = snapshot.val();
+                          adminCards.innerHTML = '';
+                          
+                          for (const [id, card] of Object.entries(cards)) {
+                              const cardElement = document.createElement('div');
+                              cardElement.style.padding = '10px';
+                              cardElement.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
+                              cardElement.style.cursor = 'pointer';
+                              cardElement.innerHTML = `
+                                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                                      <div>
+                                          <div>ID: ${id}</div>
+                                          <div>Владелец: ${card.owner || 'Не указан'}</div>
+                                          <div>Баланс: ${card.balance || 0} МР</div>
+                                          <div>Статус: ${card.status || 'active'}</div>
+                                      </div>
+                                      <md-icon style="color: ${card.frozen ? 'red' : 'green'}">
+                                          ${card.frozen ? 'block' : 'check_circle'}
+                                      </md-icon>
+                                  </div>
+                              `;
+                              cardElement.onclick = () => loadCardDetails(id, card);
+                              adminCards.appendChild(cardElement);
+                          }
+                      };
+
+                      // Загружаем детали карты
+                      const loadCardDetails = (id, card) => {
+                          cardId.textContent = id;
+                          cardBalance.value = card.balance || 0;
+                          cardOwner.value = card.owner || '';
+                          cardStatus.value = card.status || 'active';
+                          
+                          transactions.innerHTML = '';
+                          if (card.transactions) {
+                              Object.entries(card.transactions).forEach(([tid, t]) => {
+                                  const tElement = document.createElement('div');
+                                  tElement.style.padding = '5px';
+                                  tElement.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
+                                  tElement.innerHTML = `
+                                      <div>${new Date(t.timestamp).toLocaleString()}</div>
+                                      <div>${t.type}: ${t.amount} МР</div>
+                                      <div>${t.description}</div>
+                                  `;
+                                  transactions.appendChild(tElement);
+                              });
+                          }
+                      };
+
+                      // Создание новой карты
+                      createCard.onclick = async () => {
+                          const newCardId = Date.now().toString();
+                          await update(ref(db), {
+                              [`cards/${newCardId}`]: {
+                                  balance: 0,
+                                  owner: 'Новый пользователь',
+                                  status: 'active',
+                                  created: Date.now()
+                              }
+                          });
+                          loadCards();
+                      };
+
+                      // Добавление транзакции
+                      addTransaction.onclick = async () => {
+                          const id = cardId.textContent;
+                          if (!id) return;
+                          
+                          const amount = Number(document.getElementById('transactionAmount').value);
+                          const description = document.getElementById('transactionDescription').value;
+                          const type = document.getElementById('transactionType').value;
+                          
+                          const snapshot = await get(ref(db, `cards/${id}`));
+                          const card = snapshot.val();
+                          const newBalance = type === 'withdraw' ? card.balance - amount : card.balance + amount;
+                          
+                          await update(ref(db), {
+                              [`cards/${id}/balance`]: newBalance,
+                              [`cards/${id}/transactions/${Date.now()}`]: {
+                                  type,
+                                  amount,
+                                  description,
+                                  timestamp: Date.now()
+                              }
+                          });
+                          loadCards();
+                      };
+
+                      // Экспорт данных
+                      exportData.onclick = async () => {
+                          const snapshot = await get(ref(db, 'cards'));
+                          const data = snapshot.val();
+                          const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = 'mannru-bank-data.json';
+                          a.click();
+                      };
+
+                      // Обработчики кнопок
+                      updateBalance.onclick = async () => {
+                          const id = cardId.textContent;
+                          if (!id) return;
+                          
+                          await update(ref(db), {
+                              [`cards/${id}/balance`]: Number(cardBalance.value),
+                              [`cards/${id}/transactions/${Date.now()}`]: {
+                                  type: 'admin',
+                                  amount: Number(cardBalance.value),
+                                  description: 'Изменение баланса администратором',
+                                  timestamp: Date.now()
+                              }
+                          });
+                          loadCards();
+                      };
+
+                      freezeCard.onclick = async () => {
+                          const id = cardId.textContent;
+                          if (!id) return;
+                          
+                          const snapshot = await get(ref(db, `cards/${id}`));
+                          const card = snapshot.val();
+                          
+                          await update(ref(db), {
+                              [`cards/${id}/frozen`]: !card.frozen
+                          });
+                          loadCards();
+                      };
+
+                      deleteCard.onclick = async () => {
+                          const id = cardId.textContent;
+                          if (!id || !confirm('Вы уверены, что хотите удалить карту?')) return;
+                          
+                          await remove(ref(db, `cards/${id}`));
+                          cardId.textContent = '';
+                          cardBalance.value = '';
+                          transactions.innerHTML = '';
+                          loadCards();
+                      };
+
+                      // Загружаем начальные данные
+                      loadCards();
+                  }, 100);
+                  break;
+              case 'browser':
+                  title = options.title || 'Браузер';
+                  content = `<iframe src="${options.url}" style="width:100%;height:100%;border:none;"></iframe>`;
+                  window.style.width = '800px';
+                  window.style.height = '600px';
+                  break;
+              case 'calculator':
+                  title = 'Калькулятор';
+                  content = `
+                      <div style="padding:16px">
+                          <input type="text" id="calc-display" readonly style="width:100%;margin-bottom:16px;padding:8px;background:rgba(255,255,255,0.1);border:none;color:white;text-align:right;font-size:24px;">
+                          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+                              <md-filled-button onclick="document.getElementById('calc-display').value=''">C</md-filled-button>
+                              <md-filled-button onclick="document.getElementById('calc-display').value+='7'">7</md-filled-button>
+                              <md-filled-button onclick="document.getElementById('calc-display').value+='8'">8</md-filled-button>
+                              <md-filled-button onclick="document.getElementById('calc-display').value+='9'">9</md-filled-button>
+                              <md-filled-button onclick="document.getElementById('calc-display').value+='4'">4</md-filled-button>
+                              <md-filled-button onclick="document.getElementById('calc-display').value+='5'">5</md-filled-button>
+                              <md-filled-button onclick="document.getElementById('calc-display').value+='6'">6</md-filled-button>
+                              <md-filled-button onclick="document.getElementById('calc-display').value+='1'">1</md-filled-button>
+                              <md-filled-button onclick="document.getElementById('calc-display').value+='2'">2</md-filled-button>
+                              <md-filled-button onclick="document.getElementById('calc-display').value+='3'">3</md-filled-button>
+                              <md-filled-button onclick="document.getElementById('calc-display').value+='0'">0</md-filled-button>
+                              <md-filled-button onclick="document.getElementById('calc-display').value+='.'">.</md-filled-button>
+                              <md-filled-button onclick="document.getElementById('calc-display').value=eval(document.getElementById('calc-display').value)">=</md-filled-button>
+                              <md-filled-button onclick="document.getElementById('calc-display').value+='+'">+</md-filled-button>
+                              <md-filled-button onclick="document.getElementById('calc-display').value+='-'">-</md-filled-button>
+                              <md-filled-button onclick="document.getElementById('calc-display').value+='*'">×</md-filled-button>
+                              <md-filled-button onclick="document.getElementById('calc-display').value+='/'">/</md-filled-button>
+                          </div>
+                      </div>
+                  `;
+                  window.style.width = '300px';
+                  window.style.height = '400px';
+                  break;
+              case 'notepad':
+                  title = 'Блокнот';
+                  content = `
+                      <div style="height:100%;display:flex;flex-direction:column;padding:16px;">
+                          <div style="margin-bottom:16px;">
+                              <md-filled-button onclick="document.getElementById('notepad').value=''">
+                                  <md-icon slot="icon">delete</md-icon>
+                                  Очистить
+                              </md-filled-button>
+                          </div>
+                          <textarea id="notepad" style="flex:1;background:rgba(255,255,255,0.1);border:none;color:white;padding:8px;resize:none;"></textarea>
+                      </div>
+                  `;
+                  window.style.width = '400px';
+                  window.style.height = '500px';
+                  break;
+              case 'calendar':
+                  title = 'Календарь';
+                  const date = new Date();
+                  content = `
+                      <div style="padding:16px;">
+                          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                              <h2>${date.toLocaleString('ru', { month: 'long', year: 'numeric' })}</h2>
+                              <div>
+                                  <md-filled-button>
+                                      <md-icon slot="icon">chevron_left</md-icon>
+                                  </md-filled-button>
+                                  <md-filled-button>
+                                      <md-icon slot="icon">chevron_right</md-icon>
+                                  </md-filled-button>
+                              </div>
+                          </div>
+                          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;text-align:center;">
+                              <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div>Сб</div><div>Вс</div>
+                              ${Array(31).fill(0).map((_, i) => `<div style="padding:8px;border-radius:4px;cursor:pointer;background:rgba(255,255,255,0.1);">${i + 1}</div>`).join('')}
+                          </div>
+                      </div>
+                  `;
+                  window.style.width = '400px';
+                  window.style.height = '500px';
+                  break;
+              case 'weather':
+                  title = 'Погода';
+                  content = `
+                      <div style="padding:16px;text-align:center;">
+                          <md-icon style="font-size:64px;">cloud</md-icon>
+                          <h2>Москва</h2>
+                          <div style="font-size:48px;margin:16px 0;">+20°C</div>
+                          <div>Облачно с прояснениями</div>
+                          <div style="margin-top:32px;">
+                              <div style="display:flex;justify-content:space-around;">
+                                  <div>
+                                      <div>Пн</div>
+                                      <md-icon>cloud</md-icon>
+                                      <div>+18°C</div>
+                                  </div>
+                                  <div>
+                                      <div>Вт</div>
+                                      <md-icon>wb_sunny</md-icon>
+                                      <div>+22°C</div>
+                                  </div>
+                                  <div>
+                                      <div>Ср</div>
+                                      <md-icon>water_drop</md-icon>
+                                      <div>+19°C</div>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  `;
+                  window.style.width = '300px';
+                  window.style.height = '400px';
+                  break;
+              case 'chat':
+                  title = 'Чат';
+                  content = `
+                      <div style="height:100%;display:flex;flex-direction:column;">
+                          <div style="flex:1;overflow-y:auto;padding:16px;" id="chat-messages">
+                              <div style="margin-bottom:16px;">
+                                  <div style="font-weight:bold;">Система</div>
+                                  <div style="background:rgba(255,255,255,0.1);padding:8px;border-radius:4px;">
+                                      Добро пожаловать в чат!
+                                  </div>
+                              </div>
+                          </div>
+                          <div style="padding:16px;border-top:1px solid rgba(255,255,255,0.1);">
+                              <div style="display:flex;gap:8px;">
+                                  <input type="text" id="chat-input" style="flex:1;background:rgba(255,255,255,0.1);border:none;color:white;padding:8px;border-radius:4px;" placeholder="Введите сообщение...">
+                                  <md-filled-button onclick="sendMessage()">
+                                      <md-icon slot="icon">send</md-icon>
+                                  </md-filled-button>
+                              </div>
+                          </div>
+                      </div>
+                  `;
+                  window.style.width = '400px';
+                  window.style.height = '500px';
+                  break;
+              case 'memory':
+                  title = 'Память';
+                  const currentCardId = localStorage.getItem('currentCardId');
+                  content = `<iframe src="memory.html?cardId=${currentCardId}" style="width:100%;height:100%;border:none;"></iframe>`;
+                  window.style.width = '800px';
+                  window.style.height = '600px';
+                  break;
+              case 'math':
+                  title = 'Математика';
+                  const cardId = localStorage.getItem('currentCardId');
+                  content = `<iframe src="math.html?cardId=${cardId}" style="width:100%;height:100%;border:none;"></iframe>`;
+                  window.style.width = '800px';
+                  window.style.height = '600px';
+                  break;
+          }
+
+          window.innerHTML = `
+              <div class="window-header">
+                  <md-icon>${desktopIcons.find(i => i.type === type)?.icon}</md-icon>
+                  <div class="window-title">${title}</div>
+                  <div class="window-controls">
+                      <div class="window-control" onclick="minimizeWindow(this.closest('.window'))">
+                          <md-icon>remove</md-icon>
+                      </div>
+                      <div class="window-control" onclick="maximizeWindow(this.closest('.window'))">
+                          <md-icon>crop_square</md-icon>
+                      </div>
+                      <div class="window-control" onclick="closeWindow(this.closest('.window'))">
+                          <md-icon>close</md-icon>
+                      </div>
+                  </div>
+              </div>
+              <div class="window-content">${content}</div>
+          `;
+
+          // Обновляем логику перетаскивания
+          const header = window.querySelector('.window-header');
+          let isDragging = false;
+          let startX = 0;
+          let startY = 0;
+
+          header.addEventListener('mousedown', (e) => {
+              if (e.target.closest('.window-header') && !e.target.closest('.window-controls')) {
+                  isDragging = true;
+                  startX = e.clientX - window.offsetLeft;
+                  startY = e.clientY - window.offsetTop;
+                  window.classList.add('active');
+                  e.preventDefault();
+              }
+          });
+
+          const moveHandler = (e) => {
+              if (!isDragging) return;
+              
+              e.preventDefault();
+              
+              const newX = e.clientX - startX;
+              const newY = e.clientY - startY;
+              
+              // Ограничиваем движение окна в пределах экрана
+              const maxX = document.documentElement.clientWidth - window.offsetWidth;
+              const maxY = document.documentElement.clientHeight - window.offsetHeight;
+              
+              window.style.left = `${Math.max(0, Math.min(maxX, newX))}px`;
+              window.style.top = `${Math.max(0, Math.min(maxY, newY))}px`;
+          };
+
+          const upHandler = () => {
+              isDragging = false;
+              window.classList.remove('active');
+          };
+
+          document.addEventListener('mousemove', moveHandler);
+          document.addEventListener('mouseup', upHandler);
+
+          // Удаляем обработчики при закрытии окна
+          window.addEventListener('remove', () => {
+              document.removeEventListener('mousemove', moveHandler);
+              document.removeEventListener('mouseup', upHandler);
+          });
+
+          // Активация окна при клике
+          window.addEventListener('mousedown', () => {
+              windows.forEach(w => {
+                  w.style.zIndex = 1000;
+                  w.classList.remove('active');
+              });
+              window.style.zIndex = windowZIndex++;
+              window.classList.add('active');
+              activeWindow = window;
+          });
+
+          windows.push(window);
+          document.body.appendChild(window);
+          
+          // Добавляем в панель задач
+          const taskbarItem = document.createElement('div');
+          taskbarItem.className = 'taskbar-item active';
+          taskbarItem.innerHTML = `
+              <md-icon>${desktopIcons.find(i => i.type === type)?.icon}</md-icon>
+              <span>${title}</span>
+          `;
+          taskbarItem.onclick = () => {
+              window.style.display = window.style.display === 'none' ? 'flex' : 'none';
+              taskbarItem.classList.toggle('active');
+          };
+          taskbarItems.appendChild(taskbarItem);
+      }
+
+      function closeWindow(window) {
+          window.remove();
+          windows = windows.filter(w => w !== window);
+          const taskbarItem = Array.from(taskbarItems.children).find(item => 
+              item.querySelector('span').textContent === window.querySelector('.window-title').textContent
+          );
+          if (taskbarItem) taskbarItem.remove();
+      }
+
+      function minimizeWindow(window) {
+          window.style.display = 'none';
+          const taskbarItem = Array.from(taskbarItems.children).find(item => 
+              item.querySelector('span').textContent === window.querySelector('.window-title').textContent
+          );
+          if (taskbarItem) taskbarItem.classList.remove('active');
+      }
+
+      function maximizeWindow(window) {
+          if (window.style.width === '100vw') {
+              window.style.width = window.dataset.prevWidth;
+              window.style.height = window.dataset.prevHeight;
+              window.style.left = window.dataset.prevLeft;
+              window.style.top = window.dataset.prevTop;
+              window.style.transform = window.dataset.prevTransform;
+          } else {
+              window.dataset.prevWidth = window.style.width;
+              window.dataset.prevHeight = window.style.height;
+              window.dataset.prevLeft = window.style.left;
+              window.dataset.prevTop = window.style.top;
+              window.dataset.prevTransform = window.style.transform;
+              
+              window.style.width = '100vw';
+              window.style.height = `calc(100vh - var(--taskbar-height))`;
+              window.style.left = '0';
+              window.style.top = '0';
+              window.style.transform = 'none';
+          }
+      }
+
+      window.completeTask = async function(taskId, reward) {
+          const cardId = localStorage.getItem('currentCard');
+          if (!cardId) {
+              alert('Сначала войдите в аккаунт!');
+              return;
+          }
+
+          const snapshot = await get(ref(db, `cards/${cardId}`));
+          const card = snapshot.val();
+          
+          // Проверяем, не выполнено ли уже задание
+          if (card.completedTasks && card.completedTasks[taskId]) {
+              alert('Задание уже выполнено!');
+              return;
+          }
+
+          await update(ref(db), {
+              [`cards/${cardId}/balance`]: (card.balance || 0) + reward,
+              [`cards/${cardId}/completedTasks/${taskId}`]: true,
+              [`cards/${cardId}/transactions/${Date.now()}`]: {
+                  type: 'task',
+                  amount: reward,
+                  description: `Выполнение задания: ${taskId}`,
+                  timestamp: Date.now()
+              }
+          });
+
+          alert(`Поздравляем! Вы получили ${reward} МР`);
+      };
+    </script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
+    <style>
+        :root {
+            --md-icon-font: 'Material Symbols Outlined';
+            --taskbar-height: 50px;
+            --window-header-height: 32px;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: #1E1E1E;
+            font-family: 'Roboto', sans-serif;
+            color: white;
+            overflow: hidden;
+        }
+
+        /* Рабочий стол */
+        .desktop {
+            height: calc(100vh - var(--taskbar-height));
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, 100px);
+            grid-auto-rows: 100px;
+            gap: 20px;
+            overflow: auto;
+        }
+
+        /* Иконки на рабочем столе */
+        .desktop-icon {
+            width: 100px;
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.2s;
+            text-align: center;
+            padding: 10px;
+            user-select: none;
+        }
+
+        .desktop-icon:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .desktop-icon md-icon {
+            --md-icon-size: 48px;
+            --md-icon-color: white;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .desktop-icon span {
+            font-size: 12px;
+            color: white;
+            max-width: 90px;
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-align: center;
+            line-height: 1.2;
+            margin-top: 5px;
+        }
+
+        /* Панель задач */
+        .taskbar {
+            height: var(--taskbar-height);
+            background: rgba(30,30,30,0.95);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .start-button {
+            --md-filled-button-container-color: #4CAF50;
+            margin-right: 20px;
+        }
+
+        .taskbar-items {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .taskbar-item {
+            padding: 8px 16px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.1);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .taskbar-item:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .taskbar-item.active {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* Окна */
+        .window {
+            position: absolute;
+            background: #2D2D2D;
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            min-width: 300px;
+            min-height: 200px;
+            border: 1px solid rgba(255,255,255,0.1);
+            transform: translate(0, 0);
+            transition: box-shadow 0.3s;
+            resize: both;
+            overflow: hidden;
+        }
+
+        .window::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            width: 15px;
+            height: 15px;
+            cursor: se-resize;
+            background: linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.1) 50%);
+        }
+
+        .window.resizing {
+            user-select: none;
+            transition: none;
+        }
+
+        .resize-handle {
+            position: absolute;
+            z-index: 1000;
+        }
+
+        .resize-handle.top {
+            top: -3px;
+            left: 3px;
+            right: 3px;
+            height: 6px;
+            cursor: n-resize;
+        }
+
+        .resize-handle.bottom {
+            bottom: -3px;
+            left: 3px;
+            right: 3px;
+            height: 6px;
+            cursor: s-resize;
+        }
+
+        .resize-handle.left {
+            left: -3px;
+            top: 3px;
+            bottom: 3px;
+            width: 6px;
+            cursor: w-resize;
+        }
+
+        .resize-handle.right {
+            right: -3px;
+            top: 3px;
+            bottom: 3px;
+            width: 6px;
+            cursor: e-resize;
+        }
+
+        .resize-handle.top-left {
+            top: -3px;
+            left: -3px;
+            width: 12px;
+            height: 12px;
+            cursor: nw-resize;
+        }
+
+        .resize-handle.top-right {
+            top: -3px;
+            right: -3px;
+            width: 12px;
+            height: 12px;
+            cursor: ne-resize;
+        }
+
+        .resize-handle.bottom-left {
+            bottom: -3px;
+            left: -3px;
+            width: 12px;
+            height: 12px;
+            cursor: sw-resize;
+        }
+
+        .resize-handle.bottom-right {
+            bottom: -3px;
+            right: -3px;
+            width: 12px;
+            height: 12px;
+            cursor: se-resize;
+        }
+
+        .window.active {
+            box-shadow: 0 12px 48px rgba(0,0,0,0.4);
+        }
+
+        .window-header {
+            height: var(--window-header-height);
+            background: rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            cursor: move;
+            border-radius: 8px 8px 0 0;
+            user-select: none;
+        }
+
+        .window-title {
+            flex: 1;
+            margin-left: 8px;
+            font-size: 14px;
+            color: rgba(255,255,255,0.8);
+            pointer-events: none;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 4px;
+            z-index: 1;
+        }
+
+        .window-control {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .window-control:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .window-content {
+            flex: 1;
+            overflow: auto;
+            padding: 16px;
+        }
+
+        /* Файловый менеджер */
+        .file-manager {
+            display: flex;
+            height: 100%;
+        }
+
+        .sidebar {
+            width: 200px;
+            background: rgba(0,0,0,0.2);
+            padding: 16px;
+        }
+
+        .files-list {
+            flex: 1;
+            padding: 16px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 16px;
+        }
+
+        .file-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            width: 100px;
+            height: 100px;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .file-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .file-item md-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+            --md-icon-color: #4CAF50;
+        }
+
+        .file-item span {
+            font-size: 12px;
+            color: white;
+            max-width: 90px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Меню запуска */
+        .start-menu {
+            position: fixed;
+            bottom: var(--taskbar-height);
+            left: 20px;
+            width: 400px;
+            height: 600px;
+            background: rgba(30,30,30,0.95);
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            display: none;
+            grid-template-rows: auto 1fr auto;
+        }
+
+        .start-menu.visible {
+            display: grid;
+        }
+
+        .start-menu-header {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .start-menu-search {
+            flex: 1;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .start-menu-content {
+            display: grid;
+            grid-template-columns: 50px 1fr;
+            overflow: hidden;
+        }
+
+        .start-menu-sidebar {
+            background: rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 0;
+        }
+
+        .start-menu-sidebar-item {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 4px 0;
+        }
+
+        .start-menu-sidebar-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .start-menu-apps {
+            padding: 16px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 16px;
+            align-content: start;
+        }
+
+        .start-menu-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+            width: 80px;
+            height: 80px;
+        }
+
+        .start-menu-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .start-menu-footer {
+            padding: 16px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .earning-card {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-align: center;
+        }
+
+        .earning-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255,255,255,0.15);
+        }
+
+        .earning-card md-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+            --md-icon-color: #4CAF50;
+        }
+
+        .task-card {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .task-card h3 {
+            margin: 0 0 5px 0;
+        }
+
+        .task-card p {
+            margin: 0 0 10px 0;
+            color: rgba(255,255,255,0.7);
+        }
+    </style>
+</head>
+<body>
+    <div class="desktop" id="desktop">
+        <!-- Иконки рабочего стола -->
+    </div>
+
+    <div class="taskbar">
+        <md-filled-button class="start-button" id="startButton">
+            <md-icon slot="icon">apps</md-icon>
+            Меню
+        </md-filled-button>
+        <div class="taskbar-items" id="taskbarItems">
+            <!-- Активные окна -->
+        </div>
+    </div>
+
+    <div class="start-menu" id="startMenu">
+        <div class="start-menu-header">
+            <md-icon>account_circle</md-icon>
+            <span>Пользователь</span>
+            <input type="text" class="start-menu-search" placeholder="Поиск...">
+        </div>
+        <div class="start-menu-content">
+            <div class="start-menu-sidebar">
+                <div class="start-menu-sidebar-item">
+                    <md-icon>home</md-icon>
+                </div>
+                <div class="start-menu-sidebar-item">
+                    <md-icon>folder</md-icon>
+                </div>
+                <div class="start-menu-sidebar-item">
+                    <md-icon>settings</md-icon>
+                </div>
+                <div class="start-menu-sidebar-item">
+                    <md-icon>power_settings_new</md-icon>
+                </div>
+            </div>
+            <div class="start-menu-apps">
+                <div class="start-menu-item" onclick="createWindow('bank')">
+                    <md-icon>account_balance</md-icon>
+                    <span>Банк Маннру</span>
+                </div>
+                <div class="start-menu-item" onclick="createWindow('files')">
+                    <md-icon>folder</md-icon>
+                    <span>Файлы</span>
+                </div>
+                <div class="start-menu-item" onclick="createWindow('calculator')">
+                    <md-icon>calculate</md-icon>
+                    <span>Калькулятор</span>
+                </div>
+                <div class="start-menu-item" onclick="createWindow('notepad')">
+                    <md-icon>edit_note</md-icon>
+                    <span>Блокнот</span>
+                </div>
+                <div class="start-menu-item" onclick="createWindow('calendar')">
+                    <md-icon>calendar_month</md-icon>
+                    <span>Календарь</span>
+                </div>
+                <div class="start-menu-item" onclick="createWindow('weather')">
+                    <md-icon>cloud</md-icon>
+                    <span>Погода</span>
+                </div>
+                <div class="start-menu-item" onclick="createWindow('chat')">
+                    <md-icon>chat</md-icon>
+                    <span>Чат</span>
+                </div>
+                <div class="start-menu-item" onclick="createWindow('settings')">
+                    <md-icon>settings</md-icon>
+                    <span>Настройки</span>
+                </div>
+                <div class="start-menu-item" onclick="createWindow('terminal')">
+                    <md-icon>terminal</md-icon>
+                    <span>Терминал</span>
+                </div>
+            </div>
+        </div>
+        <div class="start-menu-footer">
+            <md-icon>power_settings_new</md-icon>
+            <span>Выключение</span>
+        </div>
+    </div>
+
+    <script>
+        // Весь остальной JavaScript код...
+    </script>
+</body>
+</html> 

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Выбор банка</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <script type="importmap">
+      {
+        "imports": {
+          "@material/web/": "https://esm.run/@material/web/"
+        }
+      }
+    </script>
+    <script type="module">
+      import '@material/web/all.js';
+    </script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: #001800;
+            font-family: 'Roboto', sans-serif;
+            color: #00FF00;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 24px;
+            text-shadow: 0 0 10px #00FF00;
+        }
+
+        .banks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .bank-card {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00FF00;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bank-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+
+        .bank-card.mannru {
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid #00FF00;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 255, 0, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 255, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 255, 0, 0); }
+        }
+
+        .bank-logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 15px;
+            background: rgba(0, 255, 0, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .bank-name {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .bank-description {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .terminal-effect {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15) 0px,
+                rgba(0, 0, 0, 0.15) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            animation: scan 10s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 100%; }
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 20px;
+            background: #00FF00;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+            margin-left: 5px;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="terminal-effect"></div>
+    <div class="container">
+        <div class="header">
+            > Выберите банк для входа<span class="cursor"></span>
+        </div>
+        <div class="banks-grid">
+            <div class="bank-card mannru" onclick="window.location.href='index.html'">
+                <div class="bank-logo">MB</div>
+                <div class="bank-name">Банк Маннру</div>
+                <div class="bank-description">Инновационный цифровой банк</div>
+            </div>
+            <div class="bank-card">
+                <div class="bank-logo">SB</div>
+                <div class="bank-name">СберБанк</div>
+                <div class="bank-description">Недоступно в вашем регионе</div>
+            </div>
+            <div class="bank-card">
+                <div class="bank-logo">VB</div>
+                <div class="bank-name">ВТБ</div>
+                <div class="bank-description">Недоступно в вашем регионе</div>
+            </div>
+            <div class="bank-card">
+                <div class="bank-logo">TB</div>
+                <div class="bank-name">Тинькофф</div>
+                <div class="bank-description">Недоступно в вашем регионе</div>
+            </div>
+            <div class="bank-card">
+                <div class="bank-logo">AB</div>
+                <div class="bank-name">Альфа-Банк</div>
+                <div class="bank-description">Недоступно в вашем регионе</div>
+            </div>
+            <div class="bank-card">
+                <div class="bank-logo">RB</div>
+                <div class="bank-name">Райффайзен</div>
+                <div class="bank-description">Недоступно в вашем регионе</div>
+            </div>
+            <div class="bank-card">
+                <div class="bank-logo">GB</div>
+                <div class="bank-name">Газпромбанк</div>
+                <div class="bank-description">Недоступно в вашем регионе</div>
+            </div>
+            <div class="bank-card">
+                <div class="bank-logo">PB</div>
+                <div class="bank-name">Почта Банк</div>
+                <div class="bank-description">Недоступно в вашем регионе</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

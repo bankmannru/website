@@ -108,14 +108,24 @@
                 const snapshot = await get(cardRef);
                 const cardData = snapshot.val();
 
-                if (cardData.balance < price) {
+                if (!cardData) {
+                    showNotification('Карта не найдена', true);
+                    return;
+                }
+
+                // Проверяем баланс (убеждаемся, что это число)
+                const currentBalance = Number(cardData.balance) || 0;
+                if (currentBalance < price) {
                     showNotification('Недостаточно средств', true);
                     return;
                 }
 
+                // Создаем объект обновлений
                 const updates = {};
-                // Обновляем баланс
-                updates[`cards/${cardId}/balance`] = cardData.balance - price;
+                
+                // Обновляем баланс (убеждаемся, что это число)
+                const newBalance = currentBalance - price;
+                updates[`cards/${cardId}/balance`] = newBalance;
 
                 // Добавляем покупку в историю транзакций
                 const timestamp = Date.now();
@@ -143,38 +153,34 @@
                             rate: 0.05 // 5% кэшбэк
                         };
                         break;
-                    case 'instant_transfer':
-                        updates[`cards/${cardId}/features/instantTransfer`] = {
-                            active: true,
+                    case 'neon_card':
+                    case 'hologram_card':
+                    case 'matrix_card':
+                    case 'animated_card':
+                        updates[`cards/${cardId}/design`] = {
+                            type: productType.replace('_card', ''),
                             activatedAt: timestamp,
-                            expiresAt: timestamp + (30 * 24 * 60 * 60 * 1000) // 30 дней
+                            animation: true
                         };
                         break;
-                    case 'analytics':
-                        updates[`cards/${cardId}/features/analytics`] = {
+                    case 'custom_number':
+                        showCustomNumberDialog(cardId, newBalance, price, timestamp);
+                        return;
+                    case 'nickname':
+                        showNicknameDialog(cardId, newBalance, price, timestamp);
+                        return;
+                    case 'card_effects':
+                        updates[`cards/${cardId}/effects`] = {
                             active: true,
-                            activatedAt: timestamp,
-                            expiresAt: timestamp + (60 * 24 * 60 * 60 * 1000) // 60 дней
-                        };
-                        break;
-                    case 'auto_savings':
-                        updates[`cards/${cardId}/features/autoSavings`] = {
-                            active: true,
-                            activatedAt: timestamp,
-                            rate: 0.05 // 5% от входящих переводов
-                        };
-                        break;
-                    case 'custom_theme':
-                        updates[`cards/${cardId}/features/customTheme`] = {
-                            active: true,
+                            type: 'sparkle',
                             activatedAt: timestamp
                         };
                         break;
-                    case 'notifications':
-                        updates[`cards/${cardId}/features/notifications`] = {
+                    case 'insurance':
+                        updates[`cards/${cardId}/insurance`] = {
                             active: true,
                             activatedAt: timestamp,
-                            expiresAt: timestamp + (90 * 24 * 60 * 60 * 1000) // 90 дней
+                            expiresAt: timestamp + (180 * 24 * 60 * 60 * 1000) // 180 дней
                         };
                         break;
                 }
@@ -217,7 +223,7 @@
             }, 3000);
         }
     </script>
-    <div class='header' style="display: flex; align-items: center; justify-content: center;">Мы набираем работников для банк Маннру. 
+    <div class='header' id="hiring-banner" style="display: none; align-items: center; justify-content: center;">Мы набираем работников для банк Маннру. 
       <a href="https://forms.gle/GJFTNofAoNCuxMT37" style="margin-left: 10px;">
           <md-filled-tonal-button style="background-color: #a5c8ff; color: #003060;">
               Подать заявку
@@ -451,47 +457,11 @@
             </div>
             <div class='product-card'>
                 <div class="product-content">
-                    <img class='goodsimg' src="Маркет/instant_transfer.png">
-                    <p class='goodstext'>Мгновенные переводы</p>
-                    <p class='goodsdesc'>Отключение задержки при переводах на 30 дней</p>
-                    <p class='goodsprice'>300МР</p>
-                    <md-filled-tonal-button onclick="buyProduct('instant_transfer', 300)" trailing-icon>
-                        Купить
-                        <md-icon slot="trailing-icon">shopping_cart</md-icon>
-                    </md-filled-tonal-button>
-                </div>
-            </div>
-            <div class='product-card'>
-                <div class="product-content">
-                    <img class='goodsimg' src="Маркет/analytics.png">
-                    <p class='goodstext'>Аналитика трат</p>
-                    <p class='goodsdesc'>Подробная статистика расходов на 60 дней</p>
-                    <p class='goodsprice'>800МР</p>
-                    <md-filled-tonal-button onclick="buyProduct('analytics', 800)" trailing-icon>
-                        Купить
-                        <md-icon slot="trailing-icon">shopping_cart</md-icon>
-                    </md-filled-tonal-button>
-                </div>
-            </div>
-            <div class='product-card'>
-                <div class="product-content">
-                    <img class='goodsimg' src="Маркет/auto_savings.png">
-                    <p class='goodstext'>Автокопилка</p>
-                    <p class='goodsdesc'>Автоматическое накопление 5% от входящих переводов</p>
-                    <p class='goodsprice'>600МР</p>
-                    <md-filled-tonal-button onclick="buyProduct('auto_savings', 600)" trailing-icon>
-                        Купить
-                        <md-icon slot="trailing-icon">shopping_cart</md-icon>
-                    </md-filled-tonal-button>
-                </div>
-            </div>
-            <div class='product-card'>
-                <div class="product-content">
-                    <img class='goodsimg' src="Маркет/custom_theme.png">
-                    <p class='goodstext'>Кастомная тема</p>
-                    <p class='goodsdesc'>Возможность создать свой дизайн карты</p>
+                    <img class='goodsimg' src="Маркет/neon_card.png">
+                    <p class='goodstext'>Неоновая карта</p>
+                    <p class='goodsdesc'>Светящийся неоновый дизайн карты с анимацией</p>
                     <p class='goodsprice'>1500МР</p>
-                    <md-filled-tonal-button onclick="buyProduct('custom_theme', 1500)" trailing-icon>
+                    <md-filled-tonal-button onclick="buyProduct('neon_card', 1500)" trailing-icon>
                         Купить
                         <md-icon slot="trailing-icon">shopping_cart</md-icon>
                     </md-filled-tonal-button>
@@ -499,11 +469,59 @@
             </div>
             <div class='product-card'>
                 <div class="product-content">
-                    <img class='goodsimg' src="Маркет/notifications.png">
-                    <p class='goodstext'>Push-уведомления</p>
-                    <p class='goodsdesc'>Мгновенные уведомления о всех операциях на 90 дней</p>
-                    <p class='goodsprice'>400МР</p>
-                    <md-filled-tonal-button onclick="buyProduct('notifications', 400)" trailing-icon>
+                    <img class='goodsimg' src="Маркет/hologram_card.png">
+                    <p class='goodstext'>Голографическая карта</p>
+                    <p class='goodsdesc'>Переливающийся голографический эффект</p>
+                    <p class='goodsprice'>2500МР</p>
+                    <md-filled-tonal-button onclick="buyProduct('hologram_card', 2500)" trailing-icon>
+                        Купить
+                        <md-icon slot="trailing-icon">shopping_cart</md-icon>
+                    </md-filled-tonal-button>
+                </div>
+            </div>
+            <div class='product-card'>
+                <div class="product-content">
+                    <img class='goodsimg' src="Маркет/custom_number.png">
+                    <p class='goodstext'>Выбор номера</p>
+                    <p class='goodsdesc'>Возможность выбрать красивый номер карты</p>
+                    <p class='goodsprice'>1000МР</p>
+                    <md-filled-tonal-button onclick="buyProduct('custom_number', 1000)" trailing-icon>
+                        Купить
+                        <md-icon slot="trailing-icon">shopping_cart</md-icon>
+                    </md-filled-tonal-button>
+                </div>
+            </div>
+            <div class='product-card'>
+                <div class="product-content">
+                    <img class='goodsimg' src="Маркет/animated_card.png">
+                    <p class='goodstext'>Анимированная карта</p>
+                    <p class='goodsdesc'>Движущиеся элементы на дизайне карты</p>
+                    <p class='goodsprice'>3000МР</p>
+                    <md-filled-tonal-button onclick="buyProduct('animated_card', 3000)" trailing-icon>
+                        Купить
+                        <md-icon slot="trailing-icon">shopping_cart</md-icon>
+                    </md-filled-tonal-button>
+                </div>
+            </div>
+            <div class='product-card'>
+                <div class="product-content">
+                    <img class='goodsimg' src="Маркет/nickname.png">
+                    <p class='goodstext'>Никнейм на карте</p>
+                    <p class='goodsdesc'>Добавьте свой никнейм на карту</p>
+                    <p class='goodsprice'>500МР</p>
+                    <md-filled-tonal-button onclick="buyProduct('nickname', 500)" trailing-icon>
+                        Купить
+                        <md-icon slot="trailing-icon">shopping_cart</md-icon>
+                    </md-filled-tonal-button>
+                </div>
+            </div>
+            <div class='product-card'>
+                <div class="product-content">
+                    <img class='goodsimg' src="Маркет/card_effects.png">
+                    <p class='goodstext'>Эффекты карты</p>
+                    <p class='goodsdesc'>Специальные эффекты при использовании карты</p>
+                    <p class='goodsprice'>1200МР</p>
+                    <md-filled-tonal-button onclick="buyProduct('card_effects', 1200)" trailing-icon>
                         Купить
                         <md-icon slot="trailing-icon">shopping_cart</md-icon>
                     </md-filled-tonal-button>
@@ -528,6 +546,107 @@
     <script type="module">
         // Импортируем иконки Material Design
         import '@material/web/icon/icon.js';
+    </script>
+    <script type="module">
+        import { database } from './firebase-config.js';
+        import { ref, onValue } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+
+        const hiringBannerRef = ref(database, 'settings/hiringBannerEnabled');
+        onValue(hiringBannerRef, (snapshot) => {
+            const bannerEnabled = snapshot.val();
+            const banner = document.getElementById('hiring-banner');
+            banner.style.display = bannerEnabled ? 'flex' : 'none';
+        });
+    </script>
+    <script>
+        function showCustomNumberDialog(cardId, newBalance, price, timestamp) {
+            const dialog = document.createElement('md-dialog');
+            dialog.innerHTML = `
+                <div slot="headline">Выберите номер карты</div>
+                <div slot="content" class="dialog-content">
+                    <md-outlined-text-field
+                        label="Введите желаемый номер"
+                        type="text"
+                        maxlength="3"
+                        pattern="[0-9]*"
+                        id="custom-number-input">
+                    </md-outlined-text-field>
+                    <p style="color: rgba(0,0,0,0.6);">Введите 3 цифры для номера карты</p>
+                </div>
+                <div slot="actions">
+                    <md-text-button value="cancel">Отмена</md-text-button>
+                    <md-text-button value="confirm">Подтвердить</md-text-button>
+                </div>
+            `;
+            
+            document.body.appendChild(dialog);
+            dialog.show();
+            
+            dialog.addEventListener('close', async (e) => {
+                if (e.target.returnValue === 'confirm') {
+                    const number = document.getElementById('custom-number-input').value;
+                    if (number.length === 3 && /^\d+$/.test(number)) {
+                        const updates = {
+                            [`cards/${cardId}/balance`]: newBalance,
+                            [`cards/${cardId}/number`]: number,
+                            [`cards/${cardId}/transactions/${timestamp}`]: {
+                                type: 'purchase',
+                                amount: -price,
+                                description: 'Покупка выбора номера карты',
+                                timestamp
+                            }
+                        };
+                        await update(ref(database), updates);
+                        showNotification('Номер карты успешно изменен');
+                    }
+                }
+                dialog.remove();
+            });
+        }
+
+        function showNicknameDialog(cardId, newBalance, price, timestamp) {
+            const dialog = document.createElement('md-dialog');
+            dialog.innerHTML = `
+                <div slot="headline">Добавить никнейм на карту</div>
+                <div slot="content" class="dialog-content">
+                    <md-outlined-text-field
+                        label="Введите никнейм"
+                        type="text"
+                        maxlength="15"
+                        id="nickname-input">
+                    </md-outlined-text-field>
+                    <p style="color: rgba(0,0,0,0.6);">До 15 символов</p>
+                </div>
+                <div slot="actions">
+                    <md-text-button value="cancel">Отмена</md-text-button>
+                    <md-text-button value="confirm">Подтвердить</md-text-button>
+                </div>
+            `;
+            
+            document.body.appendChild(dialog);
+            dialog.show();
+            
+            dialog.addEventListener('close', async (e) => {
+                if (e.target.returnValue === 'confirm') {
+                    const nickname = document.getElementById('nickname-input').value;
+                    if (nickname) {
+                        const updates = {
+                            [`cards/${cardId}/balance`]: newBalance,
+                            [`cards/${cardId}/nickname`]: nickname,
+                            [`cards/${cardId}/transactions/${timestamp}`]: {
+                                type: 'purchase',
+                                amount: -price,
+                                description: 'Покупка никнейма на карту',
+                                timestamp
+                            }
+                        };
+                        await update(ref(database), updates);
+                        showNotification('Никнейм успешно добавлен на карту');
+                    }
+                }
+                dialog.remove();
+            });
+        }
     </script>
 </body>
 </html>

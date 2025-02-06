@@ -491,7 +491,117 @@
         #transaction-details-dialog md-icon-button {
             --md-icon-button-icon-color: white;
         }
+
+        /* Стили для неоновой карты */
+        .neon-card {
+            border: 2px solid #0ff;
+            box-shadow: 0 0 10px #0ff, inset 0 0 10px #0ff;
+        }
+
+        .neon-glow {
+            animation: neonGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes neonGlow {
+            0%, 100% { box-shadow: 0 0 10px #0ff, inset 0 0 10px #0ff; }
+            50% { box-shadow: 0 0 20px #0ff, inset 0 0 20px #0ff; }
+        }
+
+        /* Стили для голографической карты */
+        .hologram-card {
+            background: linear-gradient(
+                45deg,
+                rgba(255,255,255,0.1) 0%,
+                rgba(255,255,255,0.3) 25%,
+                rgba(255,255,255,0.1) 50%,
+                rgba(255,255,255,0.3) 75%,
+                rgba(255,255,255,0.1) 100%
+            );
+            animation: hologramShift 3s linear infinite;
+        }
+
+        @keyframes hologramShift {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 200% 0%; }
+        }
+
+        /* Стили для матричной карты */
+        .matrix-card {
+            background-color: #000;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .matrix-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                transparent 0%,
+                rgba(32, 255, 77, 0.2) 50%,
+                transparent 100%
+            );
+            animation: matrixScan 2s linear infinite;
+        }
+
+        @keyframes matrixScan {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+
+        /* Стили для анимированной карты */
+        .animated-card {
+            animation: cardPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes cardPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        /* Стили для никнейма */
+        .card-nickname {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 14px;
+            color: rgba(255,255,255,0.8);
+            font-style: italic;
+        }
+
+        /* Стили для эффектов */
+        .effect-sparkle {
+            position: relative;
+        }
+
+        .effect-sparkle::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), 
+                                  rgba(255,255,255,0.2) 0%, 
+                                  transparent 20%);
+            pointer-events: none;
+        }
     </style>
+    <script>
+        // Добавляем отслеживание движения мыши для эффекта sparkle
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelector('.effect-sparkle')?.addEventListener('mousemove', (e) => {
+                const rect = e.target.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width) * 100;
+                const y = ((e.clientY - rect.top) / rect.height) * 100;
+                e.target.style.setProperty('--x', `${x}%`);
+                e.target.style.setProperty('--y', `${y}%`);
+            });
+        });
+    </script>
 </head>
 <body>
     <div class="container">
@@ -583,6 +693,16 @@
         </md-dialog>
     </div>
 
+    <!-- Заменяем статичный баннер -->
+    <div class='header' id="hiring-banner" style="display: none; align-items: center; justify-content: center;">Мы набираем работников для банк Маннру. 
+        <a href="https://forms.gle/GJFTNofAoNCuxMT37" style="margin-left: 10px;">
+            <md-filled-tonal-button>
+                Подать заявку
+                <svg slot="icon" viewBox="0 0 48 48"><path d="M6 40V8l38 16Zm3-4.65L36.2 24 9 12.5v8.4L21.1 24 9 27Zm0 0V12.5 27Z"/></svg>
+            </md-filled-tonal-button>
+        </a>
+    </div>
+
     <script type="module">
         import { database } from './firebase-config.js';
         import { ref, get, onValue, update, push, set } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
@@ -592,7 +712,7 @@
         window.showNotification = showNotification;
 
         // Инициализация карты
-        function initializeCard() {
+        async function initializeCard() {
             const urlParams = new URLSearchParams(window.location.search);
             const cardId = urlParams.get('id') || localStorage.getItem('currentCardId');
             
@@ -652,6 +772,8 @@
 
                     // Проверяем активные функции
                     checkActiveFeatures(cardData);
+                    // В функции updateCardDisplay добавляем обработку дизайна и эффектов
+                    updateCardDisplay(cardData);
                 } else {
                     window.location.href = 'index.html';
                 }
@@ -1030,6 +1152,66 @@
             // Проверяем повышенный кэшбэк
             if (cardData.cashback?.active && cardData.cashback.expiresAt > now) {
                 document.getElementById('cashback-badge').style.display = 'flex';
+            }
+        }
+
+        // Добавляем скрипт для проверки состояния баннера
+        const hiringBannerRef = ref(database, 'settings/hiringBannerEnabled');
+        onValue(hiringBannerRef, (snapshot) => {
+            const bannerEnabled = snapshot.val();
+            const banner = document.getElementById('hiring-banner');
+            banner.style.display = bannerEnabled ? 'flex' : 'none';
+        });
+
+        // В функции updateCardDisplay добавляем обработку дизайна и эффектов
+        function updateCardDisplay(cardData) {
+            // Получаем элемент bank-card
+            const cardElement = document.getElementById('user-card');
+            if (!cardElement) return;
+
+            // Получаем shadow root карты
+            const shadowRoot = cardElement.shadowRoot;
+            if (!shadowRoot) return;
+
+            // Находим .card внутри shadow root
+            const cardContainer = shadowRoot.querySelector('.card');
+            if (!cardContainer) return;
+
+            // Применяем дизайн карты
+            if (cardData.design) {
+                switch (cardData.design.type) {
+                    case 'neon':
+                        cardContainer.classList.add('neon-card');
+                        if (cardData.design.animation) {
+                            cardContainer.classList.add('neon-glow');
+                        }
+                        break;
+                    case 'hologram':
+                        cardContainer.classList.add('hologram-card');
+                        break;
+                    case 'matrix':
+                        cardContainer.classList.add('matrix-card');
+                        break;
+                    case 'animated':
+                        cardContainer.classList.add('animated-card');
+                        break;
+                }
+            }
+
+            // Добавляем никнейм если есть
+            if (cardData.nickname) {
+                let nicknameElement = shadowRoot.querySelector('.card-nickname');
+                if (!nicknameElement) {
+                    nicknameElement = document.createElement('div');
+                    nicknameElement.className = 'card-nickname';
+                    cardContainer.appendChild(nicknameElement);
+                }
+                nicknameElement.textContent = cardData.nickname;
+            }
+
+            // Применяем эффекты
+            if (cardData.effects && cardData.effects.active) {
+                cardContainer.classList.add(`effect-${cardData.effects.type}`);
             }
         }
     </script>
