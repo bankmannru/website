@@ -29,13 +29,18 @@
 
     <style>
         body {
-            font-family: 'Product Sans', sans-serif;
+            background: #FF7F50;
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            font-family: 'Roboto', sans-serif;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 24px;
         }
 
         .account-header {
@@ -44,16 +49,88 @@
             padding: 24px;
             border-radius: 16px;
             margin-bottom: 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .account-header h1 {
-            color: white;
             margin: 0;
+            color: white;
+        }
+
+        .account-content h2 {
+            display: none;  /* Скрываем второй заголовок */
+        }
+
+        .messages-section {
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .messages-section h3 {
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .messages-section md-icon {
+            color: white;
+        }
+
+        .messages-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .message-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+            position: relative;
+            color: white;
+        }
+
+        .message-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .message-item.unread {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .message-item.unread:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .message-subject {
+            font-weight: 500;
+            margin-bottom: 4px;
+            color: white;
+        }
+
+        .message-body {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.9em;
         }
 
         .card-section {
@@ -594,57 +671,6 @@
             color: var(--md-sys-color-error);
         }
 
-        .messages-section {
-            margin-bottom: 20px;
-        }
-
-        .messages-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .message-item {
-            background: var(--md-sys-color-surface-variant);
-            border-radius: 8px;
-            padding: 12px;
-            cursor: pointer;
-            transition: background 0.2s;
-            position: relative;
-        }
-
-        .message-item:hover {
-            background: var(--md-sys-color-surface-variant-hover);
-        }
-
-        .message-item.unread {
-            background: var(--md-sys-color-primary-container);
-        }
-
-        .message-item.unread:hover {
-            background: var(--md-sys-color-primary-container-hover);
-        }
-
-        .message-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 0.9em;
-            color: var(--md-sys-color-on-surface-variant);
-        }
-
-        .message-subject {
-            font-weight: 500;
-            margin-bottom: 4px;
-        }
-
-        .message-body {
-            color: var(--md-sys-color-on-surface-variant);
-            font-size: 0.9em;
-        }
-
         .unread-badge {
             background: var(--md-sys-color-error);
             color: var(--md-sys-color-on-error);
@@ -697,11 +723,6 @@
                 <span id="daily-message">Загрузка сообщения...</span>
             </div>
         </div>
-
-        <div class="account-content">
-            <div class="account-header">
-                <h2>Личный кабинет</h2>
-            </div>
             <!-- Добавляем вкладку с почтой -->
             <div class="account-section messages-section">
                 <h3>
@@ -715,6 +736,8 @@
             </div>
             
             <div class="account-section">
+                <div class="account-content">
+                    <div class="account-header">
                 <h3>
                     <md-icon>account_balance_wallet</md-icon>
                     Баланс
@@ -788,8 +811,28 @@
     </div>
 
     <script type="module">
-        import '@material/web/all.js';
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
         import { getDatabase, ref, get, update, onValue } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+        import { getAuth } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+        import '@material/web/all.js';
+        
+        // Конфигурация Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAK8cgAKNDAfXIOzA_0kn4QhVk5OYkcGbk",
+            authDomain: "bank-mannru2.firebaseapp.com",
+            databaseURL: "https://bank-mannru2-default-rtdb.firebaseio.com",
+            projectId: "bank-mannru2",
+            storageBucket: "bank-mannru2.firebasestorage.app",
+            messagingSenderId: "666672164834",
+            appId: "1:666672164834:web:d221a89a4c4ed88d4c13bb",
+            measurementId: "G-85BL0L97NP"
+        };
+        
+        // Инициализируем Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const auth = getAuth(app);
+        
         import { logout } from './auth.js';
 
         // Делаем функцию showNotification доступной глобально
