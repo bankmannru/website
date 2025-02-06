@@ -59,6 +59,30 @@
             margin-bottom: 16px;
         }
 
+        .chat-layout {
+            display: flex;
+            height: calc(100vh - 64px);
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .chat-toolbar {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 8px;
+        }
+
         .messages-area {
             flex: 1;
             overflow-y: auto;
@@ -67,13 +91,33 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
+            min-height: 0;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .messages-group {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .message-date-divider {
+            text-align: center;
+            color: var(--md-sys-color-outline);
+            font-size: 0.9em;
+            margin: 16px 0 8px;
+            position: sticky;
+            top: 0;
+            background: inherit;
+            padding: 4px;
+            z-index: 1;
         }
 
         .message {
             max-width: 80%;
             padding: 8px 12px;
             border-radius: 12px;
-            margin-bottom: 8px;
+            margin: 1px 0;
             word-break: break-word;
         }
 
@@ -94,9 +138,43 @@
             width: 100%;
         }
 
+        .message-info {
+            font-size: 0.8em;
+            opacity: 0.7;
+            margin-bottom: 4px;
+        }
+
+        .message-time {
+            font-size: 0.7em;
+            opacity: 0.5;
+            margin-top: 4px;
+            text-align: right;
+        }
+
+        .input-area {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .input-area form {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .media-buttons {
+            display: flex;
+            gap: 4px;
+        }
+
+        md-filled-text-field {
+            flex: 1;
+        }
+
         .new-messages-indicator {
             position: fixed;
-            bottom: 80px;
+            bottom: 100px;
             left: 50%;
             transform: translateX(-50%);
             background: var(--md-sys-color-primary);
@@ -471,8 +549,27 @@
             }
 
             // Обновляем отображение сообщений
+            let currentDate = null;
+            let currentGroup = null;
+
             onChildAdded(messagesRef, (snapshot) => {
                 const message = snapshot.val();
+                const messageDate = new Date(message.timestamp).toLocaleDateString();
+                
+                // Создаем новую группу для новой даты
+                if (messageDate !== currentDate) {
+                    currentDate = messageDate;
+                    const dateDivider = document.createElement('div');
+                    dateDivider.className = 'message-date-divider';
+                    dateDivider.textContent = messageDate;
+                    
+                    currentGroup = document.createElement('div');
+                    currentGroup.className = 'messages-group';
+                    
+                    messagesArea.appendChild(dateDivider);
+                    messagesArea.appendChild(currentGroup);
+                }
+
                 const messageElement = document.createElement('div');
                 const isOwnMessage = message.userId === userId;
                 
@@ -494,7 +591,7 @@
                     `;
                 }
                 
-                messagesArea.appendChild(messageElement);
+                currentGroup.appendChild(messageElement);
                 
                 // Проверяем, нужно ли прокручивать
                 const shouldScroll = messagesArea.scrollTop + messagesArea.clientHeight >= messagesArea.scrollHeight - 100;
