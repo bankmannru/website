@@ -68,6 +68,8 @@
       });
 
       function createWindow(type, options = {}) {
+          var title = '';
+          var content = '';
           startMenu.classList.remove('visible');
           
           const window = document.createElement('div');
@@ -76,60 +78,37 @@
           window.style.top = `${Math.max(50, Math.min(document.documentElement.clientHeight - 300, 50 + windows.length * 30))}px`;
           window.style.zIndex = windowZIndex++;
 
-          // Добавляем маркеры для изменения размера
-          const resizeHandles = ['top', 'bottom', 'left', 'right', 'top-left', 'top-right', 'bottom-left', 'bottom-right'];
-          resizeHandles.forEach(position => {
-              const handle = document.createElement('div');
-              handle.className = `resize-handle ${position}`;
-              window.appendChild(handle);
+          if (options.width) window.style.width = options.width;
+          if (options.height) window.style.height = options.height;
 
-              let startX, startY, startWidth, startHeight, startLeft, startTop;
-
-              handle.addEventListener('mousedown', (e) => {
-                  e.preventDefault();
-                  window.classList.add('resizing');
-                  startX = e.clientX;
-                  startY = e.clientY;
-                  startWidth = window.offsetWidth;
-                  startHeight = window.offsetHeight;
-                  startLeft = window.offsetLeft;
-                  startTop = window.offsetTop;
-
-                  const resizeMove = (e) => {
-                      const deltaX = e.clientX - startX;
-                      const deltaY = e.clientY - startY;
-
-                      if (position.includes('right')) {
-                          window.style.width = `${Math.max(300, startWidth + deltaX)}px`;
-                      }
-                      if (position.includes('bottom')) {
-                          window.style.height = `${Math.max(200, startHeight + deltaY)}px`;
-                      }
-                      if (position.includes('left')) {
-                          const newWidth = Math.max(300, startWidth - deltaX);
-                          window.style.width = `${newWidth}px`;
-                          window.style.left = `${startLeft + startWidth - newWidth}px`;
-                      }
-                      if (position.includes('top')) {
-                          const newHeight = Math.max(200, startHeight - deltaY);
-                          window.style.height = `${newHeight}px`;
-                          window.style.top = `${startTop + startHeight - newHeight}px`;
-                      }
-                  };
-
-                  const resizeEnd = () => {
-                      window.classList.remove('resizing');
-                      document.removeEventListener('mousemove', resizeMove);
-                      document.removeEventListener('mouseup', resizeEnd);
-                  };
-
-                  document.addEventListener('mousemove', resizeMove);
-                  document.addEventListener('mouseup', resizeEnd);
-              });
-          });
-
-          let title, content;
           switch(type) {
+              case 'android':
+                  title = 'MannruDroid Emulator';
+                  content = `
+                      <div class="android-emulator">
+                          <div class="emulator-frame">
+                              <div class="emulator-status-bar">
+                                  <md-icon>android</md-icon>
+                                  <span>MannruDroid Emulator</span>
+                              </div>
+                              <iframe src="android.html" frameborder="0"></iframe>
+                              <div class="emulator-controls">
+                                  <md-icon-button onclick="this.closest('.window').querySelector('iframe').contentWindow.history.back()">
+                                      <md-icon>arrow_back</md-icon>
+                                  </md-icon-button>
+                                  <md-icon-button onclick="this.closest('.window').querySelector('iframe').contentWindow.location.reload()">
+                                      <md-icon>home</md-icon>
+                                  </md-icon-button>
+                                  <md-icon-button onclick="this.closest('.window').querySelector('iframe').contentWindow.history.forward()">
+                                      <md-icon>apps</md-icon>
+                                  </md-icon-button>
+                              </div>
+                          </div>
+                      </div>
+                  `;
+                  window.style.width = '400px';
+                  window.style.height = '800px';
+                  break;
               case 'bank':
                   title = 'Банк Маннру';
                   content = '<iframe src="account.html" style="width:100%;height:100%;border:none;"></iframe>';
@@ -949,97 +928,29 @@
                   break;
           }
 
+          // Добавляем заголовок окна
           window.innerHTML = `
               <div class="window-header">
-                  <md-icon>${desktopIcons.find(i => i.type === type)?.icon}</md-icon>
                   <div class="window-title">${title}</div>
                   <div class="window-controls">
-                      <div class="window-control" onclick="minimizeWindow(this.closest('.window'))">
+                      <md-icon-button class="window-control" onclick="minimizeWindow(this.closest('.window'))">
                           <md-icon>remove</md-icon>
-                      </div>
-                      <div class="window-control" onclick="maximizeWindow(this.closest('.window'))">
+                      </md-icon-button>
+                      <md-icon-button class="window-control" onclick="maximizeWindow(this.closest('.window'))">
                           <md-icon>crop_square</md-icon>
-                      </div>
-                      <div class="window-control" onclick="closeWindow(this.closest('.window'))">
+                      </md-icon-button>
+                      <md-icon-button class="window-control" onclick="closeWindow(this.closest('.window'))">
                           <md-icon>close</md-icon>
-                      </div>
+                      </md-icon-button>
                   </div>
               </div>
               <div class="window-content">${content}</div>
           `;
 
-          // Обновляем логику перетаскивания
-          const header = window.querySelector('.window-header');
-          let isDragging = false;
-          let startX = 0;
-          let startY = 0;
-
-          header.addEventListener('mousedown', (e) => {
-              if (e.target.closest('.window-header') && !e.target.closest('.window-controls')) {
-                  isDragging = true;
-                  startX = e.clientX - window.offsetLeft;
-                  startY = e.clientY - window.offsetTop;
-                  window.classList.add('active');
-                  e.preventDefault();
-              }
-          });
-
-          const moveHandler = (e) => {
-              if (!isDragging) return;
-              
-              e.preventDefault();
-              
-              const newX = e.clientX - startX;
-              const newY = e.clientY - startY;
-              
-              // Ограничиваем движение окна в пределах экрана
-              const maxX = document.documentElement.clientWidth - window.offsetWidth;
-              const maxY = document.documentElement.clientHeight - window.offsetHeight;
-              
-              window.style.left = `${Math.max(0, Math.min(maxX, newX))}px`;
-              window.style.top = `${Math.max(0, Math.min(maxY, newY))}px`;
-          };
-
-          const upHandler = () => {
-              isDragging = false;
-              window.classList.remove('active');
-          };
-
-          document.addEventListener('mousemove', moveHandler);
-          document.addEventListener('mouseup', upHandler);
-
-          // Удаляем обработчики при закрытии окна
-          window.addEventListener('remove', () => {
-              document.removeEventListener('mousemove', moveHandler);
-              document.removeEventListener('mouseup', upHandler);
-          });
-
-          // Активация окна при клике
-          window.addEventListener('mousedown', () => {
-              windows.forEach(w => {
-                  w.style.zIndex = 1000;
-                  w.classList.remove('active');
-              });
-              window.style.zIndex = windowZIndex++;
-              window.classList.add('active');
-              activeWindow = window;
-          });
-
-          windows.push(window);
           document.body.appendChild(window);
-          
-          // Добавляем в панель задач
-          const taskbarItem = document.createElement('div');
-          taskbarItem.className = 'taskbar-item active';
-          taskbarItem.innerHTML = `
-              <md-icon>${desktopIcons.find(i => i.type === type)?.icon}</md-icon>
-              <span>${title}</span>
-          `;
-          taskbarItem.onclick = () => {
-              window.style.display = window.style.display === 'none' ? 'flex' : 'none';
-              taskbarItem.classList.toggle('active');
-          };
-          taskbarItems.appendChild(taskbarItem);
+          windows.push(window);
+          makeWindowDraggable(window);
+          return window;
       }
 
       function closeWindow(window) {
@@ -1110,6 +1021,441 @@
 
           alert(`Поздравляем! Вы получили ${reward} МР`);
       };
+
+      // Системные настройки
+      const systemSettings = {
+          theme: localStorage.getItem('theme') || 'dark',
+          accentColor: localStorage.getItem('accentColor') || '#4CAF50',
+          volume: parseInt(localStorage.getItem('volume')) || 50,
+          brightness: parseInt(localStorage.getItem('brightness')) || 100,
+          notifications: localStorage.getItem('notifications') !== 'false',
+          language: localStorage.getItem('language') || 'ru'
+      };
+
+      // Обновление времени
+      function updateSystemTime() {
+          const now = new Date();
+          const timeElement = document.getElementById('systemTime');
+          const dateElement = document.getElementById('systemDate');
+          
+          timeElement.textContent = now.toLocaleTimeString();
+          dateElement.textContent = now.toLocaleDateString();
+      }
+      
+      setInterval(updateSystemTime, 1000);
+      updateSystemTime();
+
+      // Функции системного трея
+      window.toggleControlCenter = function() {
+          const content = `
+              <div class="control-center">
+                  <div class="control-section">
+                      <h3>Уведомления</h3>
+                      <md-switch id="notificationsSwitch" 
+                          ${systemSettings.notifications ? 'selected' : ''}
+                          onchange="updateSetting('notifications', this.selected)">
+                      </md-switch>
+                  </div>
+                  <div class="control-section">
+                      <h3>Яркость</h3>
+                      <md-slider id="brightnessSlider"
+                          value="${systemSettings.brightness}"
+                          onchange="updateSetting('brightness', this.value)">
+                      </md-slider>
+                  </div>
+              </div>
+          `;
+          createFloatingPanel(content, 'right');
+      };
+
+      window.toggleVolumeControl = function() {
+          const content = `
+              <div class="volume-control">
+                  <md-slider id="volumeSlider"
+                      value="${systemSettings.volume}"
+                      onchange="updateSetting('volume', this.value)">
+                  </md-slider>
+              </div>
+          `;
+          createFloatingPanel(content, 'right');
+      };
+
+      window.toggleWiFiMenu = function() {
+          const content = `
+              <div class="wifi-menu">
+                  <div class="wifi-header">
+                      <h3>Wi-Fi</h3>
+                      <md-switch selected></md-switch>
+                  </div>
+                  <div class="wifi-list">
+                      <div class="wifi-item">
+                          <md-icon>wifi</md-icon>
+                          <span>MannruWiFi</span>
+                          <md-icon>lock</md-icon>
+                      </div>
+                      <div class="wifi-item">
+                          <md-icon>wifi</md-icon>
+                          <span>Guest Network</span>
+                      </div>
+                  </div>
+              </div>
+          `;
+          createFloatingPanel(content, 'right');
+      };
+
+      window.toggleBatteryInfo = function() {
+          const content = `
+              <div class="battery-info">
+                  <div class="battery-header">
+                      <h3>Батарея</h3>
+                      <md-icon>battery_full</md-icon>
+                  </div>
+                  <div class="battery-details">
+                      <div>Заряд: 100%</div>
+                      <div>Состояние: Отличное</div>
+                      <div>Питание: От сети</div>
+                  </div>
+              </div>
+          `;
+          createFloatingPanel(content, 'right');
+      };
+
+      window.updateSetting = function(setting, value) {
+          systemSettings[setting] = value;
+          localStorage.setItem(setting, value);
+
+          switch(setting) {
+              case 'theme':
+                  document.body.className = value;
+                  break;
+              case 'brightness':
+                  document.body.style.filter = `brightness(${value}%)`;
+                  break;
+              case 'volume':
+                  // Здесь можно добавить логику управления звуком
+                  break;
+          }
+      };
+
+      window.createFloatingPanel = function(content, position = 'right') {
+          // Удаляем существующие панели
+          document.querySelectorAll('.floating-panel').forEach(panel => panel.remove());
+
+          const panel = document.createElement('div');
+          panel.className = 'floating-panel';
+          panel.innerHTML = content;
+          
+          if (position === 'right') {
+              panel.style.right = '10px';
+              panel.style.bottom = '60px';
+          }
+          
+          document.body.appendChild(panel);
+
+          // Закрываем при клике вне панели
+          document.addEventListener('click', (e) => {
+              if (!panel.contains(e.target) && !e.target.closest('.tray-icon')) {
+                  panel.remove();
+              }
+          });
+      };
+
+      // Добавляем стили для новых элементов
+      const styleSheet = document.createElement('style');
+      styleSheet.textContent = `
+          .floating-panel {
+              position: fixed;
+              background: rgba(45, 45, 45, 0.95);
+              border-radius: 12px;
+              padding: 16px;
+              min-width: 300px;
+              box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+              backdrop-filter: blur(10px);
+              border: 1px solid rgba(255,255,255,0.1);
+              z-index: 10000;
+          }
+
+          .control-section {
+              margin-bottom: 16px;
+          }
+
+          .control-section h3 {
+              margin: 0 0 8px 0;
+              font-size: 14px;
+              color: rgba(255,255,255,0.7);
+          }
+
+          .wifi-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 16px;
+          }
+
+          .wifi-item {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              padding: 8px;
+              cursor: pointer;
+              border-radius: 8px;
+          }
+
+          .wifi-item:hover {
+              background: rgba(255,255,255,0.1);
+          }
+
+          .battery-info {
+              padding: 16px;
+          }
+          
+          .battery-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 16px;
+          }
+          
+          .battery-details {
+              display: flex;
+              flex-direction: column;
+              gap: 8px;
+              color: rgba(255,255,255,0.8);
+          }
+
+          .lock-screen {
+              position: fixed;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              background: rgba(0,0,0,0.9);
+              backdrop-filter: blur(10px);
+              z-index: 10000;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+          }
+
+          .lock-content {
+              text-align: center;
+          }
+
+          .lock-time {
+              font-size: 72px;
+              margin-bottom: 10px;
+          }
+
+          .lock-date {
+              font-size: 24px;
+              margin-bottom: 40px;
+              opacity: 0.7;
+          }
+
+          .task-manager {
+              height: 100%;
+              display: flex;
+              flex-direction: column;
+          }
+
+          .task-list {
+              flex: 1;
+              overflow: auto;
+              padding: 16px;
+          }
+
+          .task-item {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: 8px;
+              border-bottom: 1px solid rgba(255,255,255,0.1);
+          }
+
+          .task-item:hover {
+              background: rgba(255,255,255,0.05);
+          }
+      `;
+      document.head.appendChild(styleSheet);
+
+      // Горячие клавиши
+      document.addEventListener('keydown', (e) => {
+          // Win + E - открыть файловый менеджер
+          if (e.key === 'e' && e.metaKey) {
+              e.preventDefault();
+              createWindow('files');
+          }
+          // Win + R - открыть терминал
+          if (e.key === 'r' && e.metaKey) {
+              e.preventDefault();
+              createWindow('terminal');
+          }
+          // Win + L - заблокировать систему
+          if (e.key === 'l' && e.metaKey) {
+              e.preventDefault();
+              lockSystem();
+          }
+          // Ctrl + Alt + Delete - диспетчер задач
+          if (e.key === 'Delete' && e.ctrlKey && e.altKey) {
+              e.preventDefault();
+              createWindow('taskmanager');
+          }
+      });
+
+      // Функция блокировки системы
+      window.lockSystem = function() {
+          const lockScreen = document.createElement('div');
+          lockScreen.className = 'lock-screen';
+          lockScreen.innerHTML = `
+              <div class="lock-content">
+                  <div class="lock-time"></div>
+                  <div class="lock-date"></div>
+                  <md-filled-text-field type="password" label="Введите пароль"></md-filled-text-field>
+                  <md-filled-button onclick="unlockSystem()">Разблокировать</md-filled-button>
+              </div>
+          `;
+          document.body.appendChild(lockScreen);
+          updateLockScreenTime();
+      };
+
+      window.unlockSystem = function() {
+          const lockScreen = document.querySelector('.lock-screen');
+          if (lockScreen) {
+              lockScreen.remove();
+          }
+      };
+
+      window.updateLockScreenTime = function() {
+          const timeElement = document.querySelector('.lock-time');
+          const dateElement = document.querySelector('.lock-date');
+          if (timeElement && dateElement) {
+              const now = new Date();
+              timeElement.textContent = now.toLocaleTimeString();
+              dateElement.textContent = now.toLocaleDateString();
+              setTimeout(updateLockScreenTime, 1000);
+          }
+      };
+
+      // Диспетчер задач
+      window.createTaskManager = function() {
+          const content = `
+              <div class="task-manager">
+                  <div class="task-tabs">
+                      <md-tabs>
+                          <md-primary-tab>Процессы</md-primary-tab>
+                          <md-primary-tab>Производительность</md-primary-tab>
+                          <md-primary-tab>Автозагрузка</md-primary-tab>
+                      </md-tabs>
+                  </div>
+                  <div class="task-list">
+                      ${windows.map(w => `
+                          <div class="task-item">
+                              <span>${w.querySelector('.window-title').textContent}</span>
+                              <span>Память: ${Math.round(Math.random() * 100)}MB</span>
+                              <md-text-button onclick="closeWindow(this.closest('.window'))">
+                                  Завершить
+                              </md-text-button>
+                          </div>
+                      `).join('')}
+                  </div>
+              </div>
+          `;
+          createWindow('taskmanager', { content, title: 'Диспетчер задач' });
+      };
+
+      function createAndroidEmulator() {
+          const content = `
+              <div class="android-emulator">
+                  <div class="emulator-frame">
+                      <div class="emulator-status-bar">
+                          <md-icon>android</md-icon>
+                          <span>MannruDroid Emulator</span>
+                      </div>
+                      <iframe src="android.html" frameborder="0"></iframe>
+                      <div class="emulator-controls">
+                          <md-icon-button onclick="this.closest('.window').querySelector('iframe').contentWindow.history.back()">
+                              <md-icon>arrow_back</md-icon>
+                          </md-icon-button>
+                          <md-icon-button onclick="this.closest('.window').querySelector('iframe').contentWindow.location.reload()">
+                              <md-icon>home</md-icon>
+                          </md-icon-button>
+                          <md-icon-button onclick="this.closest('.window').querySelector('iframe').contentWindow.history.forward()">
+                              <md-icon>apps</md-icon>
+                          </md-icon-button>
+                      </div>
+                  </div>
+              </div>
+          `;
+          return createWindow('android', { 
+              content,
+              title: 'MannruDroid Emulator',
+              width: '400px',
+              height: '800px'
+          });
+      }
+
+      // Добавляем стили для эмулятора
+      const emulatorStyles = `
+          .android-emulator {
+              height: 100%;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              background: #1a1a1a;
+          }
+          // ... остальные стили эмулятора ...
+      `;
+      styleSheet.textContent += emulatorStyles;
+
+      // Добавляем иконку в меню пуск
+      const startMenuApps = document.querySelector('.start-menu-apps');
+      startMenuApps.innerHTML += `
+          <div class="start-menu-item" onclick="createWindow('android')">
+              <md-icon>android</md-icon>
+              <span>MannruDroid</span>
+          </div>
+      `;
+
+      function makeWindowDraggable(window) {
+          const header = window.querySelector('.window-header');
+          let isDragging = false;
+          let startX = 0;
+          let startY = 0;
+
+          header.addEventListener('mousedown', (e) => {
+              if (e.target.closest('.window-header') && !e.target.closest('.window-controls')) {
+                  isDragging = true;
+                  startX = e.clientX - window.offsetLeft;
+                  startY = e.clientY - window.offsetTop;
+                  window.classList.add('active');
+                  if (header.setPointerCapture) {
+                      header.setPointerCapture(e.pointerId);
+                  }
+                  e.preventDefault();
+              }
+          });
+
+          document.addEventListener('mousemove', (e) => {
+              if (!isDragging) return;
+              
+              const newX = e.clientX - startX;
+              const newY = e.clientY - startY;
+              
+              const maxX = document.documentElement.clientWidth - window.offsetWidth;
+              const maxY = document.documentElement.clientHeight - window.offsetHeight;
+              
+              window.style.left = `${Math.max(0, Math.min(maxX, newX))}px`;
+              window.style.top = `${Math.max(0, Math.min(maxY, newY))}px`;
+          });
+
+          document.addEventListener('mouseup', () => {
+              isDragging = false;
+              window.classList.remove('active');
+              if (header.releasePointerCapture) {
+                  header.releasePointerCapture(e.pointerId);
+              }
+          });
+      }
     </script>
     <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
     <style>
@@ -1197,9 +1543,19 @@
             backdrop-filter: blur(10px);
         }
 
+        .taskbar-left {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .taskbar-right {
+            display: flex;
+            gap: 16px;
+        }
+
         .start-button {
             --md-filled-button-container-color: #4CAF50;
-            margin-right: 20px;
         }
 
         .taskbar-items {
@@ -1631,6 +1987,98 @@
             flex: 1;
             background: white;
         }
+
+        .system-tray {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 0 16px;
+        }
+
+        .system-time {
+            font-size: 14px;
+            color: white;
+        }
+
+        .system-date {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .settings-container {
+            display: flex;
+            height: 100%;
+            background: var(--md-sys-color-surface);
+        }
+
+        .settings-sidebar {
+            width: 250px;
+            padding: 16px;
+            border-right: 1px solid var(--md-sys-color-outline);
+        }
+
+        .settings-category {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .settings-category:hover {
+            background: var(--md-sys-color-surface-variant);
+        }
+
+        .settings-category.active {
+            background: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-primary-container);
+        }
+
+        .settings-content {
+            flex: 1;
+            padding: 24px;
+            overflow: auto;
+        }
+
+        .color-picker {
+            display: flex;
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .color-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+
+        .wallpaper-picker {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 16px;
+            margin: 16px 0;
+        }
+
+        .wallpaper-option {
+            width: 100%;
+            aspect-ratio: 16/9;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .wallpaper-option:hover {
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body>
@@ -1639,12 +2087,32 @@
     </div>
 
     <div class="taskbar">
-        <md-filled-button class="start-button" id="startButton">
-            <md-icon slot="icon">apps</md-icon>
-            Меню
-        </md-filled-button>
-        <div class="taskbar-items" id="taskbarItems">
-            <!-- Активные окна -->
+        <div class="taskbar-left">
+            <md-filled-button class="start-button" id="startButton">
+                <md-icon slot="icon">apps</md-icon>
+                Меню
+            </md-filled-button>
+            <div class="taskbar-items" id="taskbarItems">
+                <!-- Активные окна -->
+            </div>
+        </div>
+        <div class="taskbar-right">
+            <div class="system-tray">
+                <div class="system-time" id="systemTime"></div>
+                <div class="system-date" id="systemDate"></div>
+                <md-icon-button class="tray-icon" onclick="toggleControlCenter()">
+                    <md-icon>notifications</md-icon>
+                </md-icon-button>
+                <md-icon-button class="tray-icon" onclick="toggleWiFiMenu()">
+                    <md-icon>wifi</md-icon>
+                </md-icon-button>
+                <md-icon-button class="tray-icon" onclick="toggleVolumeControl()">
+                    <md-icon>volume_up</md-icon>
+                </md-icon-button>
+                <md-icon-button class="tray-icon" onclick="toggleBatteryInfo()">
+                    <md-icon>battery_full</md-icon>
+                </md-icon-button>
+            </div>
         </div>
     </div>
 
@@ -1705,6 +2173,14 @@
                 <div class="start-menu-item" onclick="createWindow('terminal')">
                     <md-icon>terminal</md-icon>
                     <span>Терминал</span>
+                </div>
+                <div class="start-menu-item" onclick="createTaskManager()">
+                    <md-icon>memory</md-icon>
+                    <span>Диспетчер задач</span>
+                </div>
+                <div class="start-menu-item" onclick="lockSystem()">
+                    <md-icon>lock</md-icon>
+                    <span>Блокировка</span>
                 </div>
             </div>
         </div>

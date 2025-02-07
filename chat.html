@@ -30,7 +30,7 @@
     </script>
     
     <!-- Custom CSS -->
-    <link href="styles.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
 
     <!-- Добавляем необходимые стили -->
     <style>
@@ -412,7 +412,32 @@
 
     <script type="module">
         import { database } from './firebase-config.js';
-        import { ref, get, set, push, onValue, onChildAdded } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+        import { 
+            ref, 
+            get, 
+            set, 
+            push, 
+            remove, 
+            onValue, 
+            onChildAdded, 
+            onChildRemoved 
+        } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+
+        // Делаем функции глобальными
+        window.remove = remove;
+        window.ref = ref;
+        window.get = get;
+        window.set = set;
+        window.push = push;
+        window.onValue = onValue;
+        window.onChildAdded = onChildAdded;
+        window.onChildRemoved = onChildRemoved;
+
+        // Добавляем DOCTYPE в начало документа
+        if (!document.doctype) {
+            const doctype = document.implementation.createDocumentType('html', '', '');
+            document.insertBefore(doctype, document.documentElement);
+        }
 
         // Получаем сохраненные настройки
         let username = localStorage.getItem('username');
@@ -458,7 +483,7 @@
 
         // Обновляем состояние всех Material компонентов после загрузки
         document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('md-*').forEach(element => {
+            document.querySelectorAll('[class^="md-"]').forEach(element => {
                 if (element.updateComplete) {
                     element.updateComplete.then(() => element.requestUpdate());
                 }
@@ -722,7 +747,7 @@
             
             // Обновляем состояние всех Material компонентов
             requestAnimationFrame(() => {
-                document.querySelectorAll('[md-]').forEach(element => {
+                document.querySelectorAll('[class^="md-"]').forEach(element => {
                     if (element.updateComplete) {
                         element.updateComplete.then(() => element.requestUpdate());
                     }
