@@ -281,3 +281,286 @@ md-outlined-button {
     font-size: 14px;
     font-weight: 500;
 } 
+.admin-container {
+    padding: 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    overflow-y: auto;
+    height: calc(100vh - 64px);
+}
+
+.admin-section {
+    background: var(--md-sys-color-surface);
+    border-radius: 28px;
+    padding: 24px;
+    box-shadow: var(--md-elevation-level2);
+    height: fit-content;
+    max-height: calc(100vh - 112px);
+    display: flex;
+    flex-direction: column;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.section-header h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 500;
+}
+
+.section-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.search-field {
+    display: flex;
+    align-items: center;
+    background: var(--md-sys-color-surface-variant);
+    border-radius: 24px;
+    padding: 8px 16px;
+    gap: 8px;
+    width: 300px;
+}
+
+.search-field input {
+    border: none;
+    background: none;
+    padding: 0;
+    color: var(--md-sys-color-on-surface);
+    font-size: 16px;
+    width: 200px;
+}
+
+.search-field input:focus {
+    outline: none;
+}
+
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    background: var(--md-sys-color-surface-variant);
+    border-radius: 16px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: var(--md-elevation-level1);
+}
+
+.stat-value {
+    display: block;
+    font-size: 24px;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.admin-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.admin-item {
+    background: var(--md-sys-color-surface-variant);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: transform 0.2s ease;
+    box-shadow: var(--md-elevation-level1);
+}
+
+.admin-item:hover {
+    transform: translateY(-2px);
+}
+
+.admin-item-info {
+    flex: 1;
+    margin-right: 16px;
+}
+
+.admin-item-title {
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.admin-item-content {
+    margin: 8px 0;
+    word-break: break-word;
+}
+
+.admin-item-subtitle {
+    font-size: 14px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.settings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.danger-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 20px;
+    background: #DC3545;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.danger-button:hover {
+    background: #BB2D3B;
+}
+
+.primary-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 20px;
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    font-size: 14px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.primary-button:hover {
+    opacity: 0.9;
+}
+
+.admin-dialog {
+    --md-dialog-container-color: var(--md-sys-color-surface);
+    --md-dialog-container-shape: 28px;
+    --md-dialog-headline-color: var(--md-sys-color-on-surface);
+    --md-dialog-supporting-text-color: var(--md-sys-color-on-surface-variant);
+    border: none;
+    border-radius: 28px;
+    padding: 24px;
+    color: var(--md-sys-color-on-surface);
+    min-width: 400px;
+}
+
+.admin-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.dialog-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin-top: 24px;
+}
+
+/* Стилизация скроллбара */
+.admin-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.admin-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.admin-list::-webkit-scrollbar-thumb {
+    background: var(--md-sys-color-outline);
+    border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+    .admin-container {
+        padding: 16px;
+        gap: 16px;
+    }
+
+    .stats-row {
+        grid-template-columns: 1fr;
+    }
+
+    .search-field input {
+        width: 150px;
+    }
+}
+
+/* Стили для Material Web Components */
+md-outlined-text-field {
+    width: 100%;
+    --md-outlined-text-field-container-shape: 20px;
+}
+
+md-filled-button,
+md-outlined-button {
+    --md-filled-button-container-shape: 20px;
+    --md-outlined-button-container-shape: 20px;
+}
+
+.ban-button {
+    --md-outlined-button-container-color: var(--md-sys-color-error-container);
+    --md-outlined-button-label-text-color: var(--md-sys-color-error);
+}
+
+.unban-button {
+    --md-filled-button-container-color: var(--md-sys-color-primary);
+}
+
+.delete-button {
+    --md-outlined-button-container-color: var(--md-sys-color-error-container);
+    --md-outlined-button-label-text-color: var(--md-sys-color-error);
+}
+
+.toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--md-sys-color-surface-container);
+    color: var(--md-sys-color-on-surface);
+    padding: 12px 24px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    z-index: 1000;
+}
+
+.toast.success md-icon {
+    color: var(--md-sys-color-primary);
+}
+
+.toast.error md-icon {
+    color: var(--md-sys-color-error);
+}
+
+.toast span {
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+} 
