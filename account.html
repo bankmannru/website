@@ -30,16 +30,21 @@
     <!-- Добавляем стили для карты -->
     <style>
         bank-card {
-            width: 100%;
-            max-width: 400px;
-            height: 250px;
+            width: 400px;
+            height: 240px;
             display: block;
             margin: 0 auto;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
         }
 
         .card-section {
-            padding: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             perspective: 1000px;
+            margin: 40px 0;
         }
     </style>
 
@@ -939,16 +944,7 @@
         </div>
 
         <div class="card-section">
-            <bank-card 
-                id="user-card"
-                card-number="892167"
-                holder-name="АХМЕД ТЕСТОВИЧ"
-                expires="02/28"
-                primary-color="#ea6af4"
-                secondary-color="#a68eea"
-                pattern="grid"
-                theme="custom"
-            ></bank-card>
+            <bank-card id="user-card"></bank-card>
         </div>
 
         <div class="message-of-day">
@@ -1097,31 +1093,24 @@
 
         // Функция инициализации карты
         function initCard(cardId) {
-            console.log('Initializing card with ID:', cardId);
             const cardRef = ref(database, `cards/${cardId}`);
             onValue(cardRef, (snapshot) => {
                 const cardData = snapshot.val();
-                console.log('Card data received:', cardData);
                 if (cardData) {
                     const cardElement = document.getElementById('user-card');
-                    console.log('Card element found:', cardElement);
                     if (!cardElement) return;
                     
-                    // Устанавливаем атрибуты по одному с небольшой задержкой
-                    setTimeout(() => {
-                        cardElement.setAttribute('card-number', '892167');
-                        cardElement.setAttribute('holder-name', 'АХМЕД ТЕСТОВИЧ');
-                        cardElement.setAttribute('expires', '02/28');
-                        cardElement.setAttribute('primary-color', '#ea6af4');
-                        cardElement.setAttribute('secondary-color', '#a68eea');
-                        console.log('Attributes set');
-                    }, 0);
-
-                    // Принудительно вызываем рендер после небольшой задержки
-                    setTimeout(() => {
-                        cardElement.render();
-                        console.log('Card rendered');
-                    }, 100);
+                    // Устанавливаем основные атрибуты карты
+                    cardElement.setAttribute('number', cardData.number);
+                    cardElement.setAttribute('holder', cardData.holder);
+                    cardElement.setAttribute('expires', cardData.expires);
+                    // Добавляем цвета из базы данных
+                    if (cardData.primaryColor) {
+                        cardElement.setAttribute('primary-color', '#' + cardData.primaryColor);
+                    }
+                    if (cardData.secondaryColor) {
+                        cardElement.setAttribute('secondary-color', '#' + cardData.secondaryColor);
+                    }
 
                     // Обновляем баланс
                     const balanceElement = document.getElementById('balance-amount');
@@ -1399,39 +1388,36 @@
             // Реализация QR-кода
         });
 
-        // Определяем компонент bank-card
+        // Создаем компонент банковской карты
         class BankCard extends HTMLElement {
             constructor() {
                 super();
                 this.attachShadow({ mode: 'open' });
-                // Сразу вызываем рендер при создании
-                this.render();
             }
 
             static get observedAttributes() {
-                return ['card-number', 'holder-name', 'expires', 'primary-color', 'secondary-color'];
+                return ['number', 'holder', 'expires', 'primary-color', 'secondary-color'];
             }
 
-            attributeChangedCallback(name, oldValue, newValue) {
-                console.log(`Attribute ${name} changed from ${oldValue} to ${newValue}`);
+            connectedCallback() {
+                this.render();
+            }
+
+            attributeChangedCallback() {
                 this.render();
             }
 
             render() {
-                // Получаем значения атрибутов
-                const cardNumber = this.getAttribute('card-number');
-                const holderName = this.getAttribute('holder-name');
-                const expires = this.getAttribute('expires');
+                const number = this.getAttribute('number') || '000 000';
+                const holder = this.getAttribute('holder') || 'ДЕРЖАТЕЛЬ КАРТЫ';
+                const expires = this.getAttribute('expires') || '00/00';
                 const primaryColor = this.getAttribute('primary-color');
                 const secondaryColor = this.getAttribute('secondary-color');
 
-                console.log('Rendering card with:', {
-                    cardNumber,
-                    holderName,
-                    expires,
-                    primaryColor,
-                    secondaryColor
-                });
+                // Определяем цвета градиента
+                const gradient = primaryColor && secondaryColor
+                    ? `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`
+                    : 'linear-gradient(135deg, #ea6af4, #a68eea)';
 
                 this.shadowRoot.innerHTML = `
                     <style>
@@ -1447,12 +1433,13 @@
                             padding: 32px;
                             box-sizing: border-box;
                             position: relative;
-                            background: linear-gradient(135deg, ${primaryColor || '#ea6af4'}, ${secondaryColor || '#a68eea'});
+                            background: ${gradient};
                             color: white;
                             font-family: 'Roboto', sans-serif;
                             display: flex;
                             flex-direction: column;
                             justify-content: space-between;
+                            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
                         }
                         .bank-name {
                             position: absolute;
@@ -1508,15 +1495,15 @@
                     <div class="card">
                         <div class="bank-name">MANNRU BANK</div>
                         <div class="chip"></div>
-                        <div class="card-number">${cardNumber || '892167'}</div>
+                        <div class="card-number">${number}</div>
                         <div class="card-info">
                             <div>
                                 <div class="holder-label">ДЕРЖАТЕЛЬ КАРТЫ</div>
-                                <div class="holder">${holderName || 'АХМЕД ТЕСТОВИЧ'}</div>
+                                <div class="holder">${holder}</div>
                     </div>
                             <div>
                                 <div class="expires-label">СРОК ДЕЙСТВИЯ</div>
-                                <div class="expires">${expires || '02/28'}</div>
+                                <div class="expires">${expires}</div>
                             </div>
                         </div>
                     </div>
@@ -1527,7 +1514,6 @@
         // Регистрируем компонент
         if (!customElements.get('bank-card')) {
             customElements.define('bank-card', BankCard);
-            console.log('BankCard component registered');
         }
 
         // Проверяем, что компонент определен
