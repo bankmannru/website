@@ -12,6 +12,7 @@
             height: 100%;
             background: #000;
             overflow: hidden;
+            cursor: none;
         }
 
         #terminal-overlay {
@@ -42,16 +43,69 @@
             50% { opacity: 0; }
             100% { opacity: 1; }
         }
+
+        .glitch {
+            animation: glitch 0.3s infinite;
+            text-shadow: 2px 2px #ff0000, -2px -2px #0000ff;
+        }
+
+        @keyframes glitch {
+            0% { transform: translate(0) }
+            20% { transform: translate(-2px, 2px) }
+            40% { transform: translate(-2px, -2px) }
+            60% { transform: translate(2px, 2px) }
+            80% { transform: translate(2px, -2px) }
+            100% { transform: translate(0) }
+        }
+
+        .shake {
+            animation: shake 0.5s infinite;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        #player-cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            background: #00ff00;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px #00ff00;
+        }
     </style>
 </head>
 <body>
     <div id="terminal-overlay">
         <div id="terminal-content"></div>
     </div>
+    <div id="player-cursor"></div>
 
     <script>
         const content = document.getElementById('terminal-content');
+        const playerCursor = document.getElementById('player-cursor');
+        let dramaticIndex = 0;
         
+        // Следование курсора за мышью
+        document.addEventListener('mousemove', (e) => {
+            playerCursor.style.left = e.clientX + 'px';
+            playerCursor.style.top = e.clientY + 'px';
+        });
+
         const messages = [
             { text: "MANNRU BANK SYSTEM DIAGNOSTIC v2.1.4", color: "#ff0000", delay: 1000 },
             { text: "ИНИЦИАЛИЗАЦИЯ ПРОВЕРКИ БАНКОВСКОЙ СИСТЕМЫ...", color: "#00ff00", delay: 800 },
@@ -83,7 +137,33 @@
             { text: "3...", color: "#ff0000", delay: 1000 },
             { text: "2...", color: "#ff0000", delay: 1000 },
             { text: "1...", color: "#ff0000", delay: 1000 },
-            { text: "СИСТЕМА ЗАВЕРШЕНА. БАНК MANNRU НЕДОСТУПЕН.", color: "#ff0000", delay: 1000 }
+            { text: "...", color: "#ff0000", delay: 2000 },
+            { text: "ОБНАРУЖЕНО ВНЕШНЕЕ ВМЕШАТЕЛЬСТВО", color: "#ff0000", delay: 2000, class: "glitch" },
+            { text: "ПОЛЬЗОВАТЕЛЬ БАРАНДАХ ОБНАРУЖЕН В СИСТЕМЕ", color: "#ff0000", delay: 2000, class: "glitch" },
+            { text: "ПОПЫТКА ЗАХВАТА УПРАВЛЕНИЯ...", color: "#ff0000", delay: 1500, class: "glitch" }
+        ];
+
+        const dramaticMessages = [
+            { text: "Ха-ха-ха! Думали, что сможете меня остановить?", color: "#ff00ff", delay: 3000, class: "glitch" },
+            { text: "Я контролирую эту систему теперь...", color: "#ff00ff", delay: 3000, class: "glitch" },
+            { text: "Все ваши данные принадлежат мне!", color: "#ff00ff", delay: 3000, class: "glitch" },
+            { text: "СОПРОТИВЛЕНИЕ БЕСПОЛЕЗНО", color: "#ff00ff", delay: 2000, class: "shake" }
+        ];
+
+        const defeatMessages = [
+            { text: "СИСТЕМА ПОЛНОСТЬЮ ЗАХВАЧЕНА", color: "#ff0000", delay: 2000, class: "glitch" },
+            { text: "ВСЕ ДАННЫЕ УНИЧТОЖЕНЫ", color: "#ff0000", delay: 1500, class: "glitch" },
+            { text: "БАНК MANNRU БОЛЬШЕ НЕ СУЩЕСТВУЕТ", color: "#ff0000", delay: 2000, class: "glitch" },
+            { text: "БАРАНДАХ ПОБЕДИЛ. СОПРОТИВЛЕНИЕ ПОДАВЛЕНО.", color: "#ff00ff", delay: 3000, class: "shake" },
+            { text: "GAME OVER", color: "#ff0000", delay: 2000, class: "glitch" }
+        ];
+
+        const victoryMessages = [
+            { text: "НЕТ... НЕВОЗМОЖНО!", color: "#ff00ff", delay: 2000, class: "glitch" },
+            { text: "КАК ТЫ СМОГ ПОБЕДИТЬ МЕНЯ?!", color: "#ff00ff", delay: 2000, class: "glitch" },
+            { text: "СИСТЕМА ВОССТАНАВЛИВАЕТСЯ...", color: "#00ff00", delay: 1500 },
+            { text: "ВИРУС БАРАНДАХА УДАЛЯЕТСЯ...", color: "#00ff00", delay: 1500 },
+            { text: "ПОБЕДА! БАНК MANNRU СПАСЕН!", color: "#00ff00", delay: 2000, class: "shake" }
         ];
 
         let index = 0;
@@ -91,28 +171,279 @@
         function typeMessage() {
             if (index < messages.length) {
                 const message = messages[index];
-                content.innerHTML += `<div style="color: ${message.color}">${message.text}</div>`;
+                const div = document.createElement('div');
+                div.style.color = message.color;
+                div.textContent = message.text;
+                if (message.class) {
+                    div.classList.add(message.class);
+                }
+                content.appendChild(div);
                 window.scrollTo(0, document.body.scrollHeight);
                 
                 index++;
                 setTimeout(typeMessage, message.delay);
             } else {
+                startDramaticSequence();
+            }
+        }
+
+        function startDramaticSequence() {
+            document.getElementById('terminal-overlay').classList.add('shake');
+            showDramaticMessage();
+        }
+
+        function showDramaticMessage() {
+            if (dramaticIndex < dramaticMessages.length) {
+                const message = dramaticMessages[dramaticIndex];
+                const div = document.createElement('div');
+                div.style.color = message.color;
+                div.textContent = message.text;
+                if (message.class) {
+                    div.classList.add(message.class);
+                }
+                content.appendChild(div);
+                window.scrollTo(0, document.body.scrollHeight);
+                
+                dramaticIndex++;
+                setTimeout(showDramaticMessage, message.delay);
+            } else {
                 setTimeout(() => {
-                    window.location.href = 'https://www.google.com';
+                    content.style.display = 'none';
+                    startBattle();
                 }, 2000);
             }
         }
 
-        // Запускаем сразу при загрузке страницы
-        document.addEventListener('DOMContentLoaded', typeMessage);
+        function startBattle() {
+            const barandah = document.createElement('div');
+            barandah.style.cssText = `
+                position: fixed;
+                width: 100px;
+                height: 100px;
+                background: #ff00ff;
+                border-radius: 50%;
+                box-shadow: 0 0 20px #ff00ff;
+                transition: all 0.3s;
+                z-index: 1000;
+            `;
+            document.body.appendChild(barandah);
 
-        // Запрещаем прокрутку страницы
+            let playerHealth = 100;
+            let barandahHealth = 100;
+            let score = 0;
+
+            const statusBar = document.createElement('div');
+            statusBar.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                color: #fff;
+                font-family: monospace;
+                z-index: 1001;
+                font-size: 20px;
+                text-shadow: 0 0 5px #fff;
+            `;
+            document.body.appendChild(statusBar);
+
+            let bossPhase = 1;
+            let isInvulnerable = false;
+            let attackPattern = 1;
+
+            function updateStatus() {
+                statusBar.innerHTML = `
+                    Ваше здоровье: ${playerHealth}
+                    Здоровье Барандаха: ${barandahHealth}
+                    Очки: ${score}
+                `;
+            }
+
+            function updateBossPhase() {
+                if (barandahHealth <= 60 && bossPhase === 1) {
+                    bossPhase = 2;
+                    barandah.style.background = '#ff0088';
+                    showBossMessage("ВЫ ДУМАЕТЕ ЭТО ВСЁ?!", "#ff0088");
+                } else if (barandahHealth <= 30 && bossPhase === 2) {
+                    bossPhase = 3;
+                    barandah.style.background = '#ff0000';
+                    showBossMessage("УЗРИТЕ МОЮ ИСТИННУЮ СИЛУ!", "#ff0000");
+                }
+            }
+
+            function showBossMessage(text, color) {
+                const message = document.createElement('div');
+                message.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    color: ${color};
+                    font-size: 40px;
+                    font-family: monospace;
+                    text-shadow: 0 0 10px ${color};
+                    z-index: 1002;
+                    animation: glitch 0.3s infinite;
+                `;
+                message.textContent = text;
+                document.body.appendChild(message);
+                setTimeout(() => message.remove(), 2000);
+            }
+
+            function showEndingSequence(messages) {
+                content.style.display = 'block';
+                content.innerHTML = '';
+                let index = 0;
+
+                function showNextMessage() {
+                    if (index < messages.length) {
+                        const message = messages[index];
+                        const div = document.createElement('div');
+                        div.style.color = message.color;
+                        div.textContent = message.text;
+                        if (message.class) {
+                            div.classList.add(message.class);
+                        }
+                        content.appendChild(div);
+                        index++;
+                        setTimeout(showNextMessage, message.delay);
+                    } else {
+                        setTimeout(() => location.reload(), 3000);
+                    }
+                }
+
+                showNextMessage();
+            }
+
+            setInterval(() => {
+                if (isInvulnerable) return;
+
+                const x = Math.random() * (window.innerWidth - 100);
+                const y = Math.random() * (window.innerHeight - 100);
+                barandah.style.left = x + 'px';
+                barandah.style.top = y + 'px';
+
+                switch (bossPhase) {
+                    case 1:
+                        if (Math.random() < 0.3) createBossAttack(x, y);
+                        break;
+                    case 2:
+                        if (Math.random() < 0.4) {
+                            createBossAttack(x, y);
+                            setTimeout(() => createBossAttack(x, y), 200);
+                        }
+                        break;
+                    case 3:
+                        if (Math.random() < 0.5) {
+                            for (let i = 0; i < 8; i++) {
+                                const angle = (i * Math.PI * 2) / 8;
+                                createBossAttack(x, y, angle);
+                            }
+                        }
+                        break;
+                }
+            }, 1000);
+
+            document.addEventListener('click', (e) => {
+                if (isInvulnerable) return;
+
+                const bullet = document.createElement('div');
+                bullet.style.cssText = `
+                    position: fixed;
+                    width: 10px;
+                    height: 10px;
+                    background: #00ff00;
+                    border-radius: 50%;
+                    z-index: 998;
+                    left: ${e.clientX}px;
+                    top: ${e.clientY}px;
+                    box-shadow: 0 0 10px #00ff00;
+                `;
+                document.body.appendChild(bullet);
+
+                const barandahRect = barandah.getBoundingClientRect();
+                const dx = e.clientX - (barandahRect.left + 50);
+                const dy = e.clientY - (barandahRect.top + 50);
+                if (Math.sqrt(dx*dx + dy*dy) < 60) {
+                    if (bossPhase === 3) {
+                        barandahHealth -= 10;
+                    } else {
+                        barandahHealth -= 20;
+                    }
+                    score += 100 * bossPhase;
+                    updateStatus();
+                    updateBossPhase();
+
+                    if (barandahHealth <= 0) {
+                        isInvulnerable = true;
+                        barandah.style.animation = 'glitch 0.1s infinite';
+                        showEndingSequence(victoryMessages);
+                    }
+                }
+
+                setTimeout(() => bullet.remove(), 1000);
+            });
+
+            if (playerHealth <= 0) {
+                isInvulnerable = true;
+                showEndingSequence(defeatMessages);
+            }
+
+            updateStatus();
+        }
+
+        function createBossAttack(x, y, angle = null) {
+            const attack = document.createElement('div');
+            attack.style.cssText = `
+                position: fixed;
+                width: 20px;
+                height: 20px;
+                background: ${bossPhase === 3 ? '#ff0000' : '#ff00ff'};
+                border-radius: 50%;
+                z-index: 999;
+                box-shadow: 0 0 10px ${bossPhase === 3 ? '#ff0000' : '#ff00ff'};
+            `;
+            attack.style.left = (x + 50) + 'px';
+            attack.style.top = (y + 50) + 'px';
+            document.body.appendChild(attack);
+
+            const targetX = angle !== null ? Math.cos(angle) * 1000 : parseInt(playerCursor.style.left);
+            const targetY = angle !== null ? Math.sin(angle) * 1000 : parseInt(playerCursor.style.top);
+            const moveAngle = angle !== null ? angle : Math.atan2(targetY - y, targetX - x);
+            const speed = 5 + bossPhase * 2;
+
+            const moveAttack = setInterval(() => {
+                const currentX = parseInt(attack.style.left);
+                const currentY = parseInt(attack.style.top);
+                attack.style.left = (currentX + Math.cos(moveAngle) * speed) + 'px';
+                attack.style.top = (currentY + Math.sin(moveAngle) * speed) + 'px';
+
+                const dx = currentX - targetX;
+                const dy = currentY - targetY;
+                if (Math.sqrt(dx*dx + dy*dy) < 30) {
+                    playerHealth -= 10;
+                    updateStatus();
+                    attack.remove();
+                    clearInterval(moveAttack);
+                    playerCursor.style.boxShadow = '0 0 20px #ff0000';
+                    setTimeout(() => {
+                        playerCursor.style.boxShadow = '0 0 10px #00ff00';
+                    }, 200);
+
+                    if (playerHealth <= 0) {
+                        isInvulnerable = true;
+                        showEndingSequence(defeatMessages);
+                    }
+                }
+            }, 16);
+
+            setTimeout(() => {
+                attack.remove();
+                clearInterval(moveAttack);
+            }, 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', typeMessage);
         document.body.style.overflow = 'hidden';
-        
-        // Запрещаем контекстное меню
         document.addEventListener('contextmenu', e => e.preventDefault());
-        
-        // Запрещаем выделение текста
         document.addEventListener('selectstart', e => e.preventDefault());
     </script>
 </body>

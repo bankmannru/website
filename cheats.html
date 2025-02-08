@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>БАНК МАННРУ ЧИТЫ МОД МЕНЮ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <script type="importmap">
+        {
+            "imports": {
+                "@material/web/": "https://esm.run/@material/web/"
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --neon-text-color: #00ff00;
+            --neon-border-color: #00ff00;
+            --error-color: #ff0000;
+            --warning-color: #ffff00;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #000;
+            color: var(--neon-text-color);
+            font-family: 'Share Tech Mono', monospace;
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            text-shadow: 0 0 10px var(--neon-text-color);
+            animation: flicker 1.5s infinite alternate;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            color: var(--error-color);
+            text-shadow: 0 0 10px var(--error-color);
+        }
+
+        .terminal {
+            background: rgba(0, 0, 0, 0.9);
+            border: 3px solid var(--neon-border-color);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 20px var(--neon-border-color), inset 0 0 20px var(--neon-border-color);
+        }
+
+        .command-group {
+            margin-bottom: 30px;
+        }
+
+        .command-title {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 5px var(--neon-text-color);
+        }
+
+        .command-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        input[type="text"], input[type="number"] {
+            background: #000;
+            border: 1px solid var(--neon-border-color);
+            color: var(--neon-text-color);
+            padding: 8px;
+            font-family: inherit;
+            flex: 1;
+        }
+
+        button {
+            background: #000;
+            border: 1px solid var(--neon-border-color);
+            color: var(--neon-text-color);
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: var(--neon-text-color);
+            color: #000;
+        }
+
+        .console-output {
+            background: #000;
+            border: 1px solid var(--neon-border-color);
+            padding: 10px;
+            margin-top: 10px;
+            height: 100px;
+            overflow-y: auto;
+            font-size: 0.9em;
+        }
+
+        @keyframes flicker {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+                text-shadow: 
+                    -0.2rem -0.2rem 1rem #fff,
+                    0.2rem 0.2rem 1rem #fff,
+                    0 0 2rem var(--neon-text-color),
+                    0 0 4rem var(--neon-text-color),
+                    0 0 6rem var(--neon-text-color),
+                    0 0 8rem var(--neon-text-color),
+                    0 0 10rem var(--neon-text-color);
+            }
+            20%, 24%, 55% {        
+                text-shadow: none;
+            }    
+        }
+
+        .scanline {
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(
+                0deg,
+                rgba(0, 255, 0, 0) 0%,
+                rgba(0, 255, 0, 0.1) 10%,
+                rgba(0, 255, 0, 0) 100%
+            );
+            position: fixed;
+            top: 0;
+            left: 0;
+            animation: scan 10s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes scan {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100vh); }
+        }
+
+        .danger-text {
+            color: var(--error-color);
+            text-shadow: 0 0 5px var(--error-color);
+        }
+
+        .warning-text {
+            color: var(--warning-color);
+            text-shadow: 0 0 5px var(--warning-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="scanline"></div>
+    <div class="container">
+        <div class="header">
+            <h1>ЭЛИТНЫЙ ВЗЛОМ БАНКА МАННРУ ОТ ХАКЕРСКОЙ ГРУППИРОВКИ D4RKH4X0RZ</h1>
+            <h2 class="warning-text">СЕКРЕТНЫЕ ИНСТРУМЕНТЫ ВЗЛОМА 2025 [СЛИТО] [РАБОТАЕТ 100%]</h2>
+            <p class="danger-text">ВНИМАНИЕ: ИСПОЛЬЗОВАНИЕ ДАННОГО ИНСТРУМЕНТА МОЖЕТ ПРИВЕСТИ К ПОЛНОМУ ЗАХВАТУ КОНТРОЛЯ!</p>
+            <p>Мы взломали все уровни защиты. Используйте на свой страх и риск.</p>
+            <p>Этот инструмент создан элитными хакерами для полного контроля над системой!</p>
+            <p>Мы проникли в самое сердце банка. Их защита бессильна.</p>
+            <p>Используя этот инструмент, вы становитесь частью элиты цифрового андеграунда!</p>
+            <p>Максимальная мощность! Не для слабых духом!</p>
+        </div>
+
+        <div class="terminal">
+            <div class="command-group">
+                <div class="command-title">> Управление системой</div>
+                <div class="command-row">
+                    <button onclick="getUserId()">СКАНИРОВАТЬ КАРТЫ</button>
+                    <button onclick="scanSystem()">АНАЛИЗ СИСТЕМЫ</button>
+                    <button onclick="bypassSecurity()">ОБХОД ЗАЩИТЫ</button>
+                </div>
+            </div>
+
+            <div class="command-group">
+                <div class="command-title">> Взлом баланса</div>
+                <div class="command-row">
+                    <input type="text" id="cardId" placeholder="ID карты жертвы">
+                    <input type="number" id="amount" placeholder="Сумма взлома">
+                    <button onclick="addMoney()">ВЗЛОМАТЬ БАЛАНС</button>
+                    <button onclick="multiplyMoney()">УМНОЖИТЬ БАЛАНС</button>
+                    <button onclick="infiniteMoney()">∞ БЕСКОНЕЧНЫЕ ДЕНЬГИ ∞</button>
+                </div>
+            </div>
+
+            <div class="command-group">
+                <div class="command-title">> Уничтожение данных</div>
+                <div class="command-row">
+                    <button onclick="clearAllMessages()">УНИЧТОЖИТЬ СООБЩЕНИЯ</button>
+                    <button onclick="clearAllUsers()">УНИЧТОЖИТЬ ПОЛЬЗОВАТЕЛЕЙ</button>
+                    <button onclick="nukeDatabase()">ТОТАЛЬНОЕ УНИЧТОЖЕНИЕ</button>
+                </div>
+            </div>
+
+            <div class="command-group">
+                <div class="command-title">> Продвинутый взлом</div>
+                <div class="command-row">
+                    <button onclick="unlockAllAchievements()">ВЗЛОМ ДОСТИЖЕНИЙ</button>
+                    <button onclick="giveAdminRights()">ЗАХВАТ АДМИНКИ</button>
+                    <button onclick="injectBackdoor()">ВНЕДРИТЬ БЭКДОР</button>
+                    <button onclick="enableGodMode()">РЕЖИМ БОГА</button>
+                </div>
+            </div>
+
+            <div class="command-group">
+                <div class="command-title">> Терминал взлома</div>
+                <div class="console-output" id="console"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { ref, set, remove, get, update } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+        import { database } from './firebase-config.js';
+
+        // Инициализируем консоль
+        logToConsole('System initialized. Ready for commands...');
+
+        // Делаем функции глобально доступными
+        window.addMoney = async function() {
+            const cardId = document.getElementById('cardId').value;
+            const amount = parseInt(document.getElementById('amount').value);
+
+            if (!cardId || !amount) {
+                logToConsole('ERROR: Введите ID карты и сумму');
+                return;
+            }
+
+            try {
+                const cardRef = ref(database, `cards/${cardId}`);
+                const snapshot = await get(cardRef);
+                
+                if (!snapshot.exists()) {
+                    logToConsole('ERROR: Карта не найдена');
+                    return;
+                }
+
+                const card = snapshot.val();
+                const newBalance = (card.balance || 0) + amount;
+                
+                await update(ref(database), {
+                    [`cards/${cardId}/balance`]: newBalance,
+                    [`cards/${cardId}/transactions/${Date.now()}`]: {
+                        type: 'cheat',
+                        amount: amount,
+                        description: 'Чит-код: добавление денег',
+                        timestamp: Date.now()
+                    }
+                });
+
+                logToConsole(`SUCCESS: Добавлено ${amount} МР на карту ${cardId}`);
+            } catch (error) {
+                logToConsole(`ERROR: ${error.message}`);
+            }
+        };
+
+        window.clearAllMessages = async function() {
+            try {
+                await remove(ref(database, 'servers/default/messages'));
+                logToConsole('SUCCESS: Все сообщения удалены');
+            } catch (error) {
+                logToConsole(`ERROR: ${error.message}`);
+            }
+        };
+
+        window.clearAllUsers = async function() {
+            try {
+                await remove(ref(database, 'users'));
+                logToConsole('SUCCESS: Все пользователи удалены');
+            } catch (error) {
+                logToConsole(`ERROR: ${error.message}`);
+            }
+        };
+
+        window.unlockAllAchievements = async function() {
+            try {
+                const achievements = {
+                    'first_transaction': true,
+                    'big_spender': true,
+                    'early_adopter': true,
+                    'social_butterfly': true
+                };
+
+                const cardId = document.getElementById('cardId').value;
+                if (!cardId) {
+                    logToConsole('ERROR: Введите ID карты');
+                    return;
+                }
+
+                await set(ref(database, `cards/${cardId}/achievements`), achievements);
+                logToConsole('SUCCESS: Все достижения разблокированы');
+            } catch (error) {
+                logToConsole(`ERROR: ${error.message}`);
+            }
+        };
+
+        window.giveAdminRights = async function() {
+            try {
+                const cardId = document.getElementById('cardId').value;
+                if (!cardId) {
+                    logToConsole('ERROR: Введите ID карты');
+                    return;
+                }
+
+                await set(ref(database, `cards/${cardId}/isAdmin`), true);
+                logToConsole('SUCCESS: Права администратора выданы');
+            } catch (error) {
+                logToConsole(`ERROR: ${error.message}`);
+            }
+        };
+
+        window.getUserId = async function() {
+            try {
+                const cardsRef = ref(database, 'cards');
+                const snapshot = await get(cardsRef);
+                if (snapshot.exists()) {
+                    const cards = snapshot.val();
+                    logToConsole('Доступные ID карт:');
+                    Object.entries(cards).forEach(([id, card]) => {
+                        logToConsole(`${id}: ${card.holder || 'Без имени'}`);
+                    });
+                } else {
+                    logToConsole('ERROR: Карты не найдены');
+                }
+            } catch (error) {
+                logToConsole(`ERROR: ${error.message}`);
+            }
+        };
+
+        window.multiplyMoney = async function() {
+            const cardId = document.getElementById('cardId').value;
+            if (!cardId) {
+                logToConsole('ERROR: Введите ID карты жертвы');
+                return;
+            }
+            try {
+                const cardRef = ref(database, `cards/${cardId}`);
+                const snapshot = await get(cardRef);
+                if (snapshot.exists()) {
+                    const card = snapshot.val();
+                    const newBalance = (card.balance || 0) * 2;
+                    await set(cardRef, { ...card, balance: newBalance });
+                    logToConsole(`SUCCESS: Баланс умножен на 2! Новый баланс: ${newBalance}`);
+                }
+            } catch (error) {
+                logToConsole(`ERROR: ${error.message}`);
+            }
+        };
+
+        window.infiniteMoney = async function() {
+            const cardId = document.getElementById('cardId').value;
+            if (!cardId) {
+                logToConsole('ERROR: Введите ID карты жертвы');
+                return;
+            }
+            try {
+                const cardRef = ref(database, `cards/${cardId}`);
+                await update(ref(database), {
+                    [`cards/${cardId}/balance`]: 999999999,
+                });
+                logToConsole('SUCCESS: АКТИВИРОВАН РЕЖИМ БЕСКОНЕЧНЫХ ДЕНЕГ!');
+            } catch (error) {
+                logToConsole(`ERROR: ${error.message}`);
+            }
+        };
+
+        window.scanSystem = async function() {
+            logToConsole('НАЧИНАЕМ СКАНИРОВАНИЕ СИСТЕМЫ...');
+            setTimeout(() => logToConsole('ПОИСК УЯЗВИМОСТЕЙ...'), 1000);
+            setTimeout(() => logToConsole('ОБНАРУЖЕНЫ КРИТИЧЕСКИЕ УЯЗВИМОСТИ!'), 2000);
+            setTimeout(() => logToConsole('СИСТЕМА ВЗЛОМАНА! ПОЛНЫЙ ДОСТУП ПОЛУЧЕН!'), 3000);
+        };
+
+        window.bypassSecurity = function() {
+            logToConsole('ЗАПУЩЕН ОБХОД СИСТЕМЫ БЕЗОПАСНОСТИ...');
+            setTimeout(() => logToConsole('ПЕРЕХВАТ ЗАЩИТНЫХ МЕХАНИЗМОВ...'), 1000);
+            setTimeout(() => logToConsole('ОТКЛЮЧЕНИЕ ФАЙРВОЛА...'), 2000);
+            setTimeout(() => logToConsole('УСПЕШНО! ЗАЩИТА ОТКЛЮЧЕНА!'), 3000);
+        };
+
+        window.injectBackdoor = function() {
+            logToConsole('ВНЕДРЕНИЕ БЭКДОРА В СИСТЕМУ...');
+            setTimeout(() => logToConsole('СОЗДАНИЕ СКРЫТОГО ДОСТУПА...'), 1000);
+            setTimeout(() => logToConsole('МАСКИРОВКА СЛЕДОВ...'), 2000);
+            setTimeout(() => logToConsole('БЭКДОР УСПЕШНО ВНЕДРЕН! ДОСТУП БЕЗГРАНИЧЕН!'), 3000);
+        };
+
+        window.enableGodMode = async function() {
+            const cardId = document.getElementById('cardId').value;
+            if (!cardId) {
+                logToConsole('ERROR: Введите ID карты');
+                return;
+            }
+            try {
+                await update(ref(database), {
+                    [`cards/${cardId}/godMode`]: true,
+                    [`cards/${cardId}/isAdmin`]: true,
+                    [`cards/${cardId}/balance`]: 999999999,
+                });
+                logToConsole('РЕЖИМ БОГА АКТИВИРОВАН! АБСОЛЮТНАЯ ВЛАСТЬ ПОЛУЧЕНА!');
+            } catch (error) {
+                logToConsole(`ERROR: ${error.message}`);
+            }
+        };
+
+        window.nukeDatabase = async function() {
+            if (confirm('⚠️ ВНИМАНИЕ! ЭТО УНИЧТОЖИТ ВСЕ ДАННЫЕ! ПРОДОЛЖИТЬ?')) {
+                try {
+                    await remove(ref(database));
+                    logToConsole('☢️ ТОТАЛЬНОЕ УНИЧТОЖЕНИЕ ЗАВЕРШЕНО! ВСЕ ДАННЫЕ СТЕРТЫ!');
+                } catch (error) {
+                    logToConsole(`ERROR: ${error.message}`);
+                }
+            }
+        };
+
+        function logToConsole(message) {
+            const console = document.getElementById('console');
+            const time = new Date().toLocaleTimeString();
+            console.innerHTML += `[${time}] ${message}\n`;
+            console.scrollTop = console.scrollHeight;
+        }
+
+        // Добавляем кнопку получения ID пользователей
+        const commandRow = document.querySelector('.command-row');
+        const getIdButton = document.createElement('button');
+        getIdButton.textContent = 'ПОЛУЧИТЬ ID';
+        getIdButton.onclick = getUserId;
+        commandRow.appendChild(getIdButton);
+
+        // Инициализация
+        logToConsole('СИСТЕМА ВЗЛОМА ИНИЦИАЛИЗИРОВАНА...');
+        setTimeout(() => logToConsole('ПОДКЛЮЧЕНИЕ К СЕРВЕРАМ БАНКА...'), 1000);
+        setTimeout(() => logToConsole('ДОСТУП ПОЛУЧЕН! СИСТЕМА ГОТОВА К ВЗЛОМУ!'), 2000);
+    </script>
+</body>
+</html> 

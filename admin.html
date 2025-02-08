@@ -22,8 +22,132 @@
     <script type="module">
         import '@material/web/all.js';
         import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
+        import { ref, remove, get } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+        import { database } from './firebase-config.js';
 
         document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+
+        // Дожидаемся загрузки DOM
+        document.addEventListener('DOMContentLoaded', () => {
+            // Обработчик очистки всех сообщений
+            document.getElementById('clear-all-messages').addEventListener('click', async () => {
+                if (confirm('Вы уверены, что хотите удалить ВСЕ сообщения? Это действие нельзя отменить!')) {
+                    try {
+                        const messagesRef = ref(database, 'messages');
+                        await remove(messagesRef);
+                        showNotification('Все сообщения успешно удалены');
+                        loadMessages(); // Перезагружаем список сообщений
+                    } catch (error) {
+                        console.error('Ошибка при удалении сообщений:', error);
+                        showNotification('Ошибка при удалении сообщений', true);
+                    }
+                }
+            });
+
+            // Обработчик очистки всех пользователей
+            document.getElementById('clear-users').addEventListener('click', async () => {
+                if (confirm('Вы уверены, что хотите удалить ВСЕХ пользователей? Это действие нельзя отменить!')) {
+                    try {
+                        const usersRef = ref(database, 'users');
+                        await remove(usersRef);
+                        showNotification('Все пользователи успешно удалены');
+                        loadUsers(); // Перезагружаем список пользователей
+                    } catch (error) {
+                        console.error('Ошибка при удалении пользователей:', error);
+                        showNotification('Ошибка при удалении пользователей', true);
+                    }
+                }
+            });
+        });
+
+        // Функция показа уведомлений
+        function showNotification(message, isError = false) {
+            // Используем существующий snackbar или создаем новый
+            let snackbar = document.querySelector('md-snackbar');
+            if (!snackbar) {
+                snackbar = document.createElement('md-snackbar');
+                document.body.appendChild(snackbar);
+            }
+            
+            // Настраиваем snackbar
+            snackbar.labelText = message;
+            if (isError) {
+                snackbar.innerHTML = `
+                    <md-text-button slot="action">OK</md-text-button>
+                `;
+            } else {
+                snackbar.innerHTML = '';
+            }
+            
+            // Показываем уведомление
+            requestAnimationFrame(() => {
+                snackbar.setAttribute('open', '');
+                setTimeout(() => snackbar.removeAttribute('open'), 3000);
+            });
+        }
+
+        // Функция загрузки сообщений
+        async function loadMessages() {
+            try {
+                const messagesRef = ref(database, 'messages');
+                const snapshot = await get(messagesRef);
+                const messagesList = document.getElementById('messages-list');
+                messagesList.innerHTML = '';
+
+                if (snapshot.exists()) {
+                    const messages = snapshot.val();
+                    document.getElementById('total-messages').textContent = Object.keys(messages).length;
+                    
+                    // Подсчет сообщений за сегодня
+                    const today = new Date().setHours(0, 0, 0, 0);
+                    const todayMessages = Object.values(messages).filter(msg => 
+                        new Date(msg.timestamp).setHours(0, 0, 0, 0) === today
+                    ).length;
+                    document.getElementById('today-messages').textContent = todayMessages;
+                } else {
+                    document.getElementById('total-messages').textContent = '0';
+                    document.getElementById('today-messages').textContent = '0';
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки сообщений:', error);
+                showNotification('Ошибка загрузки сообщений', true);
+            }
+        }
+
+        // Функция загрузки пользователей
+        async function loadUsers() {
+            const usersRef = ref(database, 'users');
+            const snapshot = await get(usersRef);
+            const usersList = document.getElementById('users-list');
+            usersList.innerHTML = '';
+
+            if (snapshot.exists()) {
+                const users = snapshot.val();
+                document.getElementById('total-users').textContent = Object.keys(users).length;
+                
+                // Подсчет онлайн пользователей
+                const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+                const onlineUsers = Object.values(users).filter(user => 
+                    user.lastSeen > fiveMinutesAgo
+                ).length;
+                document.getElementById('online-users').textContent = onlineUsers;
+            } else {
+                document.getElementById('total-users').textContent = '0';
+                document.getElementById('online-users').textContent = '0';
+            }
+        }
+
+        // Загружаем данные при открытии страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            loadMessages();
+            loadUsers();
+
+            // Обновляем данные каждые 30 секунд
+            setInterval(() => {
+                loadMessages();
+                loadUsers();
+            }, 30000);
+        });
     </script>
     
     <!-- Custom CSS -->
