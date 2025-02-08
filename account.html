@@ -27,6 +27,27 @@
     <!-- Custom Components -->
     <script type="module" src="card-creator.js"></script>
 
+    <!-- Добавляем стили для карты -->
+    <style>
+        bank-card {
+            width: 400px;
+            height: 240px;
+            display: block;
+            margin: 0 auto;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+        }
+
+        .card-section {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1000px;
+            margin: 40px 0;
+        }
+    </style>
+
     <style>
         body {
             background: #FF7F50;
@@ -787,20 +808,37 @@
         .achievement-card {
             position: relative;
             overflow: hidden;
+            background: rgba(255, 255, 255, 0.1) !important;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            color: white;
+            transition: transform 0.3s ease;
+            border-radius: 16px;
         }
 
         .achievement-card.locked {
-            filter: grayscale(1);
-            opacity: 0.7;
+            background: rgba(255, 255, 255, 0.05) !important;
+            opacity: 0.8;
         }
 
-        .achievement-icon {
-            font-size: 32px;
-            margin-bottom: 8px;
+        .achievement-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15) !important;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
         }
 
-        .achievement-progress {
-            margin-top: 8px;
+        .achievement-card.unlocked {
+            border: 2px solid rgba(76, 175, 80, 0.6);
+            box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .achievement-card h3 {
+            color: white;
+        }
+
+        .achievement-card p {
+            color: rgba(255, 255, 255, 0.8);
         }
 
         .achievement-rarity {
@@ -810,25 +848,80 @@
             font-size: 12px;
             padding: 2px 8px;
             border-radius: 12px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1;
         }
 
-        .rarity-common { background: #78909C; }
-        .rarity-rare { background: #5C6BC0; }
-        .rarity-epic { background: #7B1FA2; }
-        .rarity-legendary { background: #FFB300; }
+        .rarity-common { 
+            background: rgba(120, 144, 156, 0.7);
+        }
+        .rarity-rare { 
+            background: rgba(92, 107, 192, 0.7);
+        }
+        .rarity-epic { 
+            background: rgba(123, 31, 162, 0.7);
+        }
+        .rarity-legendary { 
+            background: rgba(255, 179, 0, 0.7);
+        }
+
+        .secret-achievement {
+            background: linear-gradient(45deg, 
+                rgba(156, 39, 176, 0.7), 
+                rgba(103, 58, 183, 0.7)
+            ) !important;
+            animation: glow 2s infinite alternate;
+        }
+
+        .custom-achievement {
+            background: linear-gradient(45deg, 
+                rgba(255, 152, 0, 0.7), 
+                rgba(244, 67, 54, 0.7)
+            ) !important;
+            animation: glow 2s infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+            }
+            to {
+                box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            }
+        }
+
+        .achievement-icon {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            padding: 8px;
+        }
+
+        .achievement-icon md-icon {
+            font-size: 24px !important;
+            color: white;
+            --md-icon-size: 24px;
+        }
+
+        .achievement-content {
+            text-align: center;
+            padding: 16px;
+        }
+
+        .achievement-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 12px;
+        }
     </style>
-    <script>
-        // Добавляем отслеживание движения мыши для эффекта sparkle
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelector('.effect-sparkle')?.addEventListener('mousemove', (e) => {
-                const rect = e.target.getBoundingClientRect();
-                const x = ((e.clientX - rect.left) / rect.width) * 100;
-                const y = ((e.clientY - rect.top) / rect.height) * 100;
-                e.target.style.setProperty('--x', `${x}%`);
-                e.target.style.setProperty('--y', `${y}%`);
-            });
-        });
-    </script>
 </head>
 <body>
     <div class="container">
@@ -879,7 +972,7 @@
                     <md-icon>account_balance_wallet</md-icon>
                     Баланс
                 </h3>
-                <div class="balance-amount" id="balance-amount">0 ₽</div>
+                <div class="balance-amount" id="balance-amount">0 МР</div>
                 <div style="display: flex; gap: 12px;">
                     <md-outlined-button id="transfer-button">
                         <span slot="icon" class="material-symbols-outlined">send</span>
@@ -938,14 +1031,6 @@
     </div>
 
     <!-- Заменяем статичный баннер -->
-    <div class='header' id="hiring-banner" style="display: none; align-items: center; justify-content: center;">Мы набираем работников для банк Маннру. 
-        <a href="https://forms.gle/GJFTNofAoNCuxMT37" style="margin-left: 10px;">
-            <md-filled-tonal-button>
-                Подать заявку
-                <svg slot="icon" viewBox="0 0 48 48"><path d="M6 40V8l38 16Zm3-4.65L36.2 24 9 12.5v8.4L21.1 24 9 27Zm0 0V12.5 27Z"/></svg>
-            </md-filled-tonal-button>
-        </a>
-    </div>
 
     <div class="achievements-section">
         <div class="section-header">
@@ -962,527 +1047,109 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-        import { getDatabase, ref, get, update, onValue } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
-        import { getAuth } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
-        import '@material/web/all.js';
-        
-        // Конфигурация Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyAK8cgAKNDAfXIOzA_0kn4QhVk5OYkcGbk",
-            authDomain: "bank-mannru2.firebaseapp.com",
-            databaseURL: "https://bank-mannru2-default-rtdb.firebaseio.com",
-            projectId: "bank-mannru2",
-            storageBucket: "bank-mannru2.firebasestorage.app",
-            messagingSenderId: "666672164834",
-            appId: "1:666672164834:web:d221a89a4c4ed88d4c13bb",
-            measurementId: "G-85BL0L97NP"
-        };
-        
-        // Инициализируем Firebase
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
-        const auth = getAuth(app);
-        
-        import { logout } from './auth.js';
+        // Импортируем Firebase функции
+        import { getDatabase, ref, onValue, get, update } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+        import { database } from './firebase-config.js';
 
-        // Делаем функцию showNotification доступной глобально
-        window.showNotification = showNotification;
+        // Функция для форматирования баланса
+        function formatBalance(balance) {
+            return new Intl.NumberFormat('ru-RU').format(balance);
+        }
 
-        // Инициализация карты
-        async function initializeCard() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const cardId = urlParams.get('id') || localStorage.getItem('currentCardId');
-            
-            if (!cardId) {
-                window.location.href = 'index.html';
-                return;
+        // Функция для инициализации отслеживания баланса
+        function initBalance(cardId) {
+            const balanceRef = ref(database, `cards/${cardId}/balance`);
+            const balanceElement = document.getElementById('balance-amount');
+
+            onValue(balanceRef, (snapshot) => {
+                const balance = snapshot.val() || 0;
+                balanceElement.textContent = `${formatBalance(balance)} МР`;
+
+                // Добавляем анимацию при изменении баланса
+                balanceElement.style.animation = 'none';
+                balanceElement.offsetHeight; // Форсируем перерисовку
+                balanceElement.style.animation = 'highlight 0.5s ease-out';
+            });
+        }
+
+        // Добавляем стиль анимации
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes highlight {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.1); }
+                100% { transform: scale(1); }
             }
+        `;
+        document.head.appendChild(style);
 
-            localStorage.setItem('currentCardId', cardId);
-            
-            // Слушаем изменения данных карты
+        // Получаем ID карты из URL
+        function getCardIdFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const cardId = urlParams.get('id');
+            console.log('Card ID from URL:', cardId);
+            return cardId;
+        }
+
+        // Функция инициализации карты
+        function initCard(cardId) {
             const cardRef = ref(database, `cards/${cardId}`);
             onValue(cardRef, (snapshot) => {
                 const cardData = snapshot.val();
-                if (!cardData) {
-                    window.location.href = 'index.html';
-                    return;
+                if (cardData) {
+                    const cardElement = document.getElementById('user-card');
+                    if (!cardElement) return;
+                    
+                    // Устанавливаем основные атрибуты карты
+                    cardElement.setAttribute('number', cardData.number);
+                    cardElement.setAttribute('holder', cardData.holder);
+                    cardElement.setAttribute('expires', cardData.expires);
+                    // Добавляем цвета из базы данных
+                    if (cardData.primaryColor) {
+                        cardElement.setAttribute('primary-color', '#' + cardData.primaryColor);
+                    }
+                    if (cardData.secondaryColor) {
+                        cardElement.setAttribute('secondary-color', '#' + cardData.secondaryColor);
+                    }
+
+                    // Обновляем баланс
+                    const balanceElement = document.getElementById('balance-amount');
+                    if (balanceElement) {
+                        balanceElement.textContent = `${formatBalance(cardData.balance)} МР`;
+                    }
+
+                    // Добавляем дополнительные атрибуты из базы данных
+                    if (cardData.frozen) {
+                        cardElement.setAttribute('frozen', 'true');
+                    }
+                    if (cardData.godMode) {
+                        cardElement.setAttribute('god-mode', 'true');
+                    }
+                    if (cardData.isAdmin) {
+                        cardElement.setAttribute('admin', 'true');
+                    }
+
+                    // Обновляем премиум-бейджи
+                    document.getElementById('premium-badge').style.display = 
+                        cardData.premium?.enabled ? 'flex' : 'none';
+                    document.getElementById('cashback-badge').style.display = 
+                        cardData.cashback ? 'flex' : 'none';
+
+                    // Обновляем заголовок страницы
+                    document.title = `${cardData.holder} - Банк Маннру`;
+
+                    // Загружаем сообщения
+                    loadMessages(cardData.messages || {});
                 }
-                
-                updateCardDisplay(cardData);
-                updateTransactionsList(cardData.transactions || {});
-                loadMessages(cardData.messages || {});
-                // Инициализируем систему достижений
-                initAchievements(cardId);
             });
-
-            // Добавляем обработчик для кнопки выхода
-            document.getElementById('logout-button').onclick = () => logout();
-        }
-
-        // Запускаем инициализацию при загрузке страницы
-        document.addEventListener('DOMContentLoaded', initializeCard);
-        document.addEventListener('DOMContentLoaded', loadDailyMessage);
-
-        // Загрузка сообщения дня
-        async function loadDailyMessage() {
-            const messages = [
-                "Не забудьте проверить наши специальные предложения в маркете!",
-                "Копите баллы и получайте больше привилегий с картой Premium",
-                "Безопасность прежде всего - регулярно меняйте пароль",
-                "Приглашайте друзей и получайте бонусы за каждого нового клиента",
-                "У нас появились новые партнёры! Проверьте условия кэшбэка",
-                "Планируйте покупки заранее и экономьте с нашими акциями",
-                "Установите лимиты на траты для лучшего контроля бюджета",
-                "Подключите уведомления, чтобы не пропустить важные операции",
-                "Участвуйте в наших опросах и помогайте нам стать лучше",
-                "Храните средства с умом - откройте накопительный счёт"
-            ];
-            
-            // Выбираем сообщение на основе текущей даты
-            const today = new Date();
-            const messageIndex = (today.getFullYear() + today.getMonth() + today.getDate()) % messages.length;
-            
-            const messageElement = document.getElementById('daily-message');
-            messageElement.textContent = messages[messageIndex];
-        }
-
-        function showNotification(message, isError = false) {
-            const toast = document.createElement('div');
-            toast.className = `toast ${isError ? 'error' : 'success'}`;
-            toast.innerHTML = `
-                <md-icon>${isError ? 'error' : 'check_circle'}</md-icon>
-                <span>${message}</span>
-            `;
-            document.body.appendChild(toast);
-            
-            requestAnimationFrame(() => {
-                toast.style.opacity = '1';
-                toast.style.transform = 'translateX(-50%) translateY(0)';
-            });
-
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateX(-50%) translateY(20px)';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
-        function updateTransactionsList(transactions) {
-            const transactionsList = document.getElementById('transactionsList');
-            if (!transactionsList) return;
-            transactionsList.innerHTML = '';
-            
-            // Подсчитываем статистику для достижений
-            let totalSpent = 0;
-            let transactionCount = 0;
-            
-            Object.entries(transactions || {})
-                .sort(([,a], [,b]) => b.timestamp - a.timestamp)
-                .forEach(([id, transaction]) => {
-                    // Увеличиваем счетчики
-                    if (transaction.type === 'purchase' || transaction.type === 'transfer_out') {
-                        totalSpent += Math.abs(transaction.amount);
-                    }
-                    transactionCount++;
-                    
-                    const element = document.createElement('div');
-                    element.className = 'transaction-item';
-                    
-                    // Определяем иконку и цвет в зависимости от типа транзакции
-                    let icon = 'payments';
-                    let isNegative = false;
-                    
-                    switch(transaction.type) {
-                        case 'purchase':
-                            icon = 'shopping_cart';
-                            isNegative = true;
-                            break;
-                        case 'transfer_out':
-                            icon = 'send';
-                            isNegative = true;
-                            break;
-                        case 'transfer_in':
-                            icon = 'download';
-                            break;
-                        case 'deposit':
-                            icon = 'add';
-                            break;
-                    }
-
-                    element.innerHTML = `
-                        <div class="transaction-info">
-                            <div class="transaction-icon">
-                                <md-icon>${icon}</md-icon>
-                            </div>
-                            <div class="transaction-details">
-                                <div class="transaction-description">${transaction.description}</div>
-                                <div class="transaction-date">${new Date(transaction.timestamp).toLocaleString()}</div>
-                            </div>
-                        </div>
-                        <div class="transaction-amount ${isNegative ? 'negative' : ''}">${isNegative ? '-' : '+'}${Math.abs(transaction.amount)} МР</div>
-                    `;
-                    
-                    element.addEventListener('click', () => showTransactionDetails(id, transaction));
-                    transactionsList.appendChild(element);
-                });
-            
-            // Обновляем статистику в базе данных
-            const cardId = localStorage.getItem('currentCardId');
-            update(ref(database), {
-                [`cards/${cardId}/stats/totalSpent`]: totalSpent,
-                [`cards/${cardId}/stats/transactions`]: transactionCount
-            });
-        }
-
-        // Функция для показа деталей транзакции
-        function showTransactionDetails(id, transaction) {
-            const dialog = document.getElementById('transaction-details-dialog');
-            dialog.style.display = ''; // Убираем display: none перед показом
-            
-            // Заполняем данные
-            document.getElementById('detail-description').textContent = transaction.description;
-            document.getElementById('detail-amount').textContent = new Intl.NumberFormat('ru-RU').format(transaction.amount) + ' МР';
-            document.getElementById('detail-datetime').textContent = new Date(transaction.timestamp).toLocaleString();
-            document.getElementById('detail-id').textContent = id;
-            
-            // Показываем кэшбэк если есть
-            const cashbackElement = document.getElementById('detail-cashback');
-            if (transaction.cashback) {
-                cashbackElement.style.display = 'flex';
-                document.getElementById('detail-cashback-amount').textContent = 
-                    new Intl.NumberFormat('ru-RU').format(transaction.cashback) + ' МР';
-            } else {
-                cashbackElement.style.display = 'none';
-            }
-            
-            dialog.show();
-            
-            // Добавляем возможность перетаскивания
-            makeDraggable(dialog, document.getElementById('dialog-drag-handle'));
-            
-            // Добавляем обработчик закрытия
-            dialog.addEventListener('closed', () => {
-                dialog.style.display = 'none';
-            }, { once: true });
-        }
-        
-        // Функция для перетаскивания диалога
-        function makeDraggable(element, handle) {
-            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-            
-            handle.onmousedown = dragMouseDown;
-            
-            function dragMouseDown(e) {
-                e.preventDefault();
-                pos3 = e.clientX;
-                pos4 = e.clientY;
-                document.onmouseup = closeDragElement;
-                document.onmousemove = elementDrag;
-            }
-            
-            function elementDrag(e) {
-                e.preventDefault();
-                pos1 = pos3 - e.clientX;
-                pos2 = pos4 - e.clientY;
-                pos3 = e.clientX;
-                pos4 = e.clientY;
-                element.style.top = (element.offsetTop - pos2) + "px";
-                element.style.left = (element.offsetLeft - pos1) + "px";
-            }
-            
-            function closeDragElement() {
-                document.onmouseup = null;
-                document.onmousemove = null;
-            }
-        }
-
-        // Handle transfer
-        document.getElementById('transfer-button').addEventListener('click', async () => {
-            const dialog = document.createElement('md-dialog');
-            // Проверяем премиум статус для дополнительных функций
-            const cardData = await get(ref(database, `cards/${localStorage.getItem('currentCardId')}`));
-            const isPremium = cardData.val()?.theme === 'premium';
-            
-            dialog.innerHTML = `
-                <div slot="headline">Перевод средств</div>
-                <form slot="content" method="dialog" class="dialog-content" id="transfer-form">
-                    <md-outlined-text-field
-                        type="text"
-                        label="Номер карты получателя"
-                        required
-                        pattern="\\d{3} \\d{3}"
-                        placeholder="123 456"
-                        helper-text="Формат: XXX XXX (три цифры, пробел, три цифры)"
-                        id="recipient-number">
-                    </md-outlined-text-field>
-                    <md-outlined-text-field
-                        type="number"
-                        label="Сумма перевода"
-                        required
-                        min="1"
-                        id="transfer-amount">
-                    </md-outlined-text-field>
-                    ${isPremium ? `
-                    <div style="margin-top: 16px;">
-                        <md-checkbox id="use-cashback">Использовать накопленный кешбэк</md-checkbox>
-                        <div style="color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 4px;">
-                            Доступно: <span id="available-cashback">0</span> МР
-                        </div>
-                    </div>
-                    ` : ''}
-                    <div class="dialog-buttons">
-                        <md-text-button value="cancel" formmethod="dialog">Отмена</md-text-button>
-                        <md-filled-button value="confirm" type="submit">Перевести</md-filled-button>
-                    </div>
-                </form>
-            `;
-
-            // Если премиум, показываем доступный кешбэк
-            if (isPremium) {
-                const cashbackSpan = dialog.querySelector('#available-cashback');
-                cashbackSpan.textContent = cardData.val().totalCashback || 0;
-            }
-
-            document.body.appendChild(dialog);
-            dialog.show();
-
-            const form = dialog.querySelector('#transfer-form');
-            const recipientInput = dialog.querySelector('#recipient-number');
-            const amountInput = dialog.querySelector('#transfer-amount');
-            
-            // Автоматическое форматирование номера карты
-            recipientInput.addEventListener('input', (e) => {
-                let value = e.target.value.replace(/\D/g, ''); // Оставляем только цифры
-                if (value.length > 3) {
-                    value = value.slice(0, 3) + ' ' + value.slice(3, 6);
-                }
-                e.target.value = value;
-            });
-
-            let transferData = null;
-
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                transferData = {
-                    recipientNumber: recipientInput.value,
-                    amount: parseFloat(amountInput.value)
-                };
-                dialog.close('confirm');
-            });
-
-            const result = await new Promise(resolve => {
-                dialog.addEventListener('close', () => {
-                    resolve(dialog.returnValue);
-                    dialog.remove();
-                });
-            });
-
-            if (result === 'confirm' && transferData) {
-                const { recipientNumber, amount } = transferData;
-                const useCashback = isPremium && dialog.querySelector('#use-cashback')?.checked;
-                
-                try {
-                    const senderRef = ref(database, `cards/${localStorage.getItem('currentCardId')}`);
-                    const recipientRef = ref(database, `cards/${recipientNumber.replace(' ', '')}`);
-                    
-                    const [senderSnapshot, recipientSnapshot] = await Promise.all([
-                        get(senderRef),
-                        get(recipientRef)
-                    ]);
-                    
-                    if (!recipientSnapshot.exists()) {
-                        throw new Error('Карта получателя не найдена');
-                    }
-                    
-                    const sender = senderSnapshot.val();
-                    const recipient = recipientSnapshot.val();
-                    
-                    // Рассчитываем кешбэк
-                    let cashbackAmount = 0;
-                    if (sender.theme === 'premium') {
-                        // Премиум получает 5% кешбэка
-                        cashbackAmount = amount * 0.05;
-                    }
-                    if (sender.cashbackEnabled) {
-                        // Дополнительный кешбэк 2%
-                        cashbackAmount += amount * 0.02;
-                    }
-                    
-                    // Если используем накопленный кешбэк
-                    let finalAmount = amount;
-                    if (useCashback && sender.totalCashback) {
-                        finalAmount = Math.max(0, amount - (sender.totalCashback || 0));
-                    }
-
-                    // Проверяем баланс
-                    if (sender.balance < finalAmount) {
-                        throw new Error('Недостаточно средств');
-                    }
-                    
-                    // Обновляем балансы
-                    await update(senderRef, {
-                        balance: sender.balance - finalAmount,
-                        totalCashback: (sender.totalCashback || 0) + cashbackAmount - (useCashback ? sender.totalCashback : 0),
-                        transactions: {
-                            ...(sender.transactions || {}),
-                            [Date.now()]: {
-                                type: 'transfer',
-                                amount: -amount,
-                                description: `Перевод на карту ${recipientNumber}`,
-                                timestamp: Date.now(),
-                                cashback: cashbackAmount,
-                                usedCashback: useCashback ? sender.totalCashback : 0
-                            }
-                        }
-                    });
-                    
-                    await update(recipientRef, {
-                        balance: recipient.balance + amount,
-                        transactions: {
-                            ...(recipient.transactions || {}),
-                            [Date.now()]: {
-                                type: 'deposit',
-                                amount: amount,
-                                description: `Перевод с карты ${sender.number}`,
-                                timestamp: Date.now()
-                            }
-                        }
-                    });
-                    
-                    showNotification('Перевод успешно выполнен');
-                } catch (error) {
-                    showNotification(error.message, true);
-                }
-            }
-        });
-
-        // Handle logout
-        document.getElementById('logout-button').addEventListener('click', () => {
-            logout();
-        });
-
-        // Обработчик кнопки "Поделиться"
-        document.getElementById('share-button').addEventListener('click', async () => {
-            const cardNumber = document.getElementById('user-card').getAttribute('number');
-            if (navigator.share) {
-                try {
-                    await navigator.share({
-                        title: 'Номер моей карты Маннру',
-                        text: `Мой номер карты: ${cardNumber}`
-                    });
-                } catch (error) {
-                    console.log('Error sharing:', error);
-                }
-            } else {
-                // Копируем в буфер обмена если share API не поддерживается
-                navigator.clipboard.writeText(cardNumber);
-                showNotification('Номер карты скопирован в буфер обмена');
-            }
-        });
-
-        // Обработчик кнопки "QR-код"
-        document.getElementById('qr-button').addEventListener('click', () => {
-            const cardNumber = document.getElementById('user-card').getAttribute('number');
-            const dialog = document.createElement('md-dialog');
-            dialog.innerHTML = `
-                <div slot="headline">QR-код вашей карты</div>
-                <div slot="content" class="dialog-content" style="text-align: center;">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${cardNumber}" 
-                         alt="QR код карты" 
-                         style="border-radius: 8px;">
-                    <p style="margin-top: 16px; color: rgba(0,0,0,0.6);">
-                        Отсканируйте для быстрого перевода
-                    </p>
-                </div>
-                <div slot="actions">
-                    <md-text-button value="close">Закрыть</md-text-button>
-                </div>
-            `;
-            document.body.appendChild(dialog);
-            dialog.show();
-        });
-
-        // Проверяем активные функции
-        function checkActiveFeatures(cardData) {
-            const now = Date.now();
-
-            // Проверяем Premium статус
-            if (cardData.premium?.active && cardData.premium.expiresAt > now) {
-                document.getElementById('premium-badge').style.display = 'flex';
-            }
-
-            // Проверяем повышенный кэшбэк
-            if (cardData.cashback?.active && cardData.cashback.expiresAt > now) {
-                document.getElementById('cashback-badge').style.display = 'flex';
-            }
-        }
-
-        // Добавляем скрипт для проверки состояния баннера
-        const hiringBannerRef = ref(database, 'settings/hiringBannerEnabled');
-        onValue(hiringBannerRef, (snapshot) => {
-            const bannerEnabled = snapshot.val();
-            const banner = document.getElementById('hiring-banner');
-            banner.style.display = bannerEnabled ? 'flex' : 'none';
-        });
-
-        // В функции updateCardDisplay добавляем обработку дизайна и эффектов
-        function updateCardDisplay(cardData) {
-            // Получаем элемент bank-card
-            const cardElement = document.getElementById('user-card');
-            if (!cardElement) return;
-
-            // Получаем shadow root карты
-            const shadowRoot = cardElement.shadowRoot;
-            if (!shadowRoot) return;
-
-            // Находим .card внутри shadow root
-            const cardContainer = shadowRoot.querySelector('.card');
-            if (!cardContainer) return;
-
-            // Применяем дизайн карты
-            if (cardData.design) {
-                switch (cardData.design.type) {
-                    case 'neon':
-                        cardContainer.classList.add('neon-card');
-                        if (cardData.design.animation) {
-                            cardContainer.classList.add('neon-glow');
-                        }
-                        break;
-                    case 'hologram':
-                        cardContainer.classList.add('hologram-card');
-                        break;
-                    case 'matrix':
-                        cardContainer.classList.add('matrix-card');
-                        break;
-                    case 'animated':
-                        cardContainer.classList.add('animated-card');
-                        break;
-                }
-            }
-
-            // Добавляем никнейм если есть
-            if (cardData.nickname) {
-                let nicknameElement = shadowRoot.querySelector('.card-nickname');
-                if (!nicknameElement) {
-                    nicknameElement = document.createElement('div');
-                    nicknameElement.className = 'card-nickname';
-                    cardContainer.appendChild(nicknameElement);
-                }
-                nicknameElement.textContent = cardData.nickname;
-            }
-
-            // Применяем эффекты
-            if (cardData.effects && cardData.effects.active) {
-                cardContainer.classList.add(`effect-${cardData.effects.type}`);
-            }
         }
 
         // Функция загрузки сообщений
         function loadMessages(messages) {
             const messagesList = document.getElementById('messagesList');
             const unreadCount = document.getElementById('unreadCount');
+            
+            if (!messagesList || !unreadCount) return;
             
             // Считаем непрочитанные
             const unread = Object.values(messages).filter(m => !m.read).length;
@@ -1508,7 +1175,7 @@
                 // При клике помечаем как прочитанное
                 messageElement.onclick = async () => {
                     if (!message.read) {
-                        const cardId = localStorage.getItem('currentCardId');
+                        const cardId = getCardIdFromUrl();
                         await update(ref(database), {
                             [`cards/${cardId}/messages/${id}/read`]: true
                         });
@@ -1519,145 +1186,340 @@
             }
         }
 
-        // Определяем все достижения
+        // Функция для получения сообщения дня
+        function initDailyMessage() {
+            const messages = [
+                'Добро пожаловать в Банк Маннру! 🏦',
+                'Копите МР и достигайте целей! 🎯',
+                'Не забудьте проверить новые достижения! 🏆',
+                'У нас самый выгодный курс МР! 📈',
+                'Приведите друга и получите бонус! 🤝',
+                'Попробуйте наше новое приложение! 📱',
+                'Безопасность ваших средств - наш приоритет! 🔒',
+                'Участвуйте в конкурсах и получайте призы! 🎁',
+                'Проверьте наши новые функции! ✨',
+                'Спасибо, что выбрали Банк Маннру! ❤️'
+            ];
+
+            // Выбираем случайное сообщение
+            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+            document.getElementById('daily-message').textContent = randomMessage;
+        }
+
+        // Функция для отображения транзакций
+        function initTransactions(cardId) {
+            const transactionsRef = ref(database, `cards/${cardId}/transactions`);
+            const transactionsList = document.getElementById('transactionsList');
+
+            onValue(transactionsRef, (snapshot) => {
+                const transactions = snapshot.val() || {};
+            transactionsList.innerHTML = '';
+            
+                Object.entries(transactions)
+                .sort(([,a], [,b]) => b.timestamp - a.timestamp)
+                .forEach(([id, transaction]) => {
+                        const date = new Date(transaction.timestamp);
+                    const element = document.createElement('div');
+                    element.className = 'transaction-item';
+                    element.innerHTML = `
+                            <div class="transaction-icon ${transaction.type}">
+                                <md-icon>${transaction.type === 'income' ? 'arrow_downward' : 'arrow_upward'}</md-icon>
+                            </div>
+                            <div class="transaction-info">
+                                <div class="transaction-description">${transaction.description}</div>
+                                <div class="transaction-date">${date.toLocaleString()}</div>
+                            </div>
+                            <div class="transaction-amount ${transaction.type}">
+                                ${transaction.type === 'income' ? '+' : '-'}${formatBalance(transaction.amount)} МР
+                        </div>
+                    `;
+                        element.addEventListener('click', () => showTransactionDetails(transaction, id));
+                    transactionsList.appendChild(element);
+                });
+            });
+        }
+
+        // Функция для показа деталей транзакции
+        function showTransactionDetails(transaction, id) {
+            const dialog = document.getElementById('transaction-details-dialog');
+            document.getElementById('detail-description').textContent = transaction.description;
+            document.getElementById('detail-amount').textContent = 
+                `${transaction.type === 'income' ? '+' : '-'}${formatBalance(transaction.amount)} МР`;
+            document.getElementById('detail-datetime').textContent = 
+                new Date(transaction.timestamp).toLocaleString();
+            document.getElementById('detail-id').textContent = id;
+            
+            if (transaction.cashback) {
+                document.getElementById('detail-cashback').style.display = 'flex';
+                document.getElementById('detail-cashback-amount').textContent = 
+                    `+${formatBalance(transaction.cashback)} МР`;
+            } else {
+                document.getElementById('detail-cashback').style.display = 'none';
+            }
+            
+            dialog.show();
+        }
+
+        // Определяем стандартные достижения
         const achievements = {
             first_transaction: {
                 title: 'Первые шаги',
                 description: 'Совершите свою первую транзакцию',
                 icon: 'payments',
-                rarity: 'common',
-                condition: (stats) => stats.transactions >= 1
+                rarity: 'common'
             },
             big_spender: {
                 title: 'Большой транжира',
                 description: 'Потратьте 100,000 МР',
                 icon: 'shopping_cart',
-                rarity: 'rare',
-                condition: (stats) => stats.totalSpent >= 100000
+                rarity: 'rare'
             },
             savings_master: {
                 title: 'Мастер накоплений',
                 description: 'Накопите 1,000,000 МР',
                 icon: 'savings',
-                rarity: 'epic',
-                condition: (stats) => stats.balance >= 1000000
+                rarity: 'epic'
             },
             early_adopter: {
                 title: 'Ранняя пташка',
                 description: 'Зарегистрируйтесь в первый месяц работы банка',
                 icon: 'rocket_launch',
-                rarity: 'legendary',
-                condition: (stats) => stats.registrationDate < 1709251200000 // 1 марта 2024
-            },
-            social_butterfly: {
-                title: 'Душа компании',
-                description: 'Отправьте 50 сообщений в чате',
-                icon: 'chat',
-                rarity: 'rare',
-                condition: (stats) => stats.messagesSent >= 50
-            },
-            money_maker: {
-                title: 'Финансовый гений',
-                description: 'Заработайте 500,000 МР на инвестициях',
-                icon: 'trending_up',
-                rarity: 'epic',
-                condition: (stats) => stats.investmentProfit >= 500000
+                rarity: 'legendary'
             }
         };
 
-        // Функция для отображения достижений
-        function renderAchievements(cardId, userAchievements = {}) {
+        // Функция для инициализации достижений
+        function initAchievements(cardId) {
+            const achievementsRef = ref(database, `cards/${cardId}/achievements`);
+            onValue(achievementsRef, (snapshot) => {
+                const userAchievements = snapshot.val() || {};
             const container = document.querySelector('.achievements-grid');
             container.innerHTML = '';
 
-            Object.entries(achievements).forEach(([id, achievement]) => {
-                const isUnlocked = userAchievements[id] === true;
+                // Объединяем стандартные достижения с пользовательскими
+                const allAchievements = { ...achievements };
+                
+                // Добавляем пользовательские и секретные достижения
+                Object.entries(userAchievements).forEach(([id, achievement]) => {
+                    if (!allAchievements[id] && typeof achievement === 'object') {
+                        allAchievements[id] = {
+                            title: achievement.title || 'Неизвестное достижение',
+                            description: achievement.description || 'Нет описания',
+                            icon: achievement.icon || 'emoji_events',
+                            rarity: achievement.custom ? 'legendary' : 'epic',
+                            isCustom: achievement.custom,
+                            isSecret: achievement.isSecret
+                        };
+                    }
+                });
+
+                // Отображаем все достижения
+                Object.entries(allAchievements).forEach(([id, achievement]) => {
+                    const isUnlocked = userAchievements[id] === true || 
+                                     (typeof userAchievements[id] === 'object' && userAchievements[id].unlocked);
                 
                 const card = document.createElement('md-elevated-card');
                 card.className = `achievement-card ${isUnlocked ? 'unlocked' : 'locked'}`;
+
+                    let rarityClass = `rarity-${achievement.rarity}`;
+                    if (achievement.isSecret) rarityClass += ' secret-achievement';
+                    if (achievement.isCustom) rarityClass += ' custom-achievement';
+
                 card.innerHTML = `
-                    <div class="achievement-rarity rarity-${achievement.rarity}">
-                        ${achievement.rarity.toUpperCase()}
+                        <div class="achievement-rarity ${rarityClass}">
+                            ${achievement.isCustom ? 'ПОЛЬЗОВАТЕЛЬСКОЕ' : 
+                              achievement.isSecret ? 'СЕКРЕТНОЕ' : 
+                              achievement.rarity.toUpperCase()}
                     </div>
-                    <div style="padding: 16px;">
+                        <div class="achievement-content">
                         <div class="achievement-icon">
-                            <md-icon style="font-size: 32px;">${achievement.icon}</md-icon>
+                                <md-icon>${achievement.icon}</md-icon>
                         </div>
                         <h3 class="title-medium">${achievement.title}</h3>
                         <p class="body-medium">${achievement.description}</p>
+                            <div class="achievement-status">
                         ${isUnlocked ? 
-                            '<md-icon style="color: #4CAF50;">check_circle</md-icon> Получено' : 
-                            '<md-icon style="color: #9E9E9E;">lock</md-icon> Заблокировано'
-                        }
+                                    `<md-icon style="color: #4CAF50; --md-icon-size: 20px;">check_circle</md-icon>
+                                    <span style="color: #4CAF50;">Получено</span>` : 
+                                    `<md-icon style="color: #9E9E9E; --md-icon-size: 20px;">lock</md-icon>
+                                    <span style="color: #9E9E9E;">Заблокировано</span>`
+                                }
+                            </div>
                     </div>
                 `;
                 container.appendChild(card);
+                });
             });
         }
 
-        // Функция для проверки достижений
-        async function checkAchievements(cardId, stats) {
-            const updates = {};
-            let changed = false;
-
-            // Создаем объект с актуальной статистикой
-            const currentStats = {
-                transactions: stats.stats?.transactions || 0,
-                totalSpent: stats.stats?.totalSpent || 0,
-                balance: stats.balance || 0,
-                registrationDate: stats.createdAt || Date.now(),
-                messagesSent: stats.stats?.messagesSent || 0,
-                investmentProfit: stats.stats?.investmentProfit || 0
-            };
-
-            Object.entries(achievements).forEach(([id, achievement]) => {
-                if (achievement.condition(currentStats)) {
-                    if (!stats.achievements?.[id]) {
-                        updates[`cards/${cardId}/achievements/${id}`] = true;
-                        changed = true;
-                    }
-                }
+        // Инициализируем все при загрузке DOM
+        document.addEventListener('DOMContentLoaded', () => {
+            const cardId = getCardIdFromUrl();
+            if (cardId) {
+                initBalance(cardId);
+                initCard(cardId);
+                initTransactions(cardId);
+                initAchievements(cardId);
+                initDailyMessage();
+            } else {
+                console.error('ID карты не найден в URL');
+            }
+            
+            // Добавляем отслеживание движения мыши для эффекта sparkle
+            document.querySelector('.effect-sparkle')?.addEventListener('mousemove', (e) => {
+                const rect = e.target.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width) * 100;
+                const y = ((e.clientY - rect.top) / rect.height) * 100;
+                e.target.style.setProperty('--x', `${x}%`);
+                e.target.style.setProperty('--y', `${y}%`);
             });
+        });
 
-            if (changed) {
-                await update(ref(database), updates);
-                showNotification('Получено новое достижение!');
+        // Добавляем обработчики событий для кнопок
+        document.getElementById('transfer-button').addEventListener('click', () => {
+            // Реализация перевода
+        });
+
+        document.getElementById('share-button').addEventListener('click', () => {
+            // Реализация шаринга
+        });
+
+        document.getElementById('qr-button').addEventListener('click', () => {
+            // Реализация QR-кода
+        });
+
+        // Создаем компонент банковской карты
+        class BankCard extends HTMLElement {
+            constructor() {
+                super();
+                this.attachShadow({ mode: 'open' });
+            }
+
+            static get observedAttributes() {
+                return ['number', 'holder', 'expires', 'primary-color', 'secondary-color'];
+            }
+
+            connectedCallback() {
+                this.render();
+            }
+
+            attributeChangedCallback() {
+                this.render();
+            }
+
+            render() {
+                const number = this.getAttribute('number') || '000 000';
+                const holder = this.getAttribute('holder') || 'ДЕРЖАТЕЛЬ КАРТЫ';
+                const expires = this.getAttribute('expires') || '00/00';
+                const primaryColor = this.getAttribute('primary-color');
+                const secondaryColor = this.getAttribute('secondary-color');
+
+                // Определяем цвета градиента
+                const gradient = primaryColor && secondaryColor
+                    ? `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`
+                    : 'linear-gradient(135deg, #ea6af4, #a68eea)';
+
+                this.shadowRoot.innerHTML = `
+                    <style>
+                        :host {
+                            display: block;
+                            width: 100%;
+                            height: 100%;
+                        }
+                        .card {
+                            width: 100%;
+                            height: 100%;
+                            border-radius: 28px;
+                            padding: 32px;
+                            box-sizing: border-box;
+                            position: relative;
+                            background: ${gradient};
+                            color: white;
+                            font-family: 'Roboto', sans-serif;
+                            display: flex;
+                            flex-direction: column;
+                            justify-content: space-between;
+                            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+                        }
+                        .bank-name {
+                            position: absolute;
+                            top: 32px;
+                            right: 32px;
+                            font-size: 20px;
+                            font-weight: bold;
+                            letter-spacing: 1px;
+                        }
+                        .chip {
+                            width: 50px;
+                            height: 40px;
+                            background: rgba(255, 255, 255, 0.2);
+                            border-radius: 12px;
+                            margin-bottom: 48px;
+                        }
+                        .card-number {
+                            font-size: 24px;
+                            letter-spacing: 2px;
+                            font-weight: 500;
+                            margin-bottom: 48px;
+                        }
+                        .card-info {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: flex-end;
+                        }
+                        .holder-label {
+                            font-size: 12px;
+                            opacity: 0.8;
+                            margin-bottom: 8px;
+                            letter-spacing: 0.5px;
+                        }
+                        .holder {
+                            font-size: 16px;
+                            font-weight: 500;
+                            letter-spacing: 1px;
+                        }
+                        .expires-label {
+                            font-size: 12px;
+                            opacity: 0.8;
+                            margin-bottom: 8px;
+                            letter-spacing: 0.5px;
+                            text-align: right;
+                        }
+                        .expires {
+                            font-size: 16px;
+                            font-weight: 500;
+                            letter-spacing: 1px;
+                            text-align: right;
+                        }
+                    </style>
+                    <div class="card">
+                        <div class="bank-name">MANNRU BANK</div>
+                        <div class="chip"></div>
+                        <div class="card-number">${number}</div>
+                        <div class="card-info">
+                            <div>
+                                <div class="holder-label">ДЕРЖАТЕЛЬ КАРТЫ</div>
+                                <div class="holder">${holder}</div>
+                            </div>
+                            <div>
+                                <div class="expires-label">СРОК ДЕЙСТВИЯ</div>
+                                <div class="expires">${expires}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
             }
         }
 
-        // Делаем функцию обычной
-        function initAchievements(cardId) {
-            const statsRef = ref(database, `cards/${cardId}`);
-            onValue(statsRef, (snapshot) => {
-                const stats = snapshot.val() || {};
-                renderAchievements(cardId, stats.achievements);
-                checkAchievements(cardId, stats);
-            });
-
-            // Обработчик для кнопки помощи
-            document.getElementById('achievements-help').addEventListener('click', () => {
-                const dialog = document.createElement('md-dialog');
-                dialog.innerHTML = `
-                    <div slot="headline">Как получать достижения</div>
-                    <div slot="content">
-                        <p>Достижения разблокируются автоматически при выполнении определенных условий:</p>
-                        <ul>
-                            <li>Совершайте транзакции</li>
-                            <li>Накапливайте средства</li>
-                            <li>Общайтесь в чате</li>
-                            <li>Инвестируйте</li>
-                        </ul>
-                        <p>Некоторые достижения очень редкие и требуют особых условий!</p>
-                    </div>
-                    <div slot="actions">
-                        <md-text-button dialog-action="close">Закрыть</md-text-button>
-                    </div>
-                `;
-                document.body.appendChild(dialog);
-                dialog.show();
-            });
+        // Регистрируем компонент
+        if (!customElements.get('bank-card')) {
+            customElements.define('bank-card', BankCard);
         }
+
+        // Проверяем, что компонент определен
+        customElements.whenDefined('bank-card').then(() => {
+            console.log('BankCard component is defined and ready');
+        });
     </script>
 </body>
-</html> 
 </html> 
