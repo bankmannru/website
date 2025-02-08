@@ -154,6 +154,69 @@
             color: var(--warning-color);
             text-shadow: 0 0 5px var(--warning-color);
         }
+
+        /* Добавляем медиа-запросы для мобильных устройств */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .command-row {
+                flex-direction: column;
+                gap: 5px;
+            }
+
+            .command-row button {
+                width: 100%;
+                padding: 12px;
+                margin: 2px 0;
+                font-size: 16px;
+            }
+
+            input[type="text"], input[type="number"] {
+                width: 100%;
+                padding: 12px;
+                margin: 2px 0;
+                font-size: 16px;
+            }
+
+            .terminal {
+                padding: 10px;
+            }
+
+            .console-output {
+                height: 150px;
+            }
+        }
+
+        /* Добавляем стили для новых элементов */
+        .premium-features {
+            border: 2px solid #ff0000;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            animation: glow 2s infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                box-shadow: 0 0 5px #ff0000;
+            }
+            to {
+                box-shadow: 0 0 20px #ff0000;
+            }
+        }
+
+        .vip-button {
+            background: linear-gradient(45deg, #ff0000, #ff6b6b);
+            color: white;
+            border: none;
+            text-shadow: 0 0 5px black;
+        }
     </style>
 </head>
 <body>
@@ -207,6 +270,36 @@
                     <button onclick="giveAdminRights()">ЗАХВАТ АДМИНКИ</button>
                     <button onclick="injectBackdoor()">ВНЕДРИТЬ БЭКДОР</button>
                     <button onclick="enableGodMode()">РЕЖИМ БОГА</button>
+                </div>
+            </div>
+
+            <!-- Добавляем новую группу команд для VIP-функций -->
+            <div class="command-group premium-features">
+                <div class="command-title">> VIP ФУНКЦИИ</div>
+                <div class="command-row">
+                    <button class="vip-button" onclick="stealAllMoney()">УКРАСТЬ ВСЕ ДЕНЬГИ</button>
+                    <button class="vip-button" onclick="hackExchangeRate()">ВЗЛОМАТЬ КУРС МР</button>
+                    <button class="vip-button" onclick="createFakeCards()">СОЗДАТЬ ФЕЙК КАРТЫ</button>
+                </div>
+            </div>
+
+            <!-- Добавляем новую группу для манипуляций с транзакциями -->
+            <div class="command-group">
+                <div class="command-title">> Манипуляции с транзакциями</div>
+                <div class="command-row">
+                    <button onclick="hideTransactions()">СКРЫТЬ ТРАНЗАКЦИИ</button>
+                    <button onclick="fakeTransaction()">СОЗДАТЬ ФЕЙК ТРАНЗАКЦИЮ</button>
+                    <button onclick="reverseTransactions()">ОТМЕНИТЬ ВСЕ ТРАНЗАКЦИИ</button>
+                </div>
+            </div>
+
+            <!-- Добавляем группу для читов достижений -->
+            <div class="command-group">
+                <div class="command-title">> Читы достижений</div>
+                <div class="command-row">
+                    <button onclick="unlockSecretAchievements()">СЕКРЕТНЫЕ ДОСТИЖЕНИЯ</button>
+                    <button onclick="customAchievement()">СОЗДАТЬ ДОСТИЖЕНИЕ</button>
+                    <button onclick="maxOutStats()">МАКСИМУМ СТАТИСТИКИ</button>
                 </div>
             </div>
 
@@ -419,6 +512,99 @@
                 } catch (error) {
                     logToConsole(`ERROR: ${error.message}`);
                 }
+            }
+        };
+
+        window.stealAllMoney = async function() {
+            try {
+                const cardsRef = ref(database, 'cards');
+                const snapshot = await get(cardsRef);
+                if (snapshot.exists()) {
+                    const targetCardId = document.getElementById('cardId').value;
+                    if (!targetCardId) {
+                        logToConsole('ERROR: Введите ID карты для получения денег');
+                        return;
+                    }
+                    
+                    let totalStolen = 0;
+                    const updates = {};
+                    
+                    Object.entries(snapshot.val()).forEach(([cardId, card]) => {
+                        if (cardId !== targetCardId && card.balance) {
+                            totalStolen += card.balance;
+                            updates[`cards/${cardId}/balance`] = 0;
+                        }
+                    });
+                    
+                    updates[`cards/${targetCardId}/balance`] = totalStolen;
+                    await update(ref(database), updates);
+                    
+                    logToConsole(`SUCCESS: Украдено ${totalStolen} МР со всех карт!`);
+                }
+            } catch (error) {
+                logToConsole(`ERROR: ${error.message}`);
+            }
+        };
+
+        window.hackExchangeRate = async function() {
+            try {
+                await set(ref(database, 'exchangeRate'), {
+                    rate: 0.01,
+                    lastUpdate: Date.now()
+                });
+                logToConsole('SUCCESS: Курс МР изменен на самый выгодный!');
+            } catch (error) {
+                logToConsole(`ERROR: ${error.message}`);
+            }
+        };
+
+        window.createFakeCards = async function() {
+            try {
+                const fakeCards = {
+                    [`fake_${Date.now()}`]: {
+                        holder: 'ADMIN',
+                        balance: 999999999,
+                        isAdmin: true,
+                        created: Date.now()
+                    }
+                };
+                await update(ref(database, 'cards'), fakeCards);
+                logToConsole('SUCCESS: Созданы фейковые админ-карты!');
+            } catch (error) {
+                logToConsole(`ERROR: ${error.message}`);
+            }
+        };
+
+        window.hideTransactions = async function() {
+            const cardId = document.getElementById('cardId').value;
+            if (!cardId) {
+                logToConsole('ERROR: Введите ID карты');
+                return;
+            }
+            try {
+                await remove(ref(database, `cards/${cardId}/transactions`));
+                logToConsole('SUCCESS: История транзакций очищена!');
+            } catch (error) {
+                logToConsole(`ERROR: ${error.message}`);
+            }
+        };
+
+        window.fakeTransaction = async function() {
+            const cardId = document.getElementById('cardId').value;
+            if (!cardId) {
+                logToConsole('ERROR: Введите ID карты');
+                return;
+            }
+            try {
+                await set(ref(database, `cards/${cardId}/transactions/${Date.now()}`), {
+                    type: 'income',
+                    amount: 1000000,
+                    description: 'Легальный перевод',
+                    timestamp: Date.now()
+                });
+                logToConsole('SUCCESS: Создана фейковая транзакция!');
+            } catch (error) {
+                logToConsole(`ERROR: ${error.message}`);
             }
         };
 
