@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MannruDroid</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
+    <script type="importmap">
+      {
+        "imports": {
+          "@material/web/": "https://esm.run/@material/web/",
+          "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
+          "firebase/database": "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js"
+        }
+      }
+    </script>
+    <script type="module">
+      import '@material/web/all.js';
+      import { initializeApp } from 'firebase/app';
+      import { getDatabase, ref, get, update, remove } from 'firebase/database';
+
+      // Конфигурация Firebase
+      const firebaseConfig = {
+          apiKey: "AIzaSyAK8cgAKNDAfXIOzA_0kn4QhVk5OYkcGbk",
+          authDomain: "bank-mannru2.firebaseapp.com",
+          databaseURL: "https://bank-mannru2-default-rtdb.europe-west1.firebasedatabase.app",
+          projectId: "bank-mannru2",
+          storageBucket: "bank-mannru2.appspot.com",
+          messagingSenderId: "1016325543251",
+          appId: "1:1016325543251:web:c1c5c7a6d2c5d5b1c5d5b1"
+      };
+
+      // Инициализация Firebase
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
+
+      // Делаем Firebase функции глобальными
+      window.db = db;
+      window.ref = ref;
+      window.get = get;
+      window.update = update;
+      window.remove = remove;
+
+      // Обработка ошибок Firebase
+      const handleFirebaseError = (error) => {
+          console.error('Firebase error:', error);
+          if (error.code === 'PERMISSION_DENIED') {
+              return 'Доступ запрещен. Проверьте права доступа.';
+          }
+          if (error.code === 'NETWORK_ERROR') {
+              return 'Ошибка сети. Проверьте подключение к интернету.';
+          }
+          return error.message || 'Произошла неизвестная ошибка';
+      };
+    </script>
+    <style>
+        :root {
+            --md-icon-font: "Material Symbols Outlined";
+            --safe-area-top: env(safe-area-inset-top, 0px);
+            --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+            --primary-color: #4CAF50;
+        }
+
+        /* Глобальные стили для иконок */
+        md-icon {
+            color: white !important;
+            --md-icon-button-icon-color: white !important;
+            font-variation-settings: 'FILL' 1;
+        }
+
+        md-icon-button {
+            --md-icon-button-icon-color: white !important;
+            --md-icon-button-pressed-icon-color: white !important;
+            --md-icon-button-hover-icon-color: white !important;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            color: white;
+            font-family: 'Roboto', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Статус бар */
+        .status-bar {
+            height: calc(24px + var(--safe-area-top));
+            background: rgba(0,0,0,0.9);
+            padding: 4px 16px;
+            padding-top: var(--safe-area-top);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            z-index: 1001;
+            position: relative;
+        }
+
+        .status-bar-left {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .status-bar-right {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        /* Домашний экран */
+        .home-screen {
+            height: calc(100vh - 24px - var(--safe-area-top) - 108px - var(--safe-area-bottom));
+            overflow-y: auto;
+            scroll-snap-type: y mandatory;
+            background: linear-gradient(to bottom, #1a1a1a, #000000);
+            position: relative;
+        }
+
+        .home-screen::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('https://source.unsplash.com/random/1080x1920?dark');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.5;
+            z-index: 0;
+        }
+
+        /* Сетка приложений */
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            padding: 16px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .app-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .app-icon:active {
+            transform: scale(0.9);
+        }
+
+        .app-icon md-icon {
+            padding: 16px;
+            border-radius: 18px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            font-size: 28px;
+            transition: all 0.3s;
+        }
+
+        .app-icon:hover md-icon {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-2px);
+        }
+
+        .app-icon span {
+            font-size: 12px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+
+        /* Док */
+        .dock {
+            position: fixed;
+            bottom: calc(48px + var(--safe-area-bottom));
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 8px;
+            display: flex;
+            gap: 8px;
+            z-index: 1001;
+        }
+
+        .dock-icon {
+            --md-icon-button-icon-size: 28px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+
+        .dock-icon:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Навигационные кнопки */
+        .nav-buttons {
+            position: fixed;
+            bottom: var(--safe-area-bottom);
+            left: 0;
+            right: 0;
+            height: 48px;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            padding: 0 16px;
+            z-index: 1001;
+        }
+
+        .nav-button {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .nav-button:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .nav-button:active {
+            transform: scale(0.9);
+        }
+
+        /* Окна приложений */
+        .app-window {
+            position: fixed;
+            top: calc(24px + var(--safe-area-top));
+            left: 0;
+            right: 0;
+            bottom: calc(108px + var(--safe-area-bottom));
+            background: #1a1a1a;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100;
+            display: none;
+        }
+
+        .app-window.active {
+            transform: translateY(0);
+            display: block;
+        }
+
+        .app-header {
+            height: 56px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            gap: 16px;
+            font-size: 20px;
+            font-weight: 500;
+        }
+
+        .app-content {
+            flex: 1;
+            overflow: auto;
+            background: #121212;
+        }
+
+        /* Анимации */
+        @keyframes appLaunch {
+            0% {
+                transform: translateY(100%) scale(0.95);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .app-window.launching {
+            animation: appLaunch 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Недавние приложения */
+        .recents {
+            position: fixed;
+            top: calc(24px + var(--safe-area-top));
+            left: 0;
+            right: 0;
+            bottom: calc(48px + var(--safe-area-bottom));
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(20px);
+            z-index: 999;
+            display: none;
+            padding: 16px;
+            gap: 16px;
+            overflow-y: auto;
+        }
+
+        .recents.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .recent-app {
+            background: rgba(255,255,255,0.1);
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            height: 200px;
+            transition: transform 0.3s;
+        }
+
+        .recent-app:hover {
+            transform: scale(0.98);
+        }
+
+        .recent-app img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .recent-app-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 16px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Быстрые настройки */
+        .quick-settings {
+            position: fixed;
+            top: calc(24px + var(--safe-area-top));
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.95);
+            backdrop-filter: blur(20px);
+            padding: 16px;
+            transform: translateY(-100%);
+            transition: transform 0.3s;
+            z-index: 1000;
+        }
+
+        .quick-settings.visible {
+            transform: translateY(0);
+        }
+
+        .quick-toggles {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .quick-toggle {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .brightness-slider {
+            width: 100%;
+            margin: 16px 0;
+        }
+
+        .notifications {
+            margin-top: 16px;
+        }
+
+        .notification {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+
+        /* Стили для Material компонентов */
+        md-filled-button {
+            --md-sys-color-primary: var(--primary-color);
+            --md-filled-button-container-color: var(--primary-color);
+            --md-filled-button-hover-container-color: color-mix(in srgb, var(--primary-color) 85%, white);
+            --md-filled-button-pressed-container-color: color-mix(in srgb, var(--primary-color) 75%, white);
+            margin: 4px;
+        }
+
+        md-filled-text-field {
+            --md-sys-color-primary: var(--primary-color);
+            --md-filled-text-field-container-color: rgba(255,255,255,0.05);
+            --md-filled-text-field-label-text-color: rgba(255,255,255,0.7);
+            --md-filled-text-field-input-text-color: white;
+            --md-filled-text-field-active-indicator-color: var(--primary-color);
+            --md-filled-text-field-hover-active-indicator-color: var(--primary-color);
+            --md-filled-text-field-focus-active-indicator-color: var(--primary-color);
+            --md-filled-text-field-focus-label-text-color: var(--primary-color);
+        }
+
+        md-switch {
+            --md-switch-selected-handle-color: var(--primary-color);
+            --md-switch-selected-track-color: color-mix(in srgb, var(--primary-color) 30%, transparent);
+        }
+
+        md-slider {
+            --md-slider-active-track-color: var(--primary-color);
+            --md-slider-handle-color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- Статус бар -->
+    <div class="status-bar">
+        <div class="status-bar-left">
+            <md-icon-button onclick="window.history.back()">arrow_back</md-icon-button>
+            <span class="time">12:00</span>
+        </div>
+        <div class="status-bar-right">
+            <md-icon>wifi</md-icon>
+            <md-icon>signal_cellular_alt</md-icon>
+            <md-icon>battery_full</md-icon>
+        </div>
+    </div>
+
+    <!-- Домашний экран -->
+    <div class="home-screen">
+        <div class="app-grid">
+            <!-- Основные приложения -->
+            <div class="app-icon" onclick="openApp('bankApp')">
+                <md-icon>account_balance</md-icon>
+                <span>Банк</span>
+            </div>
+            <div class="app-icon" onclick="openApp('filesApp')">
+                <md-icon>folder</md-icon>
+                <span>Файлы</span>
+            </div>
+            <div class="app-icon" onclick="openApp('calculatorApp')">
+                <md-icon>calculate</md-icon>
+                <span>Калькулятор</span>
+            </div>
+            <div class="app-icon" onclick="openApp('notepadApp')">
+                <md-icon>edit_note</md-icon>
+                <span>Заметки</span>
+            </div>
+            <div class="app-icon" onclick="openApp('browserApp')">
+                <md-icon>public</md-icon>
+                <span>Браузер</span>
+            </div>
+            <div class="app-icon" onclick="openApp('chatApp')">
+                <md-icon>chat</md-icon>
+                <span>Чат</span>
+            </div>
+            <div class="app-icon" onclick="openApp('settingsApp')">
+                <md-icon>settings</md-icon>
+                <span>Настройки</span>
+            </div>
+            <div class="app-icon" onclick="openApp('marketApp')">
+                <md-icon>store</md-icon>
+                <span>Маркет</span>
+            </div>
+            <div class="app-icon" onclick="openApp('adminApp')">
+                <md-icon>admin_panel_settings</md-icon>
+                <span>Админ панель</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Док -->
+    <div class="dock">
+        <md-icon-button class="dock-icon" onclick="openApp('bankApp')">
+            <md-icon>account_balance</md-icon>
+        </md-icon-button>
+        <md-icon-button class="dock-icon" onclick="openApp('chatApp')">
+            <md-icon>chat</md-icon>
+        </md-icon-button>
+        <md-icon-button class="dock-icon" onclick="openApp('marketApp')">
+            <md-icon>store</md-icon>
+        </md-icon-button>
+        <md-icon-button class="dock-icon" onclick="openApp('settingsApp')">
+            <md-icon>settings</md-icon>
+        </md-icon-button>
+    </div>
+
+    <!-- Навигационные кнопки -->
+    <div class="nav-buttons">
+        <div class="nav-button" onclick="goBack()">
+            <md-icon>arrow_back</md-icon>
+        </div>
+        <div class="nav-button" onclick="goHome()">
+            <md-icon>home</md-icon>
+        </div>
+        <div class="nav-button" onclick="showRecents()">
+            <md-icon>apps</md-icon>
+        </div>
+    </div>
+
+    <!-- Окна приложений -->
+    <!-- Здесь будут добавлены все окна приложений через JavaScript -->
+
+    <!-- Недавние приложения -->
+    <div class="recents" id="recents"></div>
+
+    <div class="quick-settings" id="quickSettings">
+        <div class="quick-toggles">
+            <div class="quick-toggle">
+                <md-icon-button>
+                    <md-icon>wifi</md-icon>
+                </md-icon-button>
+                <span>Wi-Fi</span>
+            </div>
+            <div class="quick-toggle">
+                <md-icon-button>
+                    <md-icon>bluetooth</md-icon>
+                </md-icon-button>
+                <span>Bluetooth</span>
+            </div>
+            <div class="quick-toggle">
+                <md-icon-button>
+                    <md-icon>flashlight_on</md-icon>
+                </md-icon-button>
+                <span>Фонарик</span>
+            </div>
+            <div class="quick-toggle">
+                <md-icon-button>
+                    <md-icon>do_not_disturb_on</md-icon>
+                </md-icon-button>
+                <span>Не беспокоить</span>
+            </div>
+        </div>
+
+        <div class="brightness-slider">
+            <md-slider></md-slider>
+        </div>
+
+        <div class="notifications">
+            <div class="notification">
+                <h4>Банк Маннру</h4>
+                <p>Новое уведомление о транзакции</p>
+            </div>
+            <div class="notification">
+                <h4>Система</h4>
+                <p>Доступно обновление системы</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Создаем окна для всех приложений
+        const apps = [
+            { id: 'bankApp', title: 'Банк', icon: 'account_balance', url: 'account.html' },
+            { id: 'filesApp', title: 'Файлы', icon: 'folder', content: `
+                <div style="padding: 16px">
+                    <div style="display: grid; gap: 16px;">
+                        <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                            <md-icon>folder</md-icon>
+                            <span>Загрузки</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                            <md-icon>folder_special</md-icon>
+                            <span>Документы</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                            <md-icon>photo_library</md-icon>
+                            <span>Изображения</span>
+                        </div>
+                    </div>
+                </div>
+            ` },
+            { id: 'calculatorApp', title: 'Калькулятор', icon: 'calculate' },
+            { id: 'notepadApp', title: 'Заметки', icon: 'edit_note', content: `
+                <div style="padding: 16px">
+                    <md-filled-text-field label="Заголовок заметки" style="width: 100%; margin-bottom: 16px;"></md-filled-text-field>
+                    <md-filled-text-field label="Текст заметки" type="text" rows="8" style="width: 100%;" multiline></md-filled-text-field>
+                </div>
+            ` },
+            { id: 'browserApp', title: 'Браузер', icon: 'public', content: `
+                <div style="padding: 16px">
+                    <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                        <md-filled-text-field label="URL" style="flex: 1;"></md-filled-text-field>
+                        <md-filled-button>
+                            <md-icon>search</md-icon>
+                        </md-filled-button>
+                    </div>
+                    <div style="text-align: center; padding: 32px;">
+                        <md-icon style="font-size: 48px; opacity: 0.5;">public</md-icon>
+                        <p>Введите URL для начала</p>
+                    </div>
+                </div>
+            ` },
+            { id: 'chatApp', title: 'Чат', icon: 'chat', url: 'chat.html' },
+            { id: 'settingsApp', title: 'Настройки', icon: 'settings', content: `
+                <div style="padding: 16px">
+                    <div style="display: grid; gap: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <md-icon>dark_mode</md-icon>
+                                <span>Тёмная тема</span>
+                            </div>
+                            <md-switch selected></md-switch>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <md-icon>notifications</md-icon>
+                                <span>Уведомления</span>
+                            </div>
+                            <md-switch selected></md-switch>
+                        </div>
+                        <div style="padding: 12px; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                                <md-icon>volume_up</md-icon>
+                                <span>Громкость</span>
+                            </div>
+                            <md-slider value="80"></md-slider>
+                        </div>
+                    </div>
+                </div>
+            ` },
+            { id: 'marketApp', title: 'Маркет', icon: 'store', url: 'market.html' },
+            { id: 'phoneApp', title: 'Телефон', icon: 'phone' },
+            { id: 'messagesApp', title: 'Сообщения', icon: 'message' },
+            { id: 'cameraApp', title: 'Камера', icon: 'camera' },
+            { id: 'contactsApp', title: 'Контакты', icon: 'person' },
+            { id: 'adminApp', title: 'Админ панель', icon: 'admin_panel_settings', content: `
+                <div style="padding: 16px">
+                    <div style="display: grid; gap: 16px;">
+                        <div style="background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px;">
+                            <h3 style="margin: 0 0 16px 0;">Управление пользователями</h3>
+                            <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                                <md-filled-text-field id="userIdField" label="ID пользователя" style="flex: 1;"></md-filled-text-field>
+                                <md-filled-button onclick="searchUser()">
+                                    <md-icon>search</md-icon>
+                                </md-filled-button>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <md-filled-button onclick="blockUser()">
+                                    <md-icon>block</md-icon>
+                                    Заблокировать
+                                </md-filled-button>
+                                <md-filled-button onclick="deleteUser()">
+                                    <md-icon>delete</md-icon>
+                                    Удалить
+                                </md-filled-button>
+                            </div>
+                            <div id="userInfo" style="margin-top: 16px;"></div>
+                        </div>
+                        
+                        <div style="background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px;">
+                            <h3 style="margin: 0 0 16px 0;">Массовая рассылка</h3>
+                            <md-filled-text-field id="massMessageTitle" label="Заголовок" style="width: 100%; margin-bottom: 16px;"></md-filled-text-field>
+                            <md-filled-text-field id="massMessageText" label="Текст сообщения" type="text" rows="4" style="width: 100%; margin-bottom: 16px;" multiline></md-filled-text-field>
+                            <md-filled-button onclick="sendMassMessage()">
+                                <md-icon>send</md-icon>
+                                Отправить всем
+                            </md-filled-button>
+                        </div>
+                        
+                        <div style="background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px;">
+                            <h3 style="margin: 0 0 16px 0;">Статистика системы</h3>
+                            <div id="systemStats" style="display: grid; gap: 8px;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Активных пользователей:</span>
+                                    <span>1,234</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Транзакций сегодня:</span>
+                                    <span>5,678</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Новых регистраций:</span>
+                                    <span>89</span>
+                                </div>
+                            </div>
+                            <md-filled-button style="margin-top: 16px;" onclick="refreshStats()">
+                                <md-icon>refresh</md-icon>
+                                Обновить
+                            </md-filled-button>
+                        </div>
+                    </div>
+                </div>
+            ` }
+        ];
+
+        // Создаем окна приложений
+        apps.forEach(app => {
+            const appWindow = document.createElement('div');
+            appWindow.id = app.id;
+            appWindow.className = 'app-window';
+            appWindow.innerHTML = `
+                <div class="app-header">
+                    <md-icon-button onclick="closeApp('${app.id}')">
+                        <md-icon>arrow_back</md-icon>
+                    </md-icon-button>
+                    <md-icon>${app.icon}</md-icon>
+                    <span>${app.title}</span>
+                </div>
+                <div class="app-content">
+                    ${app.url ? `<iframe src="${app.url}" style="width:100%;height:100%;border:none;"></iframe>` : 
+                    app.content || `<div style="padding:16px">Контент приложения ${app.title}</div>`}
+                </div>
+            `;
+            document.body.appendChild(appWindow);
+        });
+
+        // История приложений
+        let appHistory = [];
+        let currentApp = null;
+
+        // Функция открытия приложения
+        function openApp(appId) {
+            const app = document.getElementById(appId);
+            if (app) {
+                if (currentApp) {
+                    document.getElementById(currentApp).classList.remove('active');
+                }
+                app.classList.add('active', 'launching');
+                setTimeout(() => app.classList.remove('launching'), 300);
+                
+                if (currentApp && currentApp !== appId) {
+                    appHistory.push(currentApp);
+                }
+                currentApp = appId;
+                document.getElementById('recents').classList.remove('active');
+            }
+        }
+
+        // Функция закрытия приложения
+        function closeApp(appId) {
+            const app = document.getElementById(appId);
+            if (app) {
+                app.classList.remove('active');
+                currentApp = appHistory.pop();
+                if (currentApp) {
+                    document.getElementById(currentApp).classList.add('active');
+                }
+            }
+        }
+
+        // Навигация
+        function goBack() {
+            if (currentApp) {
+                closeApp(currentApp);
+            }
+        }
+
+        function goHome() {
+            if (currentApp) {
+                document.getElementById(currentApp).classList.remove('active');
+                currentApp = null;
+                appHistory = [];
+            }
+            document.getElementById('recents').classList.remove('active');
+        }
+
+        function showRecents() {
+            const recents = document.getElementById('recents');
+            recents.classList.toggle('active');
+            
+            if (recents.classList.contains('active')) {
+                recents.innerHTML = '';
+                [...appHistory, currentApp].filter(Boolean).reverse().forEach(appId => {
+                    const app = apps.find(a => a.id === appId);
+                    if (app) {
+                        const recentApp = document.createElement('div');
+                        recentApp.className = 'recent-app';
+                        recentApp.innerHTML = `
+                            <div class="recent-app-info">
+                                <md-icon>${app.icon}</md-icon>
+                                <span>${app.title}</span>
+                            </div>
+                        `;
+                        recentApp.onclick = () => {
+                            openApp(appId);
+                            recents.classList.remove('active');
+                        };
+                        recents.appendChild(recentApp);
+                    }
+                });
+            }
+        }
+
+        // Обновление времени
+        function updateTime() {
+            const timeElement = document.querySelector('.time');
+            const now = new Date();
+            timeElement.textContent = now.toLocaleTimeString('ru-RU', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Быстрые настройки
+        let quickSettingsVisible = false;
+        document.querySelector('.status-bar').addEventListener('click', (e) => {
+            if (!e.target.closest('md-icon-button')) {
+                const quickSettings = document.getElementById('quickSettings');
+                quickSettingsVisible = !quickSettingsVisible;
+                quickSettings.classList.toggle('visible', quickSettingsVisible);
+            }
+        });
+
+        // Функции админ-панели
+        async function searchUser() {
+            const userId = document.getElementById('userIdField').value;
+            const userInfo = document.getElementById('userInfo');
+            try {
+                const userRef = ref(db, `users/${userId}`);
+                const snapshot = await get(userRef);
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    userInfo.innerHTML = `
+                        <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px;">
+                            <p>Имя: ${userData.name || 'Не указано'}</p>
+                            <p>Email: ${userData.email || 'Не указано'}</p>
+                            <p>Статус: ${userData.blocked ? 'Заблокирован' : 'Активен'}</p>
+                        </div>
+                    `;
+                } else {
+                    userInfo.innerHTML = '<p style="color: #ff4444;">Пользователь не найден</p>';
+                }
+            } catch (error) {
+                const errorMessage = handleFirebaseError(error);
+                userInfo.innerHTML = `<p style="color: #ff4444;">Ошибка: ${errorMessage}</p>`;
+            }
+        }
+
+        async function blockUser() {
+            const userId = document.getElementById('userIdField').value;
+            try {
+                await update(ref(db, `users/${userId}`), { blocked: true });
+                alert('Пользователь заблокирован');
+                searchUser();
+            } catch (error) {
+                console.error('Ошибка блокировки:', error);
+                alert('Ошибка блокировки пользователя');
+            }
+        }
+
+        async function deleteUser() {
+            const userId = document.getElementById('userIdField').value;
+            if (confirm('Вы уверены, что хотите удалить этого пользователя?')) {
+                try {
+                    await remove(ref(db, `users/${userId}`));
+                    alert('Пользователь удален');
+                    document.getElementById('userInfo').innerHTML = '';
+                } catch (error) {
+                    console.error('Ошибка удаления:', error);
+                    alert('Ошибка удаления пользователя');
+                }
+            }
+        }
+
+        async function sendMassMessage() {
+            const title = document.getElementById('massMessageTitle').value;
+            const text = document.getElementById('massMessageText').value;
+            if (!title || !text) {
+                alert('Заполните все поля');
+                return;
+            }
+            try {
+                const usersRef = ref(db, 'users');
+                const snapshot = await get(usersRef);
+                const users = snapshot.val();
+                for (const userId in users) {
+                    await update(ref(db, `users/${userId}/messages/${Date.now()}`), {
+                        title,
+                        text,
+                        timestamp: Date.now()
+                    });
+                }
+                alert('Сообщение отправлено всем пользователям');
+            } catch (error) {
+                console.error('Ошибка отправки:', error);
+                alert('Ошибка отправки сообщения');
+            }
+        }
+
+        async function refreshStats() {
+            const statsDiv = document.getElementById('systemStats');
+            try {
+                if (!db || !ref) {
+                    throw new Error('Firebase не инициализирован');
+                }
+                const usersRef = ref(db, 'users');
+                const transactionsRef = ref(db, 'transactions');
+                const [usersSnapshot, transactionsSnapshot] = await Promise.all([
+                    get(usersRef),
+                    get(transactionsRef)
+                ]);
+                
+                const users = usersSnapshot.val() || {};
+                const transactions = transactionsSnapshot.val() || {};
+                const activeUsers = Object.values(users).filter(u => !u.blocked).length;
+                const todayTransactions = Object.values(transactions)
+                    .filter(t => t.timestamp > Date.now() - 86400000).length;
+                const newUsers = Object.values(users)
+                    .filter(u => u.createdAt > Date.now() - 86400000).length;
+
+                statsDiv.innerHTML = `
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Активных пользователей:</span>
+                        <span>${activeUsers}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Транзакций сегодня:</span>
+                        <span>${todayTransactions}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Новых регистраций:</span>
+                        <span>${newUsers}</span>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Ошибка обновления статистики:', error);
+                statsDiv.innerHTML = `
+                    <div style="color: #ff4444; padding: 16px; text-align: center;">
+                        Ошибка загрузки статистики:<br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html> 

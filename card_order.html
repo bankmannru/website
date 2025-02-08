@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создание карты - Банк Маннру</title>
+    
+    <!-- Styles -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Material Web Components -->
+    <script type="importmap">
+      {
+        "imports": {
+          "@material/web/": "https://esm.run/@material/web/"
+        }
+      }
+    </script>
+    <script type="module">
+      import '@material/web/all.js';
+      import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
+      document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+    </script>
+
+    <!-- Custom Components -->
+    <script type="module" src="card-creator.js"></script>
+
+    <style>
+
+        body {
+            margin: 0;
+            padding: 24px;
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            color: var(--md-sys-color-on-background);
+            font-family: 'Roboto', sans-serif;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .headline-large {
+            margin: 0 0 48px 0;
+            color: white;
+            font-size: 32px;
+            font-weight: 400;
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .card-preview {
+            margin-bottom: 32px;
+            display: flex;
+            justify-content: center;
+            perspective: 1000px;
+        }
+
+        .creation-form {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            background: white;
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            border-radius: 28px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 600px) {
+            body {
+                padding: 0;
+                min-height: 100dvh;
+            }
+            
+            .container {
+                margin: 0;
+                padding: 16px;
+                min-height: 100dvh;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .creation-form {
+                padding: 20px;
+                flex: 1;
+                margin: 0;
+                border-radius: 28px 28px 0 0;
+            }
+
+            .headline-large {
+                margin-bottom: 24px;
+            }
+
+            .card-preview {
+                margin-bottom: 24px;
+            }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--md-sys-color-surface-container);
+            color: var(--md-sys-color-on-surface);
+            padding: 12px 24px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 1000;
+        }
+
+        .toast.success md-icon {
+            color: var(--md-sys-color-primary);
+        }
+
+        .toast.error md-icon {
+            color: var(--md-sys-color-error);
+        }
+
+        .toast span {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .color-pickers {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .color-picker {
+            flex: 1 1 200px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .color-picker label {
+            font-size: 14px;
+            color: rgba(0, 0, 0, 0.6);
+            margin-bottom: 4px;
+        }
+
+        .color-picker input[type="color"] {
+            width: 100%;
+            height: 40px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .slider-container {
+            position: relative;
+            padding: 8px 0;
+            width: 100%;
+        }
+
+        .md-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #f0f9ff;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 1;
+            margin-top: -8px;
+        }
+
+        .slider-value {
+            position: absolute;
+            top: -24px;
+            left: var(--slider-progress, 10%);
+            transform: translateX(-50%);
+            background: #f0f9ff;
+            color: #6366f1;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+
+        .slider-container::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 50%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            transform: translateY(-50%);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="headline-large">Создание новой карты</h1>
+        
+        <!-- Card Preview -->
+        <div class="card-preview">
+            <bank-card
+                id="preview-card"
+                number="000 000"
+                holder="ИМЯ ФАМИЛИЯ"
+                expires="12/25"
+                theme="default">
+            </bank-card>
+    </div>
+
+        <!-- Card Creation Form -->
+        <form id="card-form" class="creation-form">
+            <md-outlined-text-field
+                id="holder-input"
+                label="Имя и фамилия"
+                required
+                onInput="updatePreview()"
+            ></md-outlined-text-field>
+
+            <div class="color-pickers">
+                <div class="color-picker">
+                    <label>Основной цвет</label>
+                    <input type="color" id="primary-color" value="#ff7e5f" onInput="updatePreview()">
+                </div>
+                <div class="color-picker">
+                    <label>Дополнительный цвет</label>
+                    <input type="color" id="secondary-color" value="#feb47b" onInput="updatePreview()">
+                </div>
+                </div>
+                
+            <md-outlined-select id="pattern-select" label="Узор карты" onInput="updatePreview()">
+                <md-select-option value="waves">
+                    <div slot="headline">Волны</div>
+                </md-select-option>
+                <md-select-option value="dots">
+                    <div slot="headline">Точки</div>
+                </md-select-option>
+                <md-select-option value="lines">
+                    <div slot="headline">Линии</div>
+                </md-select-option>
+                <md-select-option value="circles">
+                    <div slot="headline">Круги</div>
+                </md-select-option>
+                <md-select-option value="grid">
+                    <div slot="headline">Сетка</div>
+                </md-select-option>
+            </md-outlined-select>
+
+            <md-outlined-select id="chip-style" label="Стиль чипа" onInput="updatePreview()">
+                <md-select-option value="classic">
+                    <div slot="headline">Классический</div>
+                </md-select-option>
+                <md-select-option value="modern">
+                    <div slot="headline">Современный</div>
+                </md-select-option>
+                <md-select-option value="minimal">
+                    <div slot="headline">Минималистичный</div>
+                </md-select-option>
+            </md-outlined-select>
+
+            <md-outlined-select
+                id="theme-select"
+                label="Тема карты"
+                onInput="updatePreview()"
+            >
+                <md-select-option value="default">
+                    <div slot="headline">Стандартная</div>
+                </md-select-option>
+                <md-select-option value="premium">
+                    <div slot="headline">Премиум</div>
+                </md-select-option>
+                <md-select-option value="gold">
+                    <div slot="headline">Золотая</div>
+                </md-select-option>
+                <md-select-option value="custom">
+                    <div slot="headline">Пользовательская</div>
+                </md-select-option>
+            </md-outlined-select>
+
+            <md-filled-button type="submit">
+                Создать карту
+            </md-filled-button>
+            </form>
+        </div>
+
+    <script>
+        // Глобальная функция обновления предпросмотра
+        function updatePreview() {
+            const holder = document.getElementById('holder-input').value.toUpperCase() || 'ИМЯ ФАМИЛИЯ';
+            let theme = document.getElementById('theme-select').value;
+            const primaryColor = document.getElementById('primary-color').value;
+            const secondaryColor = document.getElementById('secondary-color').value;
+            const pattern = document.getElementById('pattern-select').value;
+            const chipStyle = document.getElementById('chip-style').value;
+
+            const previewCard = document.getElementById('preview-card');
+            previewCard.setAttribute('holder', holder);
+            previewCard.setAttribute('theme', theme);
+            previewCard.setAttribute('primary-color', primaryColor);
+            previewCard.setAttribute('secondary-color', secondaryColor);
+            previewCard.setAttribute('pattern', pattern);
+            previewCard.setAttribute('chip-style', chipStyle);
+        }
+    </script>
+
+    <script type="module">
+        import { database } from './firebase-config.js';
+        import { ref, push, set } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+
+        const form = document.getElementById('card-form');
+        const previewCard = document.getElementById('preview-card');
+
+        // Обработка отправки формы
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            try {
+                // Получаем данные формы
+                const cardData = {
+                    holder: document.getElementById('holder-input').value.toUpperCase(),
+                    theme: document.getElementById('theme-select').value,
+                    primaryColor: document.getElementById('primary-color').value,
+                    secondaryColor: document.getElementById('secondary-color').value,
+                    pattern: document.getElementById('pattern-select').value,
+                    chipStyle: document.getElementById('chip-style').value,
+                    number: Math.floor(100000 + Math.random() * 900000), // Генерируем 6-значный номер
+                    expires: generateExpiryDate(),
+                    balance: 0,
+                    createdAt: new Date().toISOString()
+                };
+
+                // Сохраняем в базу данных
+                const cardsRef = ref(database, 'cards');
+                const newCardRef = push(cardsRef);
+                await set(newCardRef, cardData);
+
+                // Сохраняем ID карты в localStorage
+                localStorage.setItem('currentCardId', newCardRef.key);
+
+                // Показываем уведомление об успехе
+                showNotification('Карта успешно создана');
+
+                // Перенаправляем на страницу аккаунта
+                setTimeout(() => {
+                    window.location.href = `account.html?id=${newCardRef.key}`;
+                }, 1500);
+            } catch (error) {
+                console.error('Error creating card:', error);
+                showNotification('Ошибка при создании карты', true);
+            }
+        });
+
+        function generateExpiryDate() {
+            const date = new Date();
+            date.setFullYear(date.getFullYear() + 3);
+            return `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear().toString().slice(-2)}`;
+        }
+
+        function showNotification(message, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${isError ? 'error' : 'success'}`;
+            toast.innerHTML = `
+                <md-icon>${isError ? 'error' : 'check_circle'}</md-icon>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(toast);
+            
+            requestAnimationFrame(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateX(-50%) translateY(0)';
+            });
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(-50%) translateY(20px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

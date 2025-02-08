@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Беседка - Терминал</title>
+    
+    <!-- Material Design -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script type="importmap">
+      {
+        "imports": {
+          "@material/web/": "https://esm.run/@material/web/"
+        }
+      }
+    </script>
+    <script type="module">
+      import '@material/web/all.js';
+    </script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 24px;
+            background: #1e1e1e;
+            color: #fff;
+            font-family: 'Roboto Mono', monospace;
+        }
+
+        .terminal {
+            background: #2d2d2d;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            height: calc(100vh - 80px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .output {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+            margin-bottom: 16px;
+            white-space: pre-wrap;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .input-line {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            padding: 8px;
+            background: #363636;
+            border-radius: 8px;
+        }
+
+        .prompt {
+            color: #4CAF50;
+            user-select: none;
+        }
+
+        #command-input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: #fff;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 14px;
+            padding: 0;
+        }
+
+        #command-input:focus {
+            outline: none;
+        }
+
+        .success { color: #4CAF50; }
+        .error { color: #f44336; }
+        .info { color: #2196F3; }
+        .warning { color: #FFC107; }
+    </style>
+</head>
+<body>
+    <div class="terminal">
+        <div id="output" class="output">
+            <span class="info">Беседка Shell v1.0.0</span>
+            <span class="info">Введите 'help' для списка команд</span>
+        </div>
+        <div class="input-line">
+            <span class="prompt">$</span>
+            <input type="text" id="command-input" autofocus>
+        </div>
+    </div>
+
+    <script type="module">
+        import { database } from './firebase-config.js';
+        import { ref, get, set, remove } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+
+        const output = document.getElementById('output');
+        const input = document.getElementById('command-input');
+        let commandHistory = [];
+        let historyIndex = -1;
+
+        const commands = {
+            help: {
+                desc: 'Показать список команд',
+                exec: () => {
+                    print('Доступные команды:', 'info');
+                    Object.entries(commands).forEach(([name, cmd]) => {
+                        print(`  ${name.padEnd(15)} - ${cmd.desc}`);
+                    });
+                }
+            },
+            clear: {
+                desc: 'Очистить терминал',
+                exec: () => {
+                    output.innerHTML = '';
+                }
+            },
+            users: {
+                desc: 'Показать список пользователей',
+                exec: async () => {
+                    try {
+                        const usersRef = ref(database, 'users');
+                        const snapshot = await get(usersRef);
+                        if (snapshot.exists()) {
+                            print('Список пользователей:', 'info');
+                            snapshot.forEach(child => {
+                                const user = child.val();
+                                print(`  ${user.username || 'Аноним'} (${child.key})`);
+                            });
+                        } else {
+                            print('Пользователей не найдено', 'warning');
+                        }
+                    } catch (error) {
+                        print(`Ошибка: ${error.message}`, 'error');
+                    }
+                }
+            },
+            ban: {
+                desc: 'Заблокировать пользователя: ban <userId>',
+                exec: async (userId) => {
+                    if (!userId) {
+                        print('Укажите ID пользователя', 'error');
+                        return;
+                    }
+                    try {
+                        const userRef = ref(database, `users/${userId}`);
+                        const snapshot = await get(userRef);
+                        if (snapshot.exists()) {
+                            await set(ref(database, `users/${userId}/banned`), true);
+                            print(`Пользователь ${userId} заблокирован`, 'success');
+                        } else {
+                            print('Пользователь не найден', 'error');
+                        }
+                    } catch (error) {
+                        print(`Ошибка: ${error.message}`, 'error');
+                    }
+                }
+            },
+            unban: {
+                desc: 'Разблокировать пользователя: unban <userId>',
+                exec: async (userId) => {
+                    if (!userId) {
+                        print('Укажите ID пользователя', 'error');
+                        return;
+                    }
+                    try {
+                        const userRef = ref(database, `users/${userId}`);
+                        const snapshot = await get(userRef);
+                        if (snapshot.exists()) {
+                            await set(ref(database, `users/${userId}/banned`), false);
+                            print(`Пользователь ${userId} разблокирован`, 'success');
+                        } else {
+                            print('Пользователь не найден', 'error');
+                        }
+                    } catch (error) {
+                        print(`Ошибка: ${error.message}`, 'error');
+                    }
+                }
+            },
+            delete: {
+                desc: 'Удалить пользователя: delete <userId>',
+                exec: async (userId) => {
+                    if (!userId) {
+                        print('Укажите ID пользователя', 'error');
+                        return;
+                    }
+                    try {
+                        const userRef = ref(database, `users/${userId}`);
+                        const snapshot = await get(userRef);
+                        if (snapshot.exists()) {
+                            await remove(userRef);
+                            print(`Пользователь ${userId} удален`, 'success');
+                        } else {
+                            print('Пользователь не найден', 'error');
+                        }
+                    } catch (error) {
+                        print(`Ошибка: ${error.message}`, 'error');
+                    }
+                }
+            },
+            cards: {
+                desc: 'Показать список всех карт',
+                exec: async () => {
+                    try {
+                        const cardsRef = ref(database, 'cards');
+                        const snapshot = await get(cardsRef);
+                        if (snapshot.exists()) {
+                            print('Список карт:', 'info');
+                            snapshot.forEach(child => {
+                                const card = child.val();
+                                print(`  Карта ${child.key}: ${card.balance}МР (${card.holder})`);
+                            });
+                        } else {
+                            print('Карт не найдено', 'warning');
+                        }
+                    } catch (error) {
+                        print(`Ошибка: ${error.message}`, 'error');
+                    }
+                }
+            },
+            balance: {
+                desc: 'Проверить баланс карты: balance <cardId>',
+                exec: async (cardId) => {
+                    if (!cardId) {
+                        print('Укажите номер карты', 'error');
+                        return;
+                    }
+                    try {
+                        const cardRef = ref(database, `cards/${cardId}`);
+                        const snapshot = await get(cardRef);
+                        if (snapshot.exists()) {
+                            const card = snapshot.val();
+                            print(`Баланс карты ${cardId}: ${card.balance}МР`, 'success');
+                        } else {
+                            print('Карта не найдена', 'error');
+                        }
+                    } catch (error) {
+                        print(`Ошибка: ${error.message}`, 'error');
+                    }
+                }
+            },
+            addmr: {
+                desc: 'Добавить МР на карту: addmr <cardId> <amount>',
+                exec: async (cardId, amount) => {
+                    if (!cardId || !amount) {
+                        print('Укажите номер карты и сумму', 'error');
+                        return;
+                    }
+                    try {
+                        const cardRef = ref(database, `cards/${cardId}`);
+                        const snapshot = await get(cardRef);
+                        if (snapshot.exists()) {
+                            const card = snapshot.val();
+                            const newBalance = (parseInt(card.balance) || 0) + parseInt(amount);
+                            await set(cardRef, { ...card, balance: newBalance });
+                            print(`Добавлено ${amount}МР на карту ${cardId}. Новый баланс: ${newBalance}МР`, 'success');
+                        } else {
+                            print('Карта не найдена', 'error');
+                        }
+                    } catch (error) {
+                        print(`Ошибка: ${error.message}`, 'error');
+                    }
+                }
+            },
+            removemr: {
+                desc: 'Снять МР с карты: removemr <cardId> <amount>',
+                exec: async (cardId, amount) => {
+                    if (!cardId || !amount) {
+                        print('Укажите номер карты и сумму', 'error');
+                        return;
+                    }
+                    try {
+                        const cardRef = ref(database, `cards/${cardId}`);
+                        const snapshot = await get(cardRef);
+                        if (snapshot.exists()) {
+                            const card = snapshot.val();
+                            const currentBalance = parseInt(card.balance) || 0;
+                            if (currentBalance < parseInt(amount)) {
+                                print('Недостаточно средств на карте', 'error');
+                                return;
+                            }
+                            const newBalance = currentBalance - parseInt(amount);
+                            await set(cardRef, { ...card, balance: newBalance });
+                            print(`Снято ${amount}МР с карты ${cardId}. Новый баланс: ${newBalance}МР`, 'success');
+                        } else {
+                            print('Карта не найдена', 'error');
+                        }
+                    } catch (error) {
+                        print(`Ошибка: ${error.message}`, 'error');
+                    }
+                }
+            },
+            blockcard: {
+                desc: 'Заблокировать карту: blockcard <cardId>',
+                exec: async (cardId) => {
+                    if (!cardId) {
+                        print('Укажите номер карты', 'error');
+                        return;
+                    }
+                    try {
+                        const cardRef = ref(database, `cards/${cardId}`);
+                        const snapshot = await get(cardRef);
+                        if (snapshot.exists()) {
+                            const card = snapshot.val();
+                            await set(cardRef, { ...card, blocked: true });
+                            print(`Карта ${cardId} заблокирована`, 'success');
+                        } else {
+                            print('Карта не найдена', 'error');
+                        }
+                    } catch (error) {
+                        print(`Ошибка: ${error.message}`, 'error');
+                    }
+                }
+            },
+            unblockcard: {
+                desc: 'Разблокировать карту: unblockcard <cardId>',
+                exec: async (cardId) => {
+                    if (!cardId) {
+                        print('Укажите номер карты', 'error');
+                        return;
+                    }
+                    try {
+                        const cardRef = ref(database, `cards/${cardId}`);
+                        const snapshot = await get(cardRef);
+                        if (snapshot.exists()) {
+                            const card = snapshot.val();
+                            await set(cardRef, { ...card, blocked: false });
+                            print(`Карта ${cardId} разблокирована`, 'success');
+                        } else {
+                            print('Карта не найдена', 'error');
+                        }
+                    } catch (error) {
+                        print(`Ошибка: ${error.message}`, 'error');
+                    }
+                }
+            },
+            deletecard: {
+                desc: 'Удалить карту: deletecard <cardId>',
+                exec: async (cardId) => {
+                    if (!cardId) {
+                        print('Укажите номер карты', 'error');
+                        return;
+                    }
+                    try {
+                        const cardRef = ref(database, `cards/${cardId}`);
+                        const snapshot = await get(cardRef);
+                        if (snapshot.exists()) {
+                            await remove(cardRef);
+                            print(`Карта ${cardId} удалена`, 'success');
+                        } else {
+                            print('Карта не найдена', 'error');
+                        }
+                    } catch (error) {
+                        print(`Ошибка: ${error.message}`, 'error');
+                    }
+                }
+            },
+            setcardcolor: {
+                desc: 'Установить цвета карты: setcardcolor <cardId> <primaryColor> <secondaryColor>',
+                exec: async (cardId, primaryColor, secondaryColor) => {
+                    if (!cardId || !primaryColor || !secondaryColor) {
+                        print('Укажите номер карты и цвета (HEX или название)', 'error');
+                        return;
+                    }
+                    try {
+                        const cardRef = ref(database, `cards/${cardId}`);
+                        const snapshot = await get(cardRef);
+                        if (snapshot.exists()) {
+                            const card = snapshot.val();
+                            await set(cardRef, { 
+                                ...card, 
+                                theme: 'custom',
+                                customColors: {
+                                    primary: primaryColor,
+                                    secondary: secondaryColor
+                                }
+                            });
+                            print(`Цвета карты ${cardId} обновлены:`, 'success');
+                            print(`Основной: ${primaryColor}`, 'info');
+                            print(`Дополнительный: ${secondaryColor}`, 'info');
+                        } else {
+                            print('Карта не найдена', 'error');
+                        }
+                    } catch (error) {
+                        print(`Ошибка: ${error.message}`, 'error');
+                    }
+                }
+            },
+            resetcardcolor: {
+                desc: 'Сбросить цвета карты на стандартные: resetcardcolor <cardId>',
+                exec: async (cardId) => {
+                    if (!cardId) {
+                        print('Укажите номер карты', 'error');
+                        return;
+                    }
+                    try {
+                        const cardRef = ref(database, `cards/${cardId}`);
+                        const snapshot = await get(cardRef);
+                        if (snapshot.exists()) {
+                            const card = snapshot.val();
+                            const { customColors, ...updatedCard } = card;
+                            updatedCard.theme = 'default';
+                            await set(cardRef, updatedCard);
+                            print(`Цвета карты ${cardId} сброшены на стандартные`, 'success');
+                        } else {
+                            print('Карта не найдена', 'error');
+                        }
+                    } catch (error) {
+                        print(`Ошибка: ${error.message}`, 'error');
+                    }
+                }
+            }
+        };
+
+        function print(text, type = '') {
+            const line = document.createElement('div');
+            line.className = type;
+            line.textContent = text;
+            output.appendChild(line);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        input.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter') {
+                const command = input.value.trim();
+                if (command) {
+                    commandHistory.push(command);
+                    historyIndex = commandHistory.length;
+                    print(`$ ${command}`);
+                    
+                    const [cmd, ...args] = command.split(' ');
+                    if (commands[cmd]) {
+                        await commands[cmd].exec(...args);
+                    } else {
+                        print(`Команда не найдена: ${cmd}`, 'error');
+                    }
+                    
+                    input.value = '';
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    input.value = commandHistory[historyIndex];
+                }
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (historyIndex < commandHistory.length - 1) {
+                    historyIndex++;
+                    input.value = commandHistory[historyIndex];
+                } else {
+                    historyIndex = commandHistory.length;
+                    input.value = '';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

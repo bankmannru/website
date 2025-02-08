@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Беседка - Админ панель</title>
+    
+    <!-- Material Design Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
+    
+    <!-- Material Web Components -->
+    <script type="importmap">
+        {
+            "imports": {
+                "@material/web/": "https://esm.run/@material/web/"
+            }
+        }
+    </script>
+    <script type="module">
+        import '@material/web/all.js';
+        import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
+
+        document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+    </script>
+    
+    <!-- Custom CSS -->
+    <link href="styles.css" rel="stylesheet">
+    <link href="admin.css" rel="stylesheet">
+</head>
+<body class="light-theme">
+    <nav>
+        <div class="nav-content">
+            <h1 class="headline-large">Админ панель</h1>
+            <div class="nav-actions">
+                <md-icon-button href="index.html">
+                    <md-icon>chat</md-icon>
+                </md-icon-button>
+                <md-icon-button id="theme-toggle">
+                    <md-icon>dark_mode</md-icon>
+                </md-icon-button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container admin-container">
+        <div class="admin-section">
+            <div class="section-header">
+                <h2 class="title-large">Пользователи</h2>
+                <div class="section-actions">
+                    <md-icon-button id="refresh-users">
+                        <md-icon>refresh</md-icon>
+                    </md-icon-button>
+                    <md-filled-tonal-button id="clear-users" class="error">
+                        <md-icon slot="icon">delete_sweep</md-icon>
+                        Удалить всех
+                    </md-filled-tonal-button>
+                    <md-outlined-text-field
+                        id="users-search"
+                        type="search"
+                        label="Поиск пользователей"
+                        supporting-text="Поиск по имени пользователя"
+                    >
+                        <md-icon slot="leading-icon">search</md-icon>
+                    </md-outlined-text-field>
+                </div>
+            </div>
+            <div class="stats-row">
+                <div class="stat-card">
+                    <span class="headline-medium" id="total-users">0</span>
+                    <span class="body-medium">Всего пользователей</span>
+                </div>
+                <div class="stat-card">
+                    <span class="headline-medium" id="online-users">0</span>
+                    <span class="body-medium">Онлайн</span>
+                </div>
+                <div class="stat-card">
+                    <span class="headline-medium" id="banned-users">0</span>
+                    <span class="body-medium">Заблокировано</span>
+                </div>
+            </div>
+            <div id="users-list" class="admin-list"></div>
+        </div>
+        
+        <div class="admin-section">
+            <div class="section-header">
+                <h2 class="title-large">Модерация сообщений</h2>
+                <div class="section-actions">
+                    <md-icon-button id="refresh-messages">
+                        <md-icon>refresh</md-icon>
+                    </md-icon-button>
+                    <md-outlined-text-field
+                        id="messages-search"
+                        type="search"
+                        label="Поиск сообщений"
+                        supporting-text="Поиск по тексту сообщения"
+                    >
+                        <md-icon slot="leading-icon">search</md-icon>
+                    </md-outlined-text-field>
+                </div>
+            </div>
+            <div class="stats-row">
+                <div class="stat-card">
+                    <span class="headline-medium" id="total-messages">0</span>
+                    <span class="body-medium">Всего сообщений</span>
+                </div>
+                <div class="stat-card">
+                    <span class="headline-medium" id="today-messages">0</span>
+                    <span class="body-medium">Сообщений сегодня</span>
+                </div>
+                <div class="stat-card">
+                    <span class="headline-medium" id="deleted-messages">0</span>
+                    <span class="body-medium">Удалено</span>
+                </div>
+            </div>
+            <div id="messages-list" class="admin-list"></div>
+        </div>
+
+        <md-elevated-card class="admin-section">
+            <div class="section-header">
+                <h2 class="title-large">Настройки чата</h2>
+            </div>
+            <div class="settings-list">
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <span class="title-medium">Режим только для чтения</span>
+                        <span class="body-medium">Запретить отправку новых сообщений</span>
+                    </div>
+                    <md-switch id="readonly-mode"></md-switch>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <span class="title-medium">Очистить все сообщения</span>
+                        <span class="body-medium">Удалить всю историю чата</span>
+                    </div>
+                    <md-filled-tonal-button id="clear-all-messages" class="error">
+                        <md-icon slot="icon">delete_forever</md-icon>
+                        Очистить
+                    </md-filled-tonal-button>
+                </div>
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <span class="title-medium">Изменить пароль админа</span>
+                        <span class="body-medium">Установить новый пароль доступа</span>
+                    </div>
+                    <md-filled-button id="change-password">
+                        <md-icon slot="icon">key</md-icon>
+                        Изменить
+                    </md-filled-button>
+                </div>
+            </div>
+        </md-elevated-card>
+    </div>
+
+    <md-dialog id="password-dialog" modal>
+        <div slot="headline" class="headline-small">Изменение пароля</div>
+        <form slot="content" method="dialog" class="dialog-content">
+            <md-outlined-text-field
+                id="new-password"
+                type="password"
+                label="Новый пароль"
+                required
+                minlength="6"
+            ></md-outlined-text-field>
+            <md-outlined-text-field
+                id="confirm-password"
+                type="password"
+                label="Подтвердите пароль"
+                required
+                minlength="6"
+            ></md-outlined-text-field>
+            <div slot="actions">
+                <md-text-button dialog-action="close">
+                    Отмена
+                </md-text-button>
+                <md-filled-button id="save-password">
+                    Сохранить
+                </md-filled-button>
+            </div>
+        </form>
+    </md-dialog>
+
+    <script type="module" src="admin.js"></script>
+
+    <style>
+        .error {
+            --md-sys-color-primary: var(--md-sys-color-error);
+            --md-sys-color-on-primary: var(--md-sys-color-on-error);
+        }
+
+        .section-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+    </style>
+</body>
+</html> 
