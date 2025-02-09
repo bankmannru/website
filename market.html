@@ -21,15 +21,6 @@
     </script>
 
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            background: #FF7F50;
-            color: white;
-            font-family: 'Roboto', sans-serif;
-        }
-
         .market-container {
             max-width: 1200px;
             margin: 0 auto;
@@ -57,7 +48,7 @@
 
         /* Фильтры */
         .market-filters {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgb(255, 255, 255);
             backdrop-filter: blur(10px);
             padding: 16px;
             border-radius: 16px;
@@ -264,6 +255,10 @@
                 padding: 16px;
                 gap: 16px;
             }
+
+            h1, h2, h3, h4, h5, h6 {
+                color: white;
+            }
         }
     </style>
 </head>
@@ -272,7 +267,7 @@
     <div class="market-container">
         <!-- Заголовок -->
         <div class="market-header">
-            <h1>Маркет</h1>
+            <h1 style="color: white;">Маркет</h1>
             <md-filled-button id="createItemButton">
                 <md-icon slot="icon">add</md-icon>
                 Создать объявление
@@ -385,12 +380,12 @@
 
                 Object.entries(products).forEach(([id, product]) => {
                     const card = document.createElement('div');
-                    card.className = 'product-card';
+                    card.className = `product-card ${product.blocked ? 'blocked' : ''}`;
                     const isCustomProduct = product.type === 'user';
                     card.innerHTML = `
                         <img src="${product.image || 'default-item.png'}" class="product-image" alt="${product.name}" onerror="this.src='default-item.png'">
-                        <h3 class="product-title">${product.name}</h3>
-                        <p class="product-description">${product.description}</p>
+                        <h3 class="product-title" style="color: white;">${product.name}</h3>
+                        <p class="product-description" style="color: white;">${product.description}</p>
                         <p class="product-price">${product.price} МР</p>
                         <md-filled-tonal-button onclick="buyProduct('${id}', ${product.price}, '${product.sellerId}', ${isCustomProduct}, '${product.name}')">
                             ${isCustomProduct ? 'Связаться с продавцом' : 'Купить'}

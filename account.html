@@ -29,7 +29,6 @@
 
     <style>
         body {
-            background: #FF7F50;
             color: white;
             margin: 0;
             padding: 20px;
@@ -131,6 +130,96 @@
         .message-body {
             color: rgba(255, 255, 255, 0.9);
             font-size: 0.9em;
+        }
+
+        .card-section {
+            margin-bottom: 24px;
+            perspective: 1000px;
+            display: flex;
+            justify-content: center;
+            margin: 48px 0;
+            width: 100%;
+            min-height: 220px;
+        }
+
+        .balance-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .balance-amount {
+            font-size: 48px;
+            font-weight: 700;
+            color: white;
+            margin: 16px 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .transactions-section {
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .transactions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: var(--md-sys-color-surface-variant);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .transaction-item:hover {
+            background: var(--md-sys-color-surface-variant-hover);
+        }
+
+        .transaction-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .transaction-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--md-sys-color-primary-container);
+            border-radius: 20px;
+        }
+
+        .transaction-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .transaction-amount {
+            font-weight: 500;
+            color: var(--md-sys-color-primary);
+        }
+
+        .transaction-amount.negative {
+            color: var(--md-sys-color-error);
+        }
+
+        .transaction-date {
+            font-size: 0.9em;
+            color: var(--md-sys-color-on-surface-variant);
         }
 
         .card-section {
@@ -667,10 +756,6 @@
             pointer-events: none;
         }
 
-        .transaction-amount.negative {
-            color: var(--md-sys-color-error);
-        }
-
         .unread-badge {
             background: var(--md-sys-color-error);
             color: var(--md-sys-color-on-error);
@@ -678,6 +763,69 @@
             border-radius: 12px;
             font-size: 0.8em;
             margin-left: 8px;
+        }
+
+        .achievements-section {
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .achievement-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .achievement-card.locked {
+            filter: grayscale(1);
+            opacity: 0.7;
+        }
+
+        .achievement-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .achievement-progress {
+            margin-top: 8px;
+        }
+
+        .achievement-rarity {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+
+        .rarity-common { background: #78909C; }
+        .rarity-rare { background: #5C6BC0; }
+        .rarity-epic { background: #7B1FA2; }
+        .rarity-legendary { background: #FFB300; }
+
+        bank-card {
+            width: 100%;
+            max-width: 400px;
+            display: block;
+        }
+
+        .balance-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
         }
     </style>
     <script>
@@ -714,7 +862,7 @@
         </div>
 
         <div class="card-section">
-            <bank-card id="user-card"></bank-card>
+            <bank-card id="user-card" number="" holder="" expires=""></bank-card>
         </div>
 
         <div class="message-of-day">
@@ -742,8 +890,8 @@
                     <md-icon>account_balance_wallet</md-icon>
                     Баланс
                 </h3>
-                <div class="balance-amount" id="balance-amount">0 ₽</div>
-                <div style="display: flex; gap: 12px;">
+                <div class="balance-amount" id="balance-amount">0 МР</div>
+                <div class="balance-actions">
                     <md-outlined-button id="transfer-button">
                         <span slot="icon" class="material-symbols-outlined">send</span>
                         Перевести
@@ -752,17 +900,13 @@
                         <span slot="icon" class="material-symbols-outlined">share</span>
                         Поделиться
                     </md-outlined-button>
-                    <md-outlined-button id="qr-button">
-                        <span slot="icon" class="material-symbols-outlined">qr_code</span>
-                        QR-код
-                    </md-outlined-button>
                 </div>
             </div>
 
             <div class="transactions-section">
-                <h2 class="title-large">История операций</h2>
-                <div class="transaction-list" id="transaction-list">
-                    <!-- Transactions will be added here -->
+                <h2>История операций</h2>
+                <div id="transactionsList" class="transactions-list">
+                    <!-- Транзакции будут добавляться сюда динамически -->
                 </div>
             </div>
 
@@ -810,11 +954,26 @@
         </a>
     </div>
 
+    <div class="achievements-section">
+        <div class="section-header">
+            <h2>Достижения</h2>
+            <md-outlined-button id="achievements-help">
+                <md-icon slot="icon">help</md-icon>
+                Как получать
+            </md-outlined-button>
+        </div>
+        
+        <div class="achievements-grid">
+            <!-- Достижения будут добавляться сюда динамически -->
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
         import { getDatabase, ref, get, update, onValue } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
         import { getAuth } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
         import '@material/web/all.js';
+        import { BankCard } from './card-creator.js';
         
         // Конфигурация Firebase
         const firebaseConfig = {
@@ -835,8 +994,10 @@
         
         import { logout } from './auth.js';
 
-        // Делаем функцию showNotification доступной глобально
-        window.showNotification = showNotification;
+        // Регистрируем компонент bank-card если он еще не зарегистрирован
+        if (!customElements.get('bank-card')) {
+            customElements.define('bank-card', BankCard);
+        }
 
         // Инициализация карты
         async function initializeCard() {
@@ -848,81 +1009,45 @@
                 return;
             }
 
-            // Загружаем данные карты
+            localStorage.setItem('currentCardId', cardId);
+            
+            // Слушаем изменения данных карты
             const cardRef = ref(database, `cards/${cardId}`);
             onValue(cardRef, (snapshot) => {
-                if (snapshot.exists()) {
-                    const cardData = snapshot.val();
-                    
-                    // Сохраняем ID карты в localStorage
-                    localStorage.setItem('currentCardId', cardId);
-                    localStorage.setItem('cardNumber', cardData.number || cardId);
-                    
-                    // Создаем или обновляем компонент карты
-                    const cardElement = document.getElementById('user-card');
-                    if (cardElement) {
-                        // Применяем кастомные цвета если они есть
-                        if (cardData.theme === 'custom') {
-                            // Проверяем, где хранятся цвета (поддержка старого и нового формата)
-                            const primaryColor = cardData.customColors?.primary || cardData.primaryColor;
-                            const secondaryColor = cardData.customColors?.secondary || cardData.secondaryColor;
-                            
-                            // Сначала устанавливаем цвета
-                            cardElement.style.setProperty('--card-primary-color', primaryColor);
-                            cardElement.style.setProperty('--card-secondary-color', secondaryColor);
-                            // Затем устанавливаем тему
-                            cardElement.setAttribute('theme', 'custom');
-                        } else {
-                            // Очищаем кастомные цвета перед установкой стандартной темы
-                            cardElement.style.removeProperty('--card-primary-color');
-                            cardElement.style.removeProperty('--card-secondary-color');
-                            cardElement.setAttribute('theme', cardData.theme || 'default');
-                        }
-                        
-                        cardElement.setAttribute('number', cardData.number || cardId);
-                        cardElement.setAttribute('holder', cardData.holder || 'CARD HOLDER');
-                        cardElement.setAttribute('expires', cardData.expires || '12/25');
-                        // Принудительно обновляем после всех изменений
-                        setTimeout(() => cardElement.render(), 0);
-                    }
-
-                    // Обновляем баланс
-                    const balanceElement = document.querySelector('.balance-amount');
-                    if (balanceElement) {
-                        balanceElement.textContent = `${cardData.balance || 0} МР`;
-                    }
-
-                    // Update transactions if they exist
-                    if (cardData.transactions) {
-                        updateTransactionsList(cardData.transactions);
-                    }
-
-                    // Проверяем активные функции
-                    checkActiveFeatures(cardData);
-                    // В функции updateCardDisplay добавляем обработку дизайна и эффектов
-                    updateCardDisplay(cardData);
-
-                    // Загружаем сообщения
-                    loadMessages(cardData.messages || {});
-                    
-                    // Слушаем новые сообщения
-                    const messagesRef = ref(database, `cards/${cardId}/messages`);
-                    onValue(messagesRef, (snapshot) => {
-                        const messages = snapshot.val() || {};
-                        loadMessages(messages);
-                    });
-                } else {
+                const cardData = snapshot.val();
+                if (!cardData) {
                     window.location.href = 'index.html';
+                    return;
                 }
-            }, (error) => {
-                console.error(error);
-                window.location.href = 'index.html';
+                
+                // Обновляем данные карты
+                const cardElement = document.getElementById('user-card');
+                cardElement.setAttribute('number', cardData.number || '000 000');
+                cardElement.setAttribute('holder', cardData.holder || 'Без имени');
+                cardElement.setAttribute('expires', cardData.expires || '12/25');
+                
+                // Обновляем баланс
+                const balanceElement = document.getElementById('balance-amount');
+                balanceElement.textContent = `${new Intl.NumberFormat('ru-RU').format(cardData.balance || 0)} МР`;
+                
+                updateCardDisplay(cardData);
+                updateTransactionsList(cardData.transactions || {});
+                loadMessages(cardData.messages || {});
+                initAchievements(cardId);
+                
+                // Проверяем активные функции
+                checkActiveFeatures(cardData);
             });
+
+            // Добавляем обработчик для кнопки выхода
+            document.getElementById('logout-button').onclick = () => logout();
         }
 
         // Запускаем инициализацию при загрузке страницы
-        document.addEventListener('DOMContentLoaded', initializeCard);
-        document.addEventListener('DOMContentLoaded', loadDailyMessage);
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeCard();
+            loadDailyMessage();
+        });
 
         // Загрузка сообщения дня
         async function loadDailyMessage() {
@@ -969,43 +1094,69 @@
         }
 
         function updateTransactionsList(transactions) {
-            const list = document.getElementById('transaction-list');
-            list.innerHTML = '';
+            const transactionsList = document.getElementById('transactionsList');
+            if (!transactionsList) return;
+            transactionsList.innerHTML = '';
             
-            Object.entries(transactions).reverse().forEach(([id, transaction]) => {
-                const item = document.createElement('div');
-                item.className = 'transaction-item';
-                
-                // Добавляем обработчик клика для показа деталей
-                item.addEventListener('click', () => showTransactionDetails(id, transaction));
-                
-                // Добавляем информацию о кэшбэке для премиум пользователей
-                let cashbackInfo = '';
-                if (transaction.cashback) {
-                    cashbackInfo = `
-                        <div class="cashback-info">
-                            <md-icon>savings</md-icon>
-                            Кэшбэк: +${new Intl.NumberFormat('ru-RU').format(transaction.cashback)} МР
-                        </div>
-                    `;
-                }
+            // Подсчитываем статистику для достижений
+            let totalSpent = 0;
+            let transactionCount = 0;
+            
+            Object.entries(transactions || {})
+                .sort(([,a], [,b]) => b.timestamp - a.timestamp)
+                .forEach(([id, transaction]) => {
+                    // Увеличиваем счетчики
+                    if (transaction.type === 'purchase' || transaction.type === 'transfer_out') {
+                        totalSpent += Math.abs(transaction.amount);
+                    }
+                    transactionCount++;
+                    
+                    const element = document.createElement('div');
+                    element.className = 'transaction-item';
+                    
+                    // Определяем иконку и цвет в зависимости от типа транзакции
+                    let icon = 'payments';
+                    let isNegative = false;
+                    
+                    switch(transaction.type) {
+                        case 'purchase':
+                            icon = 'shopping_cart';
+                            isNegative = true;
+                            break;
+                        case 'transfer_out':
+                            icon = 'send';
+                            isNegative = true;
+                            break;
+                        case 'transfer_in':
+                            icon = 'download';
+                            break;
+                        case 'deposit':
+                            icon = 'add';
+                            break;
+                    }
 
-                item.innerHTML = `
-                    <div class="transaction-info">
-                        <div class="transaction-icon">
-                            <span class="material-symbols-outlined">${transaction.type === 'deposit' ? 'add' : 'send'}</span>
+                    element.innerHTML = `
+                        <div class="transaction-info">
+                            <div class="transaction-icon">
+                                <md-icon>${icon}</md-icon>
+                            </div>
+                            <div class="transaction-details">
+                                <div class="transaction-description">${transaction.description}</div>
+                                <div class="transaction-date">${new Date(transaction.timestamp).toLocaleString()}</div>
+                            </div>
                         </div>
-                        <div class="transaction-details">
-                            <div class="transaction-title">${transaction.description}</div>
-                            <div class="transaction-date">${new Date(transaction.timestamp).toLocaleString()}</div>
-                            ${cashbackInfo}
-                        </div>
-                    </div>
-                    <div class="amount-${transaction.amount > 0 ? 'positive' : 'negative'}">
-                        ${transaction.amount > 0 ? '+' : ''}${new Intl.NumberFormat('ru-RU').format(transaction.amount)} МР
-                    </div>
-                `;
-                list.appendChild(item);
+                        <div class="transaction-amount ${isNegative ? 'negative' : ''}">${isNegative ? '-' : '+'}${Math.abs(transaction.amount)} МР</div>
+                    `;
+                    
+                    element.addEventListener('click', () => showTransactionDetails(id, transaction));
+                    transactionsList.appendChild(element);
+                });
+            
+            // Обновляем статистику в базе данных
+            const cardId = localStorage.getItem('currentCardId');
+            update(ref(database), {
+                [`cards/${cardId}/stats/totalSpent`]: totalSpent,
+                [`cards/${cardId}/stats/transactions`]: transactionCount
             });
         }
 
@@ -1238,7 +1389,8 @@
 
         // Обработчик кнопки "Поделиться"
         document.getElementById('share-button').addEventListener('click', async () => {
-            const cardNumber = document.getElementById('user-card').getAttribute('number');
+            const cardElement = document.getElementById('user-card');
+            const cardNumber = cardElement.getAttribute('number');
             if (navigator.share) {
                 try {
                     await navigator.share({
@@ -1253,28 +1405,6 @@
                 navigator.clipboard.writeText(cardNumber);
                 showNotification('Номер карты скопирован в буфер обмена');
             }
-        });
-
-        // Обработчик кнопки "QR-код"
-        document.getElementById('qr-button').addEventListener('click', () => {
-            const cardNumber = document.getElementById('user-card').getAttribute('number');
-            const dialog = document.createElement('md-dialog');
-            dialog.innerHTML = `
-                <div slot="headline">QR-код вашей карты</div>
-                <div slot="content" class="dialog-content" style="text-align: center;">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${cardNumber}" 
-                         alt="QR код карты" 
-                         style="border-radius: 8px;">
-                    <p style="margin-top: 16px; color: rgba(0,0,0,0.6);">
-                        Отсканируйте для быстрого перевода
-                    </p>
-                </div>
-                <div slot="actions">
-                    <md-text-button value="close">Закрыть</md-text-button>
-                </div>
-            `;
-            document.body.appendChild(dialog);
-            dialog.show();
         });
 
         // Проверяем активные функции
@@ -1390,6 +1520,145 @@
                 
                 messagesList.appendChild(messageElement);
             }
+        }
+
+        // Определяем все достижения
+        const achievements = {
+            first_transaction: {
+                title: 'Первые шаги',
+                description: 'Совершите свою первую транзакцию',
+                icon: 'payments',
+                rarity: 'common',
+                condition: (stats) => stats.transactions >= 1
+            },
+            big_spender: {
+                title: 'Большой транжира',
+                description: 'Потратьте 100,000 МР',
+                icon: 'shopping_cart',
+                rarity: 'rare',
+                condition: (stats) => stats.totalSpent >= 100000
+            },
+            savings_master: {
+                title: 'Мастер накоплений',
+                description: 'Накопите 1,000,000 МР',
+                icon: 'savings',
+                rarity: 'epic',
+                condition: (stats) => stats.balance >= 1000000
+            },
+            early_adopter: {
+                title: 'Ранняя пташка',
+                description: 'Зарегистрируйтесь в первый месяц работы банка',
+                icon: 'rocket_launch',
+                rarity: 'legendary',
+                condition: (stats) => stats.registrationDate < 1709251200000 // 1 марта 2024
+            },
+            social_butterfly: {
+                title: 'Душа компании',
+                description: 'Отправьте 50 сообщений в чате',
+                icon: 'chat',
+                rarity: 'rare',
+                condition: (stats) => stats.messagesSent >= 50
+            },
+            money_maker: {
+                title: 'Финансовый гений',
+                description: 'Заработайте 500,000 МР на инвестициях',
+                icon: 'trending_up',
+                rarity: 'epic',
+                condition: (stats) => stats.investmentProfit >= 500000
+            }
+        };
+
+        // Функция для отображения достижений
+        function renderAchievements(cardId, userAchievements = {}) {
+            const container = document.querySelector('.achievements-grid');
+            container.innerHTML = '';
+
+            Object.entries(achievements).forEach(([id, achievement]) => {
+                const isUnlocked = userAchievements[id] === true;
+                
+                const card = document.createElement('md-elevated-card');
+                card.className = `achievement-card ${isUnlocked ? 'unlocked' : 'locked'}`;
+                card.innerHTML = `
+                    <div class="achievement-rarity rarity-${achievement.rarity}">
+                        ${achievement.rarity.toUpperCase()}
+                    </div>
+                    <div style="padding: 16px;">
+                        <div class="achievement-icon">
+                            <md-icon style="font-size: 32px;">${achievement.icon}</md-icon>
+                        </div>
+                        <h3 class="title-medium">${achievement.title}</h3>
+                        <p class="body-medium">${achievement.description}</p>
+                        ${isUnlocked ? 
+                            '<md-icon style="color: #4CAF50;">check_circle</md-icon> Получено' : 
+                            '<md-icon style="color: #9E9E9E;">lock</md-icon> Заблокировано'
+                        }
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Функция для проверки достижений
+        async function checkAchievements(cardId, stats) {
+            const updates = {};
+            let changed = false;
+
+            // Создаем объект с актуальной статистикой
+            const currentStats = {
+                transactions: stats.stats?.transactions || 0,
+                totalSpent: stats.stats?.totalSpent || 0,
+                balance: stats.balance || 0,
+                registrationDate: stats.createdAt || Date.now(),
+                messagesSent: stats.stats?.messagesSent || 0,
+                investmentProfit: stats.stats?.investmentProfit || 0
+            };
+
+            Object.entries(achievements).forEach(([id, achievement]) => {
+                if (achievement.condition(currentStats)) {
+                    if (!stats.achievements?.[id]) {
+                        updates[`cards/${cardId}/achievements/${id}`] = true;
+                        changed = true;
+                    }
+                }
+            });
+
+            if (changed) {
+                await update(ref(database), updates);
+                showNotification('Получено новое достижение!');
+            }
+        }
+
+        // Делаем функцию обычной
+        function initAchievements(cardId) {
+            const statsRef = ref(database, `cards/${cardId}`);
+            onValue(statsRef, (snapshot) => {
+                const stats = snapshot.val() || {};
+                renderAchievements(cardId, stats.achievements);
+                checkAchievements(cardId, stats);
+            });
+
+            // Обработчик для кнопки помощи
+            document.getElementById('achievements-help').addEventListener('click', () => {
+                const dialog = document.createElement('md-dialog');
+                dialog.innerHTML = `
+                    <div slot="headline">Как получать достижения</div>
+                    <div slot="content">
+                        <p>Достижения разблокируются автоматически при выполнении определенных условий:</p>
+                        <ul>
+                            <li>Совершайте транзакции</li>
+                            <li>Накапливайте средства</li>
+                            <li>Общайтесь в чате</li>
+                            <li>Инвестируйте</li>
+                        </ul>
+                        <p>Некоторые достижения очень редкие и требуют особых условий!</p>
+                    </div>
+                    <div slot="actions">
+                        <md-text-button dialog-action="close">Закрыть</md-text-button>
+                    </div>
+                `;
+                document.body.appendChild(dialog);
+                dialog.show();
+            });
         }
     </script>
 </body>
