@@ -1005,15 +1005,23 @@
         // Функция для получения cardId из URL
         function getCardIdFromUrl() {
             const urlParams = new URLSearchParams(window.location.search);
-            const cardId = urlParams.get('id') || localStorage.getItem('currentCardId');
+            const cardId = urlParams.get('id');
             
-            if (!cardId) {
-                window.location.href = 'index.html';
-                return null;
+            if (cardId) {
+                // Сохраняем ID карты в localStorage
+                localStorage.setItem('currentCardId', cardId);
+                return cardId;
+            }
+            
+            // Если нет ID в URL, пробуем получить из localStorage
+            const savedCardId = localStorage.getItem('currentCardId');
+            if (savedCardId) {
+                return savedCardId;
             }
 
-            localStorage.setItem('currentCardId', cardId);
-            return cardId;
+            // Если нигде нет ID, перенаправляем на главную
+            window.location.href = 'index.html';
+            return null;
         }
 
         // Функция для инициализации баланса
@@ -1108,7 +1116,10 @@
             }
 
             // Добавляем обработчик для кнопки выхода
-            document.getElementById('logout-button').addEventListener('click', logout);
+            document.getElementById('logout-button').addEventListener('click', () => {
+                localStorage.removeItem('currentCardId'); // Очищаем ID при выходе
+                window.location.href = 'index.html';
+            });
         });
 
         // Загрузка сообщения дня
