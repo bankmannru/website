@@ -1,0 +1,1140 @@
+<<<<<<< HEAD
+/* Цветовая схема Material Design 3 */
+@property --md-ref-palette-primary40 { syntax: '<color>'; inherits: false; initial-value: #6750A4; }
+@property --md-ref-palette-primary80 { syntax: '<color>'; inherits: false; initial-value: #D0BCFF; }
+@property --md-ref-palette-primary90 { syntax: '<color>'; inherits: false; initial-value: #EADDFF; }
+@property --md-ref-palette-primary100 { syntax: '<color>'; inherits: false; initial-value: #FFFFFF; }
+@property --md-ref-palette-primary20 { syntax: '<color>'; inherits: false; initial-value: #381E72; }
+@property --md-ref-palette-primary30 { syntax: '<color>'; inherits: false; initial-value: #4F378B; }
+@property --md-ref-palette-primary10 { syntax: '<color>'; inherits: false; initial-value: #21005D; }
+
+@property --md-ref-palette-neutral98 { syntax: '<color>'; inherits: false; initial-value: #FDF8FD; }
+@property --md-ref-palette-neutral6 { syntax: '<color>'; inherits: false; initial-value: #1C1B1F; }
+@property --md-ref-palette-neutral90 { syntax: '<color>'; inherits: false; initial-value: #E6E1E5; }
+@property --md-ref-palette-neutral10 { syntax: '<color>'; inherits: false; initial-value: #1C1B1F; }
+
+@property --md-ref-palette-neutral-variant90 { syntax: '<color>'; inherits: false; initial-value: #E7E0EC; }
+@property --md-ref-palette-neutral-variant30 { syntax: '<color>'; inherits: false; initial-value: #49454F; }
+@property --md-ref-palette-neutral-variant80 { syntax: '<color>'; inherits: false; initial-value: #CAC4D0; }
+@property --md-ref-palette-neutral-variant50 { syntax: '<color>'; inherits: false; initial-value: #79747E; }
+@property --md-ref-palette-neutral-variant60 { syntax: '<color>'; inherits: false; initial-value: #938F99; }
+
+@property --md-ref-palette-error40 { syntax: '<color>'; inherits: false; initial-value: #B3261E; }
+@property --md-ref-palette-error80 { syntax: '<color>'; inherits: false; initial-value: #F2B8B5; }
+@property --md-ref-palette-error20 { syntax: '<color>'; inherits: false; initial-value: #601410; }
+@property --md-ref-palette-error100 { syntax: '<color>'; inherits: false; initial-value: #FFFFFF; }
+
+@property --md-ref-palette-error-container { syntax: '<color>'; inherits: false; initial-value: #F9DEDC; }
+@property --md-ref-palette-on-error-container { syntax: '<color>'; inherits: false; initial-value: #410E0B; }
+@property --md-ref-palette-error-container-dark { syntax: '<color>'; inherits: false; initial-value: #93000A; }
+@property --md-ref-palette-on-error-container-dark { syntax: '<color>'; inherits: false; initial-value: #FFB4AB; }
+
+:root {
+    color-scheme: light;
+    
+    /* Системные цвета Material Design 3 */
+    --md-sys-color-primary: var(--md-ref-palette-primary40);
+    --md-sys-color-on-primary: var(--md-ref-palette-primary100);
+    --md-sys-color-primary-container: var(--md-ref-palette-primary90);
+    --md-sys-color-on-primary-container: var(--md-ref-palette-primary10);
+    --md-sys-color-surface: var(--md-ref-palette-neutral98);
+    --md-sys-color-surface-variant: var(--md-ref-palette-neutral-variant90);
+    --md-sys-color-on-surface: var(--md-ref-palette-neutral10);
+    --md-sys-color-on-surface-variant: var(--md-ref-palette-neutral-variant30);
+    --md-sys-color-outline: var(--md-ref-palette-neutral-variant50);
+    --md-sys-color-error: var(--md-ref-palette-error40);
+    --md-sys-color-on-error: var(--md-ref-palette-error100);
+    --md-elevation-level1: 0 1px 3px rgba(0,0,0,0.12);
+    --md-elevation-level2: 0 3px 6px rgba(0,0,0,0.15);
+    --md-sys-color-error-container: var(--md-ref-palette-error-container);
+    --md-sys-color-on-error-container: var(--md-ref-palette-on-error-container);
+}
+
+.dark-theme {
+    color-scheme: dark;
+    
+    --md-sys-color-primary: var(--md-ref-palette-primary80);
+    --md-sys-color-on-primary: var(--md-ref-palette-primary20);
+    --md-sys-color-primary-container: var(--md-ref-palette-primary30);
+    --md-sys-color-on-primary-container: var(--md-ref-palette-primary90);
+    --md-sys-color-surface: var(--md-ref-palette-neutral6);
+    --md-sys-color-surface-variant: var(--md-ref-palette-neutral-variant30);
+    --md-sys-color-on-surface: var(--md-ref-palette-neutral90);
+    --md-sys-color-on-surface-variant: var(--md-ref-palette-neutral-variant80);
+    --md-sys-color-outline: var(--md-ref-palette-neutral-variant60);
+    --md-sys-color-error: var(--md-ref-palette-error80);
+    --md-sys-color-on-error: var(--md-ref-palette-error20);
+    --md-sys-color-error-container: var(--md-ref-palette-error-container-dark);
+    --md-sys-color-on-error-container: var(--md-ref-palette-on-error-container-dark);
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--md-sys-color-surface);
+    color: var(--md-sys-color-on-surface);
+    transition: background-color 0.3s, color 0.3s;
+    overflow: hidden;
+}
+
+nav {
+    background-color: var(--md-sys-color-surface);
+    box-shadow: var(--md-elevation-level1);
+    padding: 8px 0;
+    width: 100%;
+}
+
+.nav-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.nav-content h1 {
+    font-size: 22px;
+    font-weight: 500;
+    margin: 0;
+}
+
+.nav-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.icon-button {
+    border: none;
+    background: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--md-sys-color-on-surface-variant);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.icon-button:hover {
+    background: var(--md-sys-color-surface-variant);
+}
+
+.icon-button:active {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+}
+
+.container {
+    flex: 1;
+    height: calc(100vh - 64px);
+    overflow: hidden;
+    padding: 0;
+}
+
+.chat-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--md-sys-color-surface);
+}
+
+.messages-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--md-sys-color-outline) transparent;
+}
+
+.messages-area::-webkit-scrollbar {
+    width: 6px;
+}
+
+.messages-area::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.messages-area::-webkit-scrollbar-thumb {
+    background-color: var(--md-sys-color-outline);
+    border-radius: 3px;
+}
+
+.message {
+    max-width: 70%;
+    padding: 12px 16px;
+    border-radius: 16px;
+    position: relative;
+}
+
+.message.received {
+    background: var(--md-sys-color-surface-variant);
+    color: var(--md-sys-color-on-surface-variant);
+    align-self: flex-start;
+}
+
+.message.sent {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    align-self: flex-end;
+}
+
+.message-image img {
+    max-width: 100%;
+    border-radius: 8px;
+}
+
+.message-info {
+    font-size: 12px;
+    margin-top: 4px;
+    opacity: 0.7;
+}
+
+.input-area {
+    padding: 8px 16px;
+    background: var(--md-sys-color-surface);
+    border-top: 1px solid var(--md-sys-color-outline);
+}
+
+.input-area form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Стили для текстового поля */
+.input-area md-filled-text-field {
+    flex: 1;
+    --md-filled-text-field-container-shape: 4px;
+    --md-filled-text-field-container-color: var(--md-sys-color-surface-variant);
+    --md-filled-text-field-focus-active-indicator-color: var(--md-sys-color-primary);
+    --md-filled-text-field-input-text-color: var(--md-sys-color-on-surface);
+    --md-filled-text-field-focus-input-text-color: var(--md-sys-color-on-surface);
+    --md-filled-text-field-label-text-color: var(--md-sys-color-on-surface-variant);
+    --md-filled-text-field-hover-input-text-color: var(--md-sys-color-on-surface);
+    --md-filled-text-field-hover-state-layer-color: var(--md-sys-color-on-surface-variant);
+    --md-filled-text-field-focus-label-text-color: var(--md-sys-color-primary);
+    --md-filled-text-field-focus-supporting-text-color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Стили для иконок в текстовом поле */
+.input-area md-filled-text-field::part(leading-icon),
+.input-area md-filled-text-field::part(trailing-icon) {
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Стили для кнопок */
+.input-area md-icon-button {
+    --md-icon-button-icon-size: 24px;
+}
+
+/* Убираем старые стили */
+.input-area .input-field,
+.input-area .icon-button {
+    display: none;
+}
+
+/* Settings Dialog */
+.settings-dialog {
+    border: none;
+    border-radius: 28px;
+    padding: 24px;
+    background: var(--md-sys-color-surface);
+    color: var(--md-sys-color-on-surface);
+    min-width: 280px;
+}
+
+.settings-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.dialog-header h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 500;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-radius: 16px;
+    background: var(--md-sys-color-surface-variant);
+    margin-bottom: 8px;
+}
+
+.setting-item:last-child {
+    margin-bottom: 0;
+}
+
+.setting-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.setting-title {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.setting-description {
+    font-size: 14px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.font-size-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#font-size-value {
+    min-width: 48px;
+    text-align: center;
+}
+
+.nickname-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.nickname-input input {
+    flex: 1;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 16px;
+    background: var(--md-sys-color-surface-variant);
+    color: var(--md-sys-color-on-surface);
+    font-size: 16px;
+    line-height: 24px;
+    transition: all 0.2s ease;
+}
+
+.nickname-input input:focus {
+    outline: none;
+    background: var(--md-sys-color-surface);
+    box-shadow: 0 0 0 2px var(--md-sys-color-primary);
+}
+
+.danger-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    background: #DC3545;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.danger-button:hover {
+    background: #BB2D3B;
+}
+
+/* Switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 32px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--md-sys-color-surface-variant);
+    transition: .3s;
+    border-radius: 16px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 24px;
+    width: 24px;
+    left: 4px;
+    bottom: 4px;
+    background-color: var(--md-sys-color-outline);
+    transition: .3s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--md-sys-color-primary);
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
+    background-color: var(--md-sys-color-on-primary);
+}
+
+@media only screen and (max-width: 600px) {
+    .message {
+        max-width: 85%;
+    }
+    
+    .input-area {
+        padding: 12px;
+    }
+}
+
+/* Добавьте эти стили к существующим */
+.message-image {
+    max-width: 300px;
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+.message-image img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 8px;
+    transition: transform 0.3s ease;
+}
+
+.message-image img:hover {
+    transform: scale(1.02);
+}
+
+/* Добавьте эти стили к существующим */
+.login-dialog {
+    border: none;
+    border-radius: 28px;
+    padding: 32px;
+    background: var(--md-sys-color-surface);
+    color: var(--md-sys-color-on-surface);
+    min-width: 320px;
+    text-align: center;
+}
+
+.login-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin-top: 24px;
+}
+
+.login-form .input-field {
+    background: var(--md-sys-color-surface-variant);
+    border-radius: 16px;
+    padding: 0 16px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+}
+
+.login-form .input-field:focus-within {
+    background: var(--md-sys-color-surface);
+    box-shadow: 0 0 0 2px var(--md-sys-color-primary);
+}
+
+.login-form input {
+    width: 100%;
+    border: none;
+    background: none;
+    padding: 16px 0;
+    color: var(--md-sys-color-on-surface);
+    font-size: 16px;
+    line-height: 24px;
+    text-align: center;
+}
+
+.login-form input:focus {
+    outline: none;
+}
+
+.primary-button {
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    border: none;
+    border-radius: 24px;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.primary-button:hover {
+    opacity: 0.9;
+}
+
+.primary-button:disabled {
+    background: var(--md-sys-color-surface-variant);
+    color: var(--md-sys-color-on-surface-variant);
+    cursor: not-allowed;
+}
+
+/* Обновляем стили для текстовых полей */
+.input-field {
+    position: relative;
+    background: var(--md-sys-color-surface-variant);
+    border-radius: 16px;
+    padding: 0 16px;
+    transition: all 0.2s ease;
+}
+
+.input-field:focus-within {
+    background: var(--md-sys-color-surface);
+    box-shadow: 0 0 0 2px var(--md-sys-color-primary);
+}
+
+.input-field input {
+    width: 100%;
+    border: none;
+    background: none;
+    padding: 12px 0;
+    color: var(--md-sys-color-on-surface);
+    font-size: 16px;
+    line-height: 24px;
+}
+
+.input-field input::placeholder {
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.input-field input:focus {
+    outline: none;
+}
+
+/* Утилиты */
+.error {
+    --md-filled-tonal-button-container-color: var(--md-sys-color-error-container);
+    --md-filled-tonal-button-label-text-color: var(--md-sys-color-on-error-container);
+}
+
+md-dialog {
+    --md-dialog-container-color: var(--md-sys-color-surface);
+    --md-dialog-container-shape: 28px;
+    --md-dialog-headline-color: var(--md-sys-color-on-surface);
+    --md-dialog-supporting-text-color: var(--md-sys-color-on-surface-variant);
+    --md-dialog-container-elevation: var(--md-elevation-level2);
+}
+
+md-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.6);
+}
+
+/* Стили для Material Web Components в диалоге */
+md-dialog md-outlined-text-field {
+    --md-outlined-text-field-container-shape: 20px;
+    --md-outlined-text-field-outline-color: var(--md-sys-color-outline);
+    --md-outlined-text-field-label-text-color: var(--md-sys-color-on-surface-variant);
+}
+
+md-dialog md-filled-tonal-button {
+    --md-filled-tonal-button-container-shape: 20px;
+}
+
+md-dialog md-icon-button {
+    --md-icon-button-icon-color: var(--md-sys-color-on-surface-variant);
+}
+
+md-dialog md-switch {
+    --md-switch-selected-handle-color: var(--md-sys-color-primary);
+    --md-switch-selected-track-color: var(--md-sys-color-primary-container);
+    --md-switch-unselected-handle-color: var(--md-sys-color-outline);
+    --md-switch-unselected-track-color: var(--md-sys-color-surface-variant);
+=======
+/* Цветовая схема Material Design 3 */
+@property --md-ref-palette-primary40 { syntax: '<color>'; inherits: false; initial-value: #6750A4; }
+@property --md-ref-palette-primary80 { syntax: '<color>'; inherits: false; initial-value: #D0BCFF; }
+@property --md-ref-palette-primary90 { syntax: '<color>'; inherits: false; initial-value: #EADDFF; }
+@property --md-ref-palette-primary100 { syntax: '<color>'; inherits: false; initial-value: #FFFFFF; }
+@property --md-ref-palette-primary20 { syntax: '<color>'; inherits: false; initial-value: #381E72; }
+@property --md-ref-palette-primary30 { syntax: '<color>'; inherits: false; initial-value: #4F378B; }
+@property --md-ref-palette-primary10 { syntax: '<color>'; inherits: false; initial-value: #21005D; }
+
+@property --md-ref-palette-neutral98 { syntax: '<color>'; inherits: false; initial-value: #FDF8FD; }
+@property --md-ref-palette-neutral6 { syntax: '<color>'; inherits: false; initial-value: #1C1B1F; }
+@property --md-ref-palette-neutral90 { syntax: '<color>'; inherits: false; initial-value: #E6E1E5; }
+@property --md-ref-palette-neutral10 { syntax: '<color>'; inherits: false; initial-value: #1C1B1F; }
+
+@property --md-ref-palette-neutral-variant90 { syntax: '<color>'; inherits: false; initial-value: #E7E0EC; }
+@property --md-ref-palette-neutral-variant30 { syntax: '<color>'; inherits: false; initial-value: #49454F; }
+@property --md-ref-palette-neutral-variant80 { syntax: '<color>'; inherits: false; initial-value: #CAC4D0; }
+@property --md-ref-palette-neutral-variant50 { syntax: '<color>'; inherits: false; initial-value: #79747E; }
+@property --md-ref-palette-neutral-variant60 { syntax: '<color>'; inherits: false; initial-value: #938F99; }
+
+@property --md-ref-palette-error40 { syntax: '<color>'; inherits: false; initial-value: #B3261E; }
+@property --md-ref-palette-error80 { syntax: '<color>'; inherits: false; initial-value: #F2B8B5; }
+@property --md-ref-palette-error20 { syntax: '<color>'; inherits: false; initial-value: #601410; }
+@property --md-ref-palette-error100 { syntax: '<color>'; inherits: false; initial-value: #FFFFFF; }
+
+@property --md-ref-palette-error-container { syntax: '<color>'; inherits: false; initial-value: #F9DEDC; }
+@property --md-ref-palette-on-error-container { syntax: '<color>'; inherits: false; initial-value: #410E0B; }
+@property --md-ref-palette-error-container-dark { syntax: '<color>'; inherits: false; initial-value: #93000A; }
+@property --md-ref-palette-on-error-container-dark { syntax: '<color>'; inherits: false; initial-value: #FFB4AB; }
+
+:root {
+    color-scheme: light;
+    
+    /* Системные цвета Material Design 3 */
+    --md-sys-color-primary: var(--md-ref-palette-primary40);
+    --md-sys-color-on-primary: var(--md-ref-palette-primary100);
+    --md-sys-color-primary-container: var(--md-ref-palette-primary90);
+    --md-sys-color-on-primary-container: var(--md-ref-palette-primary10);
+    --md-sys-color-surface: var(--md-ref-palette-neutral98);
+    --md-sys-color-surface-variant: var(--md-ref-palette-neutral-variant90);
+    --md-sys-color-on-surface: var(--md-ref-palette-neutral10);
+    --md-sys-color-on-surface-variant: var(--md-ref-palette-neutral-variant30);
+    --md-sys-color-outline: var(--md-ref-palette-neutral-variant50);
+    --md-sys-color-error: var(--md-ref-palette-error40);
+    --md-sys-color-on-error: var(--md-ref-palette-error100);
+    --md-elevation-level1: 0 1px 3px rgba(0,0,0,0.12);
+    --md-elevation-level2: 0 3px 6px rgba(0,0,0,0.15);
+    --md-sys-color-error-container: var(--md-ref-palette-error-container);
+    --md-sys-color-on-error-container: var(--md-ref-palette-on-error-container);
+}
+
+.dark-theme {
+    color-scheme: dark;
+    
+    --md-sys-color-primary: var(--md-ref-palette-primary80);
+    --md-sys-color-on-primary: var(--md-ref-palette-primary20);
+    --md-sys-color-primary-container: var(--md-ref-palette-primary30);
+    --md-sys-color-on-primary-container: var(--md-ref-palette-primary90);
+    --md-sys-color-surface: var(--md-ref-palette-neutral6);
+    --md-sys-color-surface-variant: var(--md-ref-palette-neutral-variant30);
+    --md-sys-color-on-surface: var(--md-ref-palette-neutral90);
+    --md-sys-color-on-surface-variant: var(--md-ref-palette-neutral-variant80);
+    --md-sys-color-outline: var(--md-ref-palette-neutral-variant60);
+    --md-sys-color-error: var(--md-ref-palette-error80);
+    --md-sys-color-on-error: var(--md-ref-palette-error20);
+    --md-sys-color-error-container: var(--md-ref-palette-error-container-dark);
+    --md-sys-color-on-error-container: var(--md-ref-palette-on-error-container-dark);
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--md-sys-color-surface);
+    color: var(--md-sys-color-on-surface);
+    transition: background-color 0.3s, color 0.3s;
+    overflow: hidden;
+}
+
+nav {
+    background-color: var(--md-sys-color-surface);
+    box-shadow: var(--md-elevation-level1);
+    padding: 8px 0;
+    width: 100%;
+}
+
+.nav-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.nav-content h1 {
+    font-size: 22px;
+    font-weight: 500;
+    margin: 0;
+}
+
+.nav-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.icon-button {
+    border: none;
+    background: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--md-sys-color-on-surface-variant);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.icon-button:hover {
+    background: var(--md-sys-color-surface-variant);
+}
+
+.icon-button:active {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+}
+
+.container {
+    flex: 1;
+    height: calc(100vh - 64px);
+    overflow: hidden;
+    padding: 0;
+}
+
+.chat-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--md-sys-color-surface);
+}
+
+.messages-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--md-sys-color-outline) transparent;
+}
+
+.messages-area::-webkit-scrollbar {
+    width: 6px;
+}
+
+.messages-area::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.messages-area::-webkit-scrollbar-thumb {
+    background-color: var(--md-sys-color-outline);
+    border-radius: 3px;
+}
+
+.message {
+    max-width: 70%;
+    padding: 12px 16px;
+    border-radius: 16px;
+    position: relative;
+}
+
+.message.received {
+    background: var(--md-sys-color-surface-variant);
+    color: var(--md-sys-color-on-surface-variant);
+    align-self: flex-start;
+}
+
+.message.sent {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    align-self: flex-end;
+}
+
+.message-image img {
+    max-width: 100%;
+    border-radius: 8px;
+}
+
+.message-info {
+    font-size: 12px;
+    margin-top: 4px;
+    opacity: 0.7;
+}
+
+.input-area {
+    padding: 8px 16px;
+    background: var(--md-sys-color-surface);
+    border-top: 1px solid var(--md-sys-color-outline);
+}
+
+.input-area form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Стили для текстового поля */
+.input-area md-filled-text-field {
+    flex: 1;
+    --md-filled-text-field-container-shape: 4px;
+    --md-filled-text-field-container-color: var(--md-sys-color-surface-variant);
+    --md-filled-text-field-focus-active-indicator-color: var(--md-sys-color-primary);
+    --md-filled-text-field-input-text-color: var(--md-sys-color-on-surface);
+    --md-filled-text-field-focus-input-text-color: var(--md-sys-color-on-surface);
+    --md-filled-text-field-label-text-color: var(--md-sys-color-on-surface-variant);
+    --md-filled-text-field-hover-input-text-color: var(--md-sys-color-on-surface);
+    --md-filled-text-field-hover-state-layer-color: var(--md-sys-color-on-surface-variant);
+    --md-filled-text-field-focus-label-text-color: var(--md-sys-color-primary);
+    --md-filled-text-field-focus-supporting-text-color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Стили для иконок в текстовом поле */
+.input-area md-filled-text-field::part(leading-icon),
+.input-area md-filled-text-field::part(trailing-icon) {
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Стили для кнопок */
+.input-area md-icon-button {
+    --md-icon-button-icon-size: 24px;
+}
+
+/* Убираем старые стили */
+.input-area .input-field,
+.input-area .icon-button {
+    display: none;
+}
+
+/* Settings Dialog */
+.settings-dialog {
+    border: none;
+    border-radius: 28px;
+    padding: 24px;
+    background: var(--md-sys-color-surface);
+    color: var(--md-sys-color-on-surface);
+    min-width: 280px;
+}
+
+.settings-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.dialog-header h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 500;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-radius: 16px;
+    background: var(--md-sys-color-surface-variant);
+    margin-bottom: 8px;
+}
+
+.setting-item:last-child {
+    margin-bottom: 0;
+}
+
+.setting-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.setting-title {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.setting-description {
+    font-size: 14px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.font-size-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#font-size-value {
+    min-width: 48px;
+    text-align: center;
+}
+
+.nickname-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.nickname-input input {
+    flex: 1;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 16px;
+    background: var(--md-sys-color-surface-variant);
+    color: var(--md-sys-color-on-surface);
+    font-size: 16px;
+    line-height: 24px;
+    transition: all 0.2s ease;
+}
+
+.nickname-input input:focus {
+    outline: none;
+    background: var(--md-sys-color-surface);
+    box-shadow: 0 0 0 2px var(--md-sys-color-primary);
+}
+
+.danger-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    background: #DC3545;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.danger-button:hover {
+    background: #BB2D3B;
+}
+
+/* Switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 32px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--md-sys-color-surface-variant);
+    transition: .3s;
+    border-radius: 16px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 24px;
+    width: 24px;
+    left: 4px;
+    bottom: 4px;
+    background-color: var(--md-sys-color-outline);
+    transition: .3s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--md-sys-color-primary);
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
+    background-color: var(--md-sys-color-on-primary);
+}
+
+@media only screen and (max-width: 600px) {
+    .message {
+        max-width: 85%;
+    }
+    
+    .input-area {
+        padding: 12px;
+    }
+}
+
+/* Добавьте эти стили к существующим */
+.message-image {
+    max-width: 300px;
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+.message-image img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 8px;
+    transition: transform 0.3s ease;
+}
+
+.message-image img:hover {
+    transform: scale(1.02);
+}
+
+/* Добавьте эти стили к существующим */
+.login-dialog {
+    border: none;
+    border-radius: 28px;
+    padding: 32px;
+    background: var(--md-sys-color-surface);
+    color: var(--md-sys-color-on-surface);
+    min-width: 320px;
+    text-align: center;
+}
+
+.login-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin-top: 24px;
+}
+
+.login-form .input-field {
+    background: var(--md-sys-color-surface-variant);
+    border-radius: 16px;
+    padding: 0 16px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+}
+
+.login-form .input-field:focus-within {
+    background: var(--md-sys-color-surface);
+    box-shadow: 0 0 0 2px var(--md-sys-color-primary);
+}
+
+.login-form input {
+    width: 100%;
+    border: none;
+    background: none;
+    padding: 16px 0;
+    color: var(--md-sys-color-on-surface);
+    font-size: 16px;
+    line-height: 24px;
+    text-align: center;
+}
+
+.login-form input:focus {
+    outline: none;
+}
+
+.primary-button {
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    border: none;
+    border-radius: 24px;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.primary-button:hover {
+    opacity: 0.9;
+}
+
+.primary-button:disabled {
+    background: var(--md-sys-color-surface-variant);
+    color: var(--md-sys-color-on-surface-variant);
+    cursor: not-allowed;
+}
+
+/* Обновляем стили для текстовых полей */
+.input-field {
+    position: relative;
+    background: var(--md-sys-color-surface-variant);
+    border-radius: 16px;
+    padding: 0 16px;
+    transition: all 0.2s ease;
+}
+
+.input-field:focus-within {
+    background: var(--md-sys-color-surface);
+    box-shadow: 0 0 0 2px var(--md-sys-color-primary);
+}
+
+.input-field input {
+    width: 100%;
+    border: none;
+    background: none;
+    padding: 12px 0;
+    color: var(--md-sys-color-on-surface);
+    font-size: 16px;
+    line-height: 24px;
+}
+
+.input-field input::placeholder {
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+.input-field input:focus {
+    outline: none;
+}
+
+/* Утилиты */
+.error {
+    --md-filled-tonal-button-container-color: var(--md-sys-color-error-container);
+    --md-filled-tonal-button-label-text-color: var(--md-sys-color-on-error-container);
+}
+
+md-dialog {
+    --md-dialog-container-color: var(--md-sys-color-surface);
+    --md-dialog-container-shape: 28px;
+    --md-dialog-headline-color: var(--md-sys-color-on-surface);
+    --md-dialog-supporting-text-color: var(--md-sys-color-on-surface-variant);
+    --md-dialog-container-elevation: var(--md-elevation-level2);
+}
+
+md-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.6);
+}
+
+/* Стили для Material Web Components в диалоге */
+md-dialog md-outlined-text-field {
+    --md-outlined-text-field-container-shape: 20px;
+    --md-outlined-text-field-outline-color: var(--md-sys-color-outline);
+    --md-outlined-text-field-label-text-color: var(--md-sys-color-on-surface-variant);
+}
+
+md-dialog md-filled-tonal-button {
+    --md-filled-tonal-button-container-shape: 20px;
+}
+
+md-dialog md-icon-button {
+    --md-icon-button-icon-color: var(--md-sys-color-on-surface-variant);
+}
+
+md-dialog md-switch {
+    --md-switch-selected-handle-color: var(--md-sys-color-primary);
+    --md-switch-selected-track-color: var(--md-sys-color-primary-container);
+    --md-switch-unselected-handle-color: var(--md-sys-color-outline);
+    --md-switch-unselected-track-color: var(--md-sys-color-surface-variant);
+>>>>>>> 58afe73bc799a44fad7f9cc6e3f1e7079ea65410
+} 

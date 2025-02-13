@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Миграция в Firestore</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #1E1E1E;
+            color: white;
+        }
+        .log {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .progress {
+            margin-top: 20px;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+        }
+        .success {
+            color: #4CAF50;
+        }
+        .error {
+            color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <h1>Миграция данных в Firestore</h1>
+    <button id="startButton">Начать миграцию</button>
+    <div id="progress" class="progress" style="display: none;">
+        Выполняется миграция...
+    </div>
+    <div id="log" class="log"></div>
+
+    <script type="module">
+        import { migrateData } from './migrate-to-firestore.js';
+
+        document.getElementById('startButton').addEventListener('click', async () => {
+            const log = document.getElementById('log');
+            const button = document.getElementById('startButton');
+            const progress = document.getElementById('progress');
+            
+            try {
+                button.disabled = true;
+                progress.style.display = 'block';
+                log.textContent = 'Начинаем миграцию...\n';
+                
+                const result = await migrateData();
+                
+                log.innerHTML += `<div class="success">${result}</div>`;
+            } catch (error) {
+                log.innerHTML += `<div class="error">Ошибка при миграции: ${error.message}</div>`;
+            } finally {
+                button.disabled = false;
+                progress.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html> 

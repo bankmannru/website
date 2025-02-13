@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Облако Маннру</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
+    <script type="importmap">
+      {
+        "imports": {
+          "@material/web/": "https://esm.run/@material/web/"
+        }
+      }
+    </script>
+    <script type="module">
+        import '@material/web/all.js';
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getStorage, ref, uploadBytes, listAll, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+        import { firebaseConfig } from './firebase-config.js';
+        import { auth, getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        const app = initializeApp(firebaseConfig);
+        const storage = getStorage(app);
+
+        // Добавим аутентификацию перед загрузкой файлов
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Анонимная аутентификация для тестирования
+                await signInAnonymously(auth);
+                loadFiles();
+            } catch (error) {
+                console.error("Ошибка аутентификации:", error);
+                showNotification('Ошибка аутентификации', true);
+            }
+        });
+
+        // Обновим функцию uploadFile
+        window.uploadFile = async function() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            try {
+                // Проверяем аутентификацию
+                if (!auth.currentUser) {
+                    throw new Error('Требуется аутентификация');
+                }
+
+                const storageRef = ref(storage, `files/${file.name}`);
+                await uploadBytes(storageRef, file);
+                showNotification('Файл успешно загружен');
+                loadFiles();
+            } catch (error) {
+                console.error("Ошибка загрузки:", error);
+                showNotification('Ошибка при загрузке файла', true);
+            }
+        };
+
+        // Обновим функцию loadFiles
+        window.loadFiles = async function() {
+            const filesList = document.getElementById('filesList');
+            filesList.innerHTML = '';
+            
+            try {
+                // Проверяем аутентификацию
+                if (!auth.currentUser) {
+                    throw new Error('Требуется аутентификация');
+                }
+
+                const listRef = ref(storage, 'files');
+                const res = await listAll(listRef);
+                
+                for (const itemRef of res.items) {
+                    const url = await getDownloadURL(itemRef);
+                    const size = await getFileSize(itemRef);
+                    const fileElement = createFileElement(itemRef.name, url, size);
+                    filesList.appendChild(fileElement);
+                }
+            } catch (error) {
+                console.error("Ошибка загрузки списка:", error);
+                showNotification('Ошибка при загрузке списка файлов', true);
+            }
+        };
+
+        // Получение размера файла
+        async function getFileSize(fileRef) {
+            try {
+                const metadata = await fileRef.getMetadata();
+                return formatFileSize(metadata.size);
+            } catch {
+                return 'Неизвестно';
+            }
+        }
+
+        // Форматирование размера файла
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Создание элемента файла
+        function createFileElement(name, url, size) {
+            const div = document.createElement('div');
+            div.className = 'file-item';
+            
+            const icon = getFileIcon(name);
+            
+            div.innerHTML = `
+                <div class="file-info">
+                    <md-icon>${icon}</md-icon>
+                    <div class="file-details">
+                        <div class="file-name">${name}</div>
+                        <div class="file-size">${size}</div>
+                    </div>
+                </div>
+                <div class="file-actions">
+                    <md-filled-tonal-button onclick="window.location.href='${url}'">
+                        <md-icon slot="icon">download</md-icon>
+                        Скачать
+                    </md-filled-tonal-button>
+                    <md-filled-tonal-button onclick="deleteFile('${name}')" class="delete-button">
+                        <md-icon slot="icon">delete</md-icon>
+                        Удалить
+                    </md-filled-tonal-button>
+                </div>
+            `;
+            return div;
+        }
+
+        // Получение иконки файла
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const icons = {
+                pdf: 'picture_as_pdf',
+                doc: 'description',
+                docx: 'description',
+                xls: 'table_chart',
+                xlsx: 'table_chart',
+                jpg: 'image',
+                jpeg: 'image',
+                png: 'image',
+                gif: 'gif',
+                zip: 'folder_zip',
+                rar: 'folder_zip',
+                txt: 'article',
+                mp3: 'audio_file',
+                mp4: 'video_file'
+            };
+            return icons[ext] || 'insert_drive_file';
+        }
+
+        // Удаление файла
+        window.deleteFile = async function(filename) {
+            if (!confirm('Вы уверены, что хотите удалить этот файл?')) return;
+            
+            try {
+                const fileRef = ref(storage, `files/${filename}`);
+                await deleteObject(fileRef);
+                showNotification('Файл успешно удален');
+                loadFiles();
+            } catch (error) {
+                showNotification('Ошибка при удалении файла', true);
+            }
+        };
+
+        // Уведомления
+        function showNotification(message, isError = false) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${isError ? 'error' : 'success'}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+    </script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Roboto', sans-serif;
+            background: #1E1E1E;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .upload-section {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        #filesList {
+            display: grid;
+            gap: 15px;
+        }
+
+        .file-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .file-details {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .file-name {
+            font-weight: 500;
+        }
+
+        .file-size {
+            font-size: 0.9em;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 25px;
+            border-radius: 8px;
+            animation: slideUp 0.3s ease;
+        }
+
+        .notification.success {
+            background: #4CAF50;
+        }
+
+        .notification.error {
+            background: #f44336;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translate(-50%, 100%);
+                opacity: 0;
+            }
+            to {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+        }
+
+        .delete-button {
+            --md-sys-color-primary: #f44336;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .upload-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 8px 16px;
+            background: var(--md-sys-color-primary);
+            color: white;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Облако Маннру</h1>
+            <div class="upload-section">
+                <input type="file" id="fileInput" onchange="uploadFile()">
+                <label for="fileInput" class="upload-label">
+                    <md-icon>upload</md-icon>
+                    Загрузить файл
+                </label>
+            </div>
+        </div>
+        <div id="filesList"></div>
+    </div>
+</body>
+</html> 

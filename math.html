@@ -1,0 +1,540 @@
+<<<<<<< HEAD
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Математика - Банк Маннру</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <script type="importmap">
+      {
+        "imports": {
+          "@material/web/": "https://esm.run/@material/web/"
+        }
+      }
+    </script>
+    <script type="module">
+      import '@material/web/all.js';
+      import { getDatabase, ref, get, update } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+      import { database } from './firebase-config.js';
+
+      const db = database;
+
+      window.gameState = {
+          score: 0,
+          timeLeft: 60,
+          timer: null,
+          currentProblem: null,
+          correctAnswer: null,
+          streak: 0
+      };
+
+      function generateProblem() {
+          const operations = ['+', '-', '*'];
+          const operation = operations[Math.floor(Math.random() * operations.length)];
+          let num1, num2, answer;
+
+          switch(operation) {
+              case '+':
+                  num1 = Math.floor(Math.random() * 100);
+                  num2 = Math.floor(Math.random() * 100);
+                  answer = num1 + num2;
+                  break;
+              case '-':
+                  num1 = Math.floor(Math.random() * 100);
+                  num2 = Math.floor(Math.random() * num1);
+                  answer = num1 - num2;
+                  break;
+              case '*':
+                  num1 = Math.floor(Math.random() * 12);
+                  num2 = Math.floor(Math.random() * 12);
+                  answer = num1 * num2;
+                  break;
+          }
+
+          return {
+              problem: `${num1} ${operation} ${num2} = ?`,
+              answer: answer,
+              options: generateOptions(answer)
+          };
+      }
+
+      function generateOptions(correctAnswer) {
+          const options = [correctAnswer];
+          while (options.length < 4) {
+              const wrong = correctAnswer + Math.floor(Math.random() * 10) * (Math.random() < 0.5 ? 1 : -1);
+              if (!options.includes(wrong)) {
+                  options.push(wrong);
+              }
+          }
+          return options.sort(() => Math.random() - 0.5);
+      }
+
+      window.startGame = function() {
+          const state = window.gameState;
+          state.score = 0;
+          state.timeLeft = 60;
+          state.streak = 0;
+          document.getElementById('score').textContent = state.score;
+          document.getElementById('time').textContent = state.timeLeft;
+          document.getElementById('streak').textContent = state.streak;
+
+          clearInterval(state.timer);
+          state.timer = setInterval(() => {
+              state.timeLeft--;
+              document.getElementById('time').textContent = state.timeLeft;
+              if (state.timeLeft <= 0) {
+                  gameOver();
+              }
+          }, 1000);
+
+          nextProblem();
+      };
+
+      function nextProblem() {
+          const state = window.gameState;
+          const { problem, answer, options } = generateProblem();
+          state.currentProblem = problem;
+          state.correctAnswer = answer;
+
+          document.getElementById('problem').textContent = problem;
+          const buttonsContainer = document.getElementById('options');
+          buttonsContainer.innerHTML = '';
+          
+          options.forEach(option => {
+              const button = document.createElement('md-filled-button');
+              button.textContent = option;
+              button.onclick = () => checkAnswer(option);
+              buttonsContainer.appendChild(button);
+          });
+      }
+
+      window.checkAnswer = function(answer) {
+          const state = window.gameState;
+          if (answer === state.correctAnswer) {
+              state.streak++;
+              state.score += state.streak * 10;
+              document.getElementById('score').textContent = state.score;
+              document.getElementById('streak').textContent = state.streak;
+              document.getElementById('feedback').textContent = `Правильно! +${state.streak * 10} очков`;
+          } else {
+              state.streak = 0;
+              document.getElementById('streak').textContent = state.streak;
+              document.getElementById('feedback').textContent = 'Неправильно!';
+          }
+          nextProblem();
+      };
+
+      async function gameOver() {
+          const state = window.gameState;
+          clearInterval(state.timer);
+          
+          const reward = Math.floor(state.score / 10);
+          const urlParams = new URLSearchParams(window.location.search);
+          const cardId = urlParams.get('cardId');
+          
+          if (!cardId) {
+              alert('Пожалуйста, войдите в аккаунт, чтобы получить награду!');
+              return;
+          }
+          
+          if (reward > 0) {
+              try {
+                  const snapshot = await get(ref(db, `cards/${cardId}`));
+                  const card = snapshot.val();
+                  await update(ref(db), {
+                      [`cards/${cardId}/balance`]: (card.balance || 0) + reward,
+                      [`cards/${cardId}/transactions/${Date.now()}`]: {
+                          type: 'game',
+                          amount: reward,
+                          description: `Выигрыш в игре "Математика" (${state.score} очков)`,
+                          timestamp: Date.now()
+                      }
+                  });
+                  alert(`Игра окончена!\nОчки: ${state.score}\nНаграда: ${reward} МР`);
+              } catch (error) {
+                  console.error('Ошибка при сохранении результата:', error);
+                  alert('Произошла ошибка при сохранении результата');
+              }
+          } else {
+              alert(`Игра окончена!\nОчки: ${state.score}`);
+          }
+      }
+
+      // Запускаем игру при загрузке
+      startGame();
+    </script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            background: #1a1a1a;
+            font-family: 'Roboto', sans-serif;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+            padding: 0 10px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            font-size: 18px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .problem {
+            font-size: 48px;
+            margin: 40px 0;
+            word-break: break-word;
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 20px;
+            margin: 20px auto;
+            max-width: 400px;
+        }
+
+        .feedback {
+            font-size: 24px;
+            margin: 20px 0;
+            min-height: 36px;
+            word-break: break-word;
+        }
+
+        md-filled-button {
+            --md-filled-button-container-color: #4CAF50;
+            font-size: 24px;
+            width: 100%;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 24px;
+                margin: 10px 0;
+            }
+
+            .stats {
+                font-size: 14px;
+            }
+
+            .problem {
+                font-size: 32px;
+                margin: 20px 0;
+            }
+
+            .options {
+                gap: 10px;
+            }
+
+            .feedback {
+                font-size: 18px;
+            }
+
+            md-filled-button {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Математика</h1>
+        <div class="stats">
+            <div>Очки: <span id="score">0</span></div>
+            <div>Время: <span id="time">60</span>с</div>
+            <div>Серия: <span id="streak">0</span>×</div>
+        </div>
+        <div class="problem" id="problem"></div>
+        <div class="options" id="options"></div>
+        <div class="feedback" id="feedback"></div>
+        <md-filled-button onclick="startGame()">Новая игра</md-filled-button>
+    </div>
+</body>
+=======
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Математика - Банк Маннру</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <script type="importmap">
+      {
+        "imports": {
+          "@material/web/": "https://esm.run/@material/web/"
+        }
+      }
+    </script>
+    <script type="module">
+      import '@material/web/all.js';
+      import { getDatabase, ref, get, update } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js';
+      import { database } from './firebase-config.js';
+
+      const db = database;
+
+      window.gameState = {
+          score: 0,
+          timeLeft: 60,
+          timer: null,
+          currentProblem: null,
+          correctAnswer: null,
+          streak: 0
+      };
+
+      function generateProblem() {
+          const operations = ['+', '-', '*'];
+          const operation = operations[Math.floor(Math.random() * operations.length)];
+          let num1, num2, answer;
+
+          switch(operation) {
+              case '+':
+                  num1 = Math.floor(Math.random() * 100);
+                  num2 = Math.floor(Math.random() * 100);
+                  answer = num1 + num2;
+                  break;
+              case '-':
+                  num1 = Math.floor(Math.random() * 100);
+                  num2 = Math.floor(Math.random() * num1);
+                  answer = num1 - num2;
+                  break;
+              case '*':
+                  num1 = Math.floor(Math.random() * 12);
+                  num2 = Math.floor(Math.random() * 12);
+                  answer = num1 * num2;
+                  break;
+          }
+
+          return {
+              problem: `${num1} ${operation} ${num2} = ?`,
+              answer: answer,
+              options: generateOptions(answer)
+          };
+      }
+
+      function generateOptions(correctAnswer) {
+          const options = [correctAnswer];
+          while (options.length < 4) {
+              const wrong = correctAnswer + Math.floor(Math.random() * 10) * (Math.random() < 0.5 ? 1 : -1);
+              if (!options.includes(wrong)) {
+                  options.push(wrong);
+              }
+          }
+          return options.sort(() => Math.random() - 0.5);
+      }
+
+      window.startGame = function() {
+          const state = window.gameState;
+          state.score = 0;
+          state.timeLeft = 60;
+          state.streak = 0;
+          document.getElementById('score').textContent = state.score;
+          document.getElementById('time').textContent = state.timeLeft;
+          document.getElementById('streak').textContent = state.streak;
+
+          clearInterval(state.timer);
+          state.timer = setInterval(() => {
+              state.timeLeft--;
+              document.getElementById('time').textContent = state.timeLeft;
+              if (state.timeLeft <= 0) {
+                  gameOver();
+              }
+          }, 1000);
+
+          nextProblem();
+      };
+
+      function nextProblem() {
+          const state = window.gameState;
+          const { problem, answer, options } = generateProblem();
+          state.currentProblem = problem;
+          state.correctAnswer = answer;
+
+          document.getElementById('problem').textContent = problem;
+          const buttonsContainer = document.getElementById('options');
+          buttonsContainer.innerHTML = '';
+          
+          options.forEach(option => {
+              const button = document.createElement('md-filled-button');
+              button.textContent = option;
+              button.onclick = () => checkAnswer(option);
+              buttonsContainer.appendChild(button);
+          });
+      }
+
+      window.checkAnswer = function(answer) {
+          const state = window.gameState;
+          if (answer === state.correctAnswer) {
+              state.streak++;
+              state.score += state.streak * 10;
+              document.getElementById('score').textContent = state.score;
+              document.getElementById('streak').textContent = state.streak;
+              document.getElementById('feedback').textContent = `Правильно! +${state.streak * 10} очков`;
+          } else {
+              state.streak = 0;
+              document.getElementById('streak').textContent = state.streak;
+              document.getElementById('feedback').textContent = 'Неправильно!';
+          }
+          nextProblem();
+      };
+
+      async function gameOver() {
+          const state = window.gameState;
+          clearInterval(state.timer);
+          
+          const reward = Math.floor(state.score / 10);
+          const urlParams = new URLSearchParams(window.location.search);
+          const cardId = urlParams.get('cardId');
+          
+          if (!cardId) {
+              alert('Пожалуйста, войдите в аккаунт, чтобы получить награду!');
+              return;
+          }
+          
+          if (reward > 0) {
+              try {
+                  const snapshot = await get(ref(db, `cards/${cardId}`));
+                  const card = snapshot.val();
+                  await update(ref(db), {
+                      [`cards/${cardId}/balance`]: (card.balance || 0) + reward,
+                      [`cards/${cardId}/transactions/${Date.now()}`]: {
+                          type: 'game',
+                          amount: reward,
+                          description: `Выигрыш в игре "Математика" (${state.score} очков)`,
+                          timestamp: Date.now()
+                      }
+                  });
+                  alert(`Игра окончена!\nОчки: ${state.score}\nНаграда: ${reward} МР`);
+              } catch (error) {
+                  console.error('Ошибка при сохранении результата:', error);
+                  alert('Произошла ошибка при сохранении результата');
+              }
+          } else {
+              alert(`Игра окончена!\nОчки: ${state.score}`);
+          }
+      }
+
+      // Запускаем игру при загрузке
+      startGame();
+    </script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            background: #1a1a1a;
+            font-family: 'Roboto', sans-serif;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+            padding: 0 10px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            font-size: 18px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .problem {
+            font-size: 48px;
+            margin: 40px 0;
+            word-break: break-word;
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 20px;
+            margin: 20px auto;
+            max-width: 400px;
+        }
+
+        .feedback {
+            font-size: 24px;
+            margin: 20px 0;
+            min-height: 36px;
+            word-break: break-word;
+        }
+
+        md-filled-button {
+            --md-filled-button-container-color: #4CAF50;
+            font-size: 24px;
+            width: 100%;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 24px;
+                margin: 10px 0;
+            }
+
+            .stats {
+                font-size: 14px;
+            }
+
+            .problem {
+                font-size: 32px;
+                margin: 20px 0;
+            }
+
+            .options {
+                gap: 10px;
+            }
+
+            .feedback {
+                font-size: 18px;
+            }
+
+            md-filled-button {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Математика</h1>
+        <div class="stats">
+            <div>Очки: <span id="score">0</span></div>
+            <div>Время: <span id="time">60</span>с</div>
+            <div>Серия: <span id="streak">0</span>×</div>
+        </div>
+        <div class="problem" id="problem"></div>
+        <div class="options" id="options"></div>
+        <div class="feedback" id="feedback"></div>
+        <md-filled-button onclick="startGame()">Новая игра</md-filled-button>
+    </div>
+</body>
+>>>>>>> 58afe73bc799a44fad7f9cc6e3f1e7079ea65410
+</html> 

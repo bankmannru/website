@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет - Банк Маннру</title>
+    
+    <!-- Styles -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Material Web Components -->
+    <script type="importmap">
+        {
+            "imports": {
+                "@material/web/": "https://esm.run/@material/web/"
+            }
+        }
+    </script>
+    <script type="module">
+        import '@material/web/all.js';
+        import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
+        document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+    </script>
+
+    <!-- Custom Components -->
+    <script type="module" src="card-creator.js"></script>
+
+    <!-- Добавляем стили для карты -->
+    <style>
+        bank-card {
+            width: 400px;
+            height: 240px;
+            display: block;
+            margin: 0 auto;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+        }
+
+        .card-section {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1000px;
+            margin: 40px 0;
+        }
+    </style>
+
+    <style>
+        body {
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .account-header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .account-header h1 {
+            margin: 0;
+            color: white;
+        }
+
+        .account-content h2 {
+            display: none;  /* Скрываем второй заголовок */
+        }
+
+        .messages-section {
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .messages-section h3 {
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .messages-section md-icon {
+            color: white;
+        }
+
+        .messages-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .message-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+            position: relative;
+            color: white;
+        }
+
+        .message-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .message-item.unread {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .message-item.unread:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .message-subject {
+            font-weight: 500;
+            margin-bottom: 4px;
+            color: white;
+        }
+
+        .message-body {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.9em;
+        }
+
+        .card-section {
+            margin-bottom: 24px;
+            perspective: 1000px;
+            display: flex;
+            justify-content: center;
+            margin: 48px 0;
+            width: 100%;
+            min-height: 220px;
+        }
+
+        .balance-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .balance-amount {
+            font-size: 48px;
+            font-weight: 700;
+            color: white;
+            margin: 16px 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .transactions-section {
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .transactions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: var(--md-sys-color-surface-variant);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .transaction-item:hover {
+            background: var(--md-sys-color-surface-variant-hover);
+        }
+
+        .transaction-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .transaction-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--md-sys-color-primary-container);
+            border-radius: 20px;
+        }
+
+        .transaction-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .transaction-amount {
+            font-weight: 500;
+            color: var(--md-sys-color-primary);
+        }
+
+        .transaction-amount.negative {
+            color: var(--md-sys-color-error);
+        }
+
+        .transaction-date {
+            font-size: 0.9em;
+            color: var(--md-sys-color-on-surface-variant);
+        }
+
+        .card-section {
+            margin-bottom: 24px;
+            perspective: 1000px;
+            display: flex;
+            justify-content: center;
+            margin: 48px 0;
+            width: 100%;
+            min-height: 220px;
+        }
+
+        .balance-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .balance-amount {
+            font-size: 48px;
+            font-weight: 700;
+            color: white;
+            margin: 16px 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .transactions-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .transaction-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .transaction-item:hover {
+            transform: translateX(4px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .transaction-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .transaction-icon {
+            padding: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .transaction-icon .material-symbols-outlined {
+            font-size: 20px;
+        }
+
+        .transaction-details {
+            display: flex;
+            flex-direction: column;
+            color: white;
+        }
+
+        .transaction-title {
+            font-weight: 500;
+        }
+
+        .transaction-date {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .amount-positive {
+            color: #4caf50;
+            font-weight: 500;
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+        }
+
+        .amount-negative {
+            color: #f44336;
+            font-weight: 500;
+            text-shadow: 0 0 10px rgba(244, 67, 54, 0.3);
+        }
+
+        /* Диалоги */
+        md-dialog {
+            --md-dialog-container-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        md-dialog .dialog-content {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding: 16px;
+            min-width: 300px;
+        }
+
+        md-outlined-text-field {
+            width: 100%;
+            --md-outlined-text-field-container-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Кнопки */
+        md-filled-button {
+            --md-filled-button-container-color: rgba(255, 255, 255, 0.2);
+            --md-filled-button-hover-state-layer-color: rgba(255, 255, 255, 0.1);
+            --md-filled-button-label-text-color: white;
+        }
+
+        md-outlined-button {
+            --md-outlined-button-outline-color: rgba(255, 255, 255, 0.3);
+            --md-outlined-button-hover-state-layer-color: rgba(255, 255, 255, 0.1);
+            --md-outlined-button-label-text-color: white;
+        }
+
+        md-dialog md-filled-button {
+            --md-filled-button-container-color: #6750A4;
+            --md-filled-button-hover-container-color: #7C6EAE;
+            --md-filled-button-pressed-container-color: #9183B8;
+            --md-filled-button-label-text-color: white;
+        }
+
+        md-dialog md-text-button {
+            --md-text-button-label-text-color: #6750A4;
+            --md-text-button-hover-state-layer-color: rgba(103, 80, 164, 0.08);
+            --md-text-button-pressed-state-layer-color: rgba(103, 80, 164, 0.12);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            color: #333;
+            padding: 12px 24px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.success md-icon {
+            color: #4caf50;
+        }
+
+        .toast.error md-icon {
+            color: #f44336;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+
+            /* Адаптивный размер карты */
+            .card-section bank-card {
+                transform: scale(0.85);
+                transform-origin: center;
+                margin: -24px 0;
+            }
+
+            .card-section {
+                margin: 24px 0;
+                min-height: 180px;
+            }
+
+            .balance-amount {
+                font-size: 36px;
+            }
+
+            .account-header {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+
+            /* Адаптивные кнопки */
+            .balance-section > div {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            md-outlined-button {
+                flex: 1 1 calc(50% - 6px);
+                min-width: 0;
+            }
+
+            /* Фиксим диалог на мобильных */
+            md-dialog#transaction-details-dialog {
+                position: fixed;
+                inset: 0;
+                margin: auto;
+                width: calc(100% - 32px);
+                max-height: calc(100vh - 64px);
+            }
+
+            /* Адаптивные отступы в диалоге */
+            #transaction-details-dialog .dialog-content {
+                padding: 16px;
+            }
+
+            #transaction-details-dialog .dialog-header {
+                padding: 12px 16px;
+            }
+
+            /* Уменьшаем размер шрифта для мобильных */
+            .transaction-title {
+                font-size: 14px;
+            }
+
+            .transaction-date {
+                font-size: 11px;
+            }
+
+            .amount-positive,
+            .amount-negative {
+                font-size: 14px;
+            }
+        }
+
+        .dialog-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        /* Стили для значков в кнопках */
+        md-filled-button .material-symbols-outlined,
+        md-outlined-button .material-symbols-outlined {
+            margin-left: 8px;
+            font-size: 20px;
+        }
+
+        .active-features {
+            display: flex;
+            gap: 12px;
+        }
+
+        .active-features > div {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.2);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        #premium-badge {
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+        }
+
+        #cashback-badge {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+        }
+
+        /* Премиум стили */
+        .cashback-info {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            color: #FFD700;
+            margin-top: 4px;
+        }
+
+        .cashback-info md-icon {
+            font-size: 16px;
+        }
+
+        /* Анимация для премиум карты */
+        #user-card[theme="premium"] {
+            transition: all 0.3s ease;
+        }
+
+        #user-card[theme="premium"]:hover {
+            transform: scale(1.05) !important;
+        }
+
+        .message-of-day {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 16px 24px;
+            margin: 16px 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .message-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+            font-size: 16px;
+        }
+        
+        .message-content md-icon {
+            color: white;
+            opacity: 0.9;
+        }
+
+        /* Стили для диалога с деталями транзакции */
+        .dialog-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: var(--md-sys-color-surface-container);
+            border-bottom: 1px solid var(--md-sys-color-outline-variant);
+            cursor: move;
+        }
+        
+        .dialog-title {
+            font-size: 20px;
+            font-weight: 500;
+            color: var(--md-sys-color-on-surface);
+        }
+        
+        .dialog-content {
+            padding: 24px;
+        }
+        
+        .transaction-detail-item {
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .transaction-detail-item .label {
+            color: var(--md-sys-color-on-surface-variant);
+            font-size: 14px;
+        }
+        
+        .transaction-detail-item span:not(.label) {
+            color: var(--md-sys-color-on-surface);
+            font-size: 16px;
+        }
+
+        /* Стили для диалога транзакций */
+        md-dialog#transaction-details-dialog {
+            --md-dialog-container-color: rgba(30, 30, 30, 0.95);
+            --md-dialog-container-shape: 16px;
+            position: fixed;
+            inset: 0;
+            margin: auto;
+            min-width: 320px;
+            max-width: 90vw;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --md-dialog-content-color: white;
+        }
+
+        #transaction-details-dialog .dialog-header {
+            background: rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: -24px -24px 24px -24px;
+        }
+
+        #transaction-details-dialog .dialog-title {
+            color: white;
+            font-size: 20px;
+            font-weight: 500;
+        }
+
+        #transaction-details-dialog .dialog-content {
+            padding: 24px;
+            color: white;
+        }
+
+        #transaction-details-dialog .transaction-detail-item {
+            margin-bottom: 20px;
+        }
+
+        #transaction-details-dialog .transaction-detail-item:last-child {
+            margin-bottom: 0;
+        }
+
+        #transaction-details-dialog .transaction-detail-item .label {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        #transaction-details-dialog .transaction-detail-item span:not(.label) {
+            color: white;
+            font-size: 16px;
+        }
+
+        #transaction-details-dialog md-icon-button {
+            --md-icon-button-icon-color: white;
+        }
+
+        /* Стили для неоновой карты */
+        .neon-card {
+            border: 2px solid #0ff;
+            box-shadow: 0 0 10px #0ff, inset 0 0 10px #0ff;
+        }
+
+        .neon-glow {
+            animation: neonGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes neonGlow {
+            0%, 100% { box-shadow: 0 0 10px #0ff, inset 0 0 10px #0ff; }
+            50% { box-shadow: 0 0 20px #0ff, inset 0 0 20px #0ff; }
+        }
+
+        /* Стили для голографической карты */
+        .hologram-card {
+            background: linear-gradient(
+                45deg,
+                rgba(255,255,255,0.1) 0%,
+                rgba(255,255,255,0.3) 25%,
+                rgba(255,255,255,0.1) 50%,
+                rgba(255,255,255,0.3) 75%,
+                rgba(255,255,255,0.1) 100%
+            );
+            animation: hologramShift 3s linear infinite;
+        }
+
+        @keyframes hologramShift {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 200% 0%; }
+        }
+
+        /* Стили для матричной карты */
+        .matrix-card {
+            background-color: #000;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .matrix-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                transparent 0%,
+                rgba(32, 255, 77, 0.2) 50%,
+                transparent 100%
+            );
+            animation: matrixScan 2s linear infinite;
+        }
+
+        @keyframes matrixScan {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+
+        /* Стили для анимированной карты */
+        .animated-card {
+            animation: cardPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes cardPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        /* Стили для никнейма */
+        .card-nickname {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 14px;
+            color: rgba(255,255,255,0.8);
+            font-style: italic;
+        }
+
+        /* Стили для эффектов */
+        .effect-sparkle {
+            position: relative;
+        }
+
+        .effect-sparkle::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), 
+                                  rgba(255,255,255,0.2) 0%, 
+                                  transparent 20%);
+            pointer-events: none;
+        }
+
+        .unread-badge {
+            background: var(--md-sys-color-error);
+            color: var(--md-sys-color-on-error);
+            padding: 2px 6px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-left: 8px;
+        }
+
+        .achievements-section {
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .achievement-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .achievement-card.locked {
+            filter: grayscale(1);
+            opacity: 0.7;
+        }
+
+        .achievement-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .achievement-progress {
+            margin-top: 8px;
+        }
+
+        .achievement-rarity {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+
+        .rarity-common { background: #78909C; }
+        .rarity-rare { background: #5C6BC0; }
+        .rarity-epic { background: #7B1FA2; }
+        .rarity-legendary { background: #FFB300; }
+
+        bank-card {
+            width: 100%;
+            max-width: 400px;
+            display: block;
+        }
+
+        .balance-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="account-header">
+            <h1 class="headline-large">Личный кабинет</h1>
+            <md-filled-button id="logout-button">
+                Выйти
+                <span class="material-symbols-outlined" slot="icon">logout</span>
+            </md-filled-button>
+            <div class="active-features">
+                <div id="premium-badge" style="display: none;">
+                    <span class="material-symbols-outlined">stars</span>
+                    Premium
+                </div>
+                <div id="cashback-badge" style="display: none;">
+                    <span class="material-symbols-outlined">savings</span>
+                    5% Кэшбэк
+                </div>
+            </div>
+        </div>
+
+        <div class="card-section">
+            <bank-card id="user-card" number="" holder="" expires=""></bank-card>
+        </div>
+
+        <div class="message-of-day">
+            <div class="message-content">
+                <md-icon>tips_and_updates</md-icon>
+                <span id="daily-message">Загрузка сообщения...</span>
+            </div>
+        </div>
+            <!-- Добавляем вкладку с почтой -->
+            <div class="account-section messages-section">
+                <h3>
+                    <md-icon>mail</md-icon>
+                    Почта
+                    <span id="unreadCount" class="unread-badge"></span>
+                </h3>
+                <div id="messagesList" class="messages-list">
+                    <!-- Сообщения будут добавлены через JavaScript -->
+                </div>
+            </div>
+            
+            <div class="account-section">
+                <div class="account-content">
+                    <div class="account-header">
+                <h3>
+                    <md-icon>account_balance_wallet</md-icon>
+                    Баланс
+                </h3>
+                <div class="balance-amount" id="balance-amount">0 МР</div>
+                <div class="balance-actions">
+                    <md-outlined-button id="transfer-button">
+                        <span slot="icon" class="material-symbols-outlined">send</span>
+                        Перевести
+                    </md-outlined-button>
+                    <md-outlined-button id="share-button">
+                        <span slot="icon" class="material-symbols-outlined">share</span>
+                        Поделиться
+                    </md-outlined-button>
+                </div>
+            </div>
+
+            <div class="transactions-section">
+                <h2>История операций</h2>
+                <div id="transactionsList" class="transactions-list">
+                    <!-- Транзакции будут добавляться сюда динамически -->
+                <h2>История операций</h2>
+                <div id="transactionsList" class="transactions-list">
+                    <!-- Транзакции будут добавляться сюда динамически -->
+                </div>
+            </div>
+
+            <!-- Добавляем диалог для деталей транзакции -->
+            <md-dialog id="transaction-details-dialog" style="display: none;">
+                <div slot="content" class="dialog-content">
+                    <div class="dialog-header" id="dialog-drag-handle">
+                        <span class="dialog-title">Детали операции</span>
+                        <md-icon-button onclick="document.getElementById('transaction-details-dialog').close()">
+                            <md-icon>close</md-icon>
+                        </md-icon-button>
+                    </div>
+                    <div class="transaction-detail-item">
+                        <span class="label">Описание:</span>
+                        <span id="detail-description"></span>
+                    </div>
+                    <div class="transaction-detail-item">
+                        <span class="label">Сумма:</span>
+                        <span id="detail-amount"></span>
+                    </div>
+                    <div class="transaction-detail-item">
+                        <span class="label">Дата и время:</span>
+                        <span id="detail-datetime"></span>
+                    </div>
+                    <div class="transaction-detail-item">
+                        <span class="label">ID операции:</span>
+                        <span id="detail-id"></span>
+                    </div>
+                    <div id="detail-cashback" class="transaction-detail-item" style="display: none;">
+                        <span class="label">Кэшбэк:</span>
+                        <span id="detail-cashback-amount"></span>
+                    </div>
+                </div>
+            </md-dialog>
+        </div>
+    </div>
+
+    <!-- Заменяем статичный баннер -->
+    <div class='header' id="hiring-banner" style="display: none; align-items: center; justify-content: center;">Мы набираем работников для банк Маннру. 
+        <a href="https://forms.gle/GJFTNofAoNCuxMT37" style="margin-left: 10px;">
+            <md-filled-tonal-button>
+                Подать заявку
+                <svg slot="icon" viewBox="0 0 48 48"><path d="M6 40V8l38 16Zm3-4.65L36.2 24 9 12.5v8.4L21.1 24 9 27Zm0 0V12.5 27Z"/></svg>
+            </md-filled-tonal-button>
+        </a>
+    </div>
+
+    <div class="achievements-section">
+        <div class="section-header">
+            <h2>Достижения</h2>
+            <md-outlined-button id="achievements-help">
+                <md-icon slot="icon">help</md-icon>
+                Как получать
+            </md-outlined-button>
+        </div>
+        
+        <div class="achievements-grid">
+            <!-- Достижения будут добавляться сюда динамически -->
+        </div>
+    </div>
+
+    <script type="module">
+        import { 
+            db, 
+            auth, 
+            doc, 
+            getDoc, 
+            updateDoc, 
+            collection, 
+            addDoc, 
+            query, 
+            where, 
+            orderBy, 
+            onSnapshot 
+        } from './firebase-config.js';
+        import { BankCard } from './card-creator.js';
+        import { logout } from './auth.js';
+
+        // Регистрируем компонент bank-card если он еще не зарегистрирован
+        if (!customElements.get('bank-card')) {
+            customElements.define('bank-card', BankCard);
+        }
+
+        // Функция для получения cardId из URL
+        function getCardIdFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const cardId = urlParams.get('id') || localStorage.getItem('currentCardId');
+            
+            if (!cardId) {
+                window.location.href = 'index.html';
+                return null;
+            }
+
+            localStorage.setItem('currentCardId', cardId);
+            return cardId;
+        }
+
+        // Функция для инициализации баланса
+        function initBalance(cardId) {
+            const cardRef = doc(db, 'cards', cardId);
+            onSnapshot(cardRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const cardData = snapshot.data();
+                    document.getElementById('balance-amount').textContent = 
+                        `${new Intl.NumberFormat('ru-RU').format(cardData.balance || 0)} МР`;
+                }
+            });
+        }
+
+        // Функция для инициализации карты
+        function initCard(cardId) {
+            const cardRef = doc(db, 'cards', cardId);
+            onSnapshot(cardRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const cardData = snapshot.data();
+                    const cardElement = document.getElementById('user-card');
+                    cardElement.setAttribute('number', cardData.number || '000 000');
+                    cardElement.setAttribute('holder', cardData.holder || 'Без имени');
+                    cardElement.setAttribute('expires', cardData.expires || '12/25');
+                    
+                    updateCardDisplay(cardData);
+                    checkActiveFeatures(cardData);
+                }
+            });
+        }
+
+        // Функция для инициализации транзакций
+        function initTransactions(cardId) {
+            const transactionsRef = collection(db, 'cards', cardId, 'transactions');
+            const q = query(transactionsRef, orderBy('timestamp', 'desc'));
+            
+            onSnapshot(q, (snapshot) => {
+                const transactionsList = document.getElementById('transactionsList');
+                transactionsList.innerHTML = '';
+                
+                snapshot.forEach((doc) => {
+                    const transaction = doc.data();
+                    const transactionElement = createTransactionElement(doc.id, transaction);
+                    transactionsList.appendChild(transactionElement);
+                });
+            });
+        }
+
+        // Функция для создания элемента транзакции
+        function createTransactionElement(id, transaction) {
+            const element = document.createElement('div');
+            element.className = 'transaction-item';
+            
+            let icon = 'payments';
+            let isNegative = false;
+            
+            switch(transaction.type) {
+                case 'purchase': icon = 'shopping_cart'; isNegative = true; break;
+                case 'transfer_out': icon = 'send'; isNegative = true; break;
+                case 'transfer_in': icon = 'download'; break;
+                case 'deposit': icon = 'add'; break;
+            }
+
+            element.innerHTML = `
+                <div class="transaction-info">
+                    <div class="transaction-icon">
+                        <md-icon>${icon}</md-icon>
+                    </div>
+                    <div class="transaction-details">
+                        <div class="transaction-title">${transaction.description}</div>
+                        <div class="transaction-date">${transaction.timestamp.toDate().toLocaleString()}</div>
+                    </div>
+                </div>
+                <div class="transaction-amount ${isNegative ? 'amount-negative' : 'amount-positive'}">
+                    ${isNegative ? '-' : '+'}${Math.abs(transaction.amount)} МР
+                </div>
+            `;
+            
+            element.addEventListener('click', () => showTransactionDetails(id, transaction));
+            return element;
+        }
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', () => {
+            const cardId = getCardIdFromUrl();
+            if (cardId) {
+                initBalance(cardId);
+                initCard(cardId);
+                initTransactions(cardId);
+                initAchievements(cardId);
+                loadDailyMessage();
+            }
+
+            // Добавляем обработчик для кнопки выхода
+            document.getElementById('logout-button').addEventListener('click', logout);
+        });
+
+        // Загрузка сообщения дня
+        async function loadDailyMessage() {
+            const messages = [
+                'Добро пожаловать в Банк Маннру! 🏦',
+                'Копите МР и достигайте целей! 🎯',
+                'Не забудьте проверить новые достижения! 🏆',
+                'У нас самый выгодный курс МР! 📈',
+                'Приведите друга и получите бонус! 🤝',
+                'Попробуйте наше новое приложение! 📱',
+                'Безопасность ваших средств - наш приоритет! 🔒',
+                'Участвуйте в конкурсах и получайте призы! 🎁',
+                'Проверьте наши новые функции! ✨',
+                'Спасибо, что выбрали Банк Маннру! ❤️'
+            ];
+
+            // Выбираем случайное сообщение
+            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+            document.getElementById('daily-message').textContent = randomMessage;
+        }
+
+        function showNotification(message, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${isError ? 'error' : 'success'}`;
+            toast.innerHTML = `
+                <md-icon>${isError ? 'error' : 'check_circle'}</md-icon>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(toast);
+            
+            requestAnimationFrame(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateX(-50%) translateY(0)';
+            });
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(-50%) translateY(20px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function updateTransactionsList(transactions) {
+            const transactionsList = document.getElementById('transactionsList');
+            if (!transactionsList) return;
+            transactionsList.innerHTML = '';
+            
+            // Подсчитываем статистику для достижений
+            let totalSpent = 0;
+            let transactionCount = 0;
+            
+            Object.entries(transactions || {})
+                .sort(([,a], [,b]) => b.timestamp - a.timestamp)
+                .forEach(([id, transaction]) => {
+                    // Увеличиваем счетчики
+                    if (transaction.type === 'purchase' || transaction.type === 'transfer_out') {
+                        totalSpent += Math.abs(transaction.amount);
+                    }
+                    transactionCount++;
+                    
+                    const element = document.createElement('div');
+                    element.className = 'transaction-item';
+                    
+                    // Определяем иконку и цвет в зависимости от типа транзакции
+                    let icon = 'payments';
+                    let isNegative = false;
+                    
+                    switch(transaction.type) {
+                        case 'purchase':
+                            icon = 'shopping_cart';
+                            isNegative = true;
+                            break;
+                        case 'transfer_out':
+                            icon = 'send';
+                            isNegative = true;
+                            break;
+                        case 'transfer_in':
+                            icon = 'download';
+                            break;
+                        case 'deposit':
+                            icon = 'add';
+                            break;
+                    }
+
+                    element.innerHTML = `
+                        <div class="transaction-info">
+                            <div class="transaction-icon">
+                                <md-icon>${icon}</md-icon>
+                            </div>
+                            <div class="transaction-details">
+                                <div class="transaction-description">${transaction.description}</div>
+                                <div class="transaction-date">${new Date(transaction.timestamp).toLocaleString()}</div>
+                            </div>
+                        </div>
+                        <div class="transaction-amount ${isNegative ? 'negative' : ''}">${isNegative ? '-' : '+'}${Math.abs(transaction.amount)} МР</div>
+                    `;
+                    
+                    element.addEventListener('click', () => showTransactionDetails(id, transaction));
+                    transactionsList.appendChild(element);
+                });
+            
+            // Обновляем статистику в базе данных
+            const cardId = localStorage.getItem('currentCardId');
+            update(ref(database), {
+                [`cards/${cardId}/stats/totalSpent`]: totalSpent,
+                [`cards/${cardId}/stats/transactions`]: transactionCount
+            });
+        }
+
+        // Функция для показа деталей транзакции
+        function showTransactionDetails(transaction, id) {
+            const dialog = document.getElementById('transaction-details-dialog');
+            document.getElementById('detail-description').textContent = transaction.description;
+            document.getElementById('detail-amount').textContent = 
+                `${transaction.type === 'income' ? '+' : '-'}${formatBalance(transaction.amount)} МР`;
+            document.getElementById('detail-datetime').textContent = 
+                new Date(transaction.timestamp).toLocaleString();
+            document.getElementById('detail-id').textContent = id;
+            
+            if (transaction.cashback) {
+                document.getElementById('detail-cashback').style.display = 'flex';
+                document.getElementById('detail-cashback-amount').textContent = 
+                    `+${formatBalance(transaction.cashback)} МР`;
+            } else {
+                document.getElementById('detail-cashback').style.display = 'none';
+            }
+            
+            dialog.show();
+        }
+
+        // Определяем все достижения
+        const achievements = {
+            first_transaction: {
+                title: 'Первые шаги',
+                description: 'Совершите свою первую транзакцию',
+                icon: 'payments',
+                rarity: 'common',
+                condition: (stats) => stats.transactions >= 1
+            },
+            big_spender: {
+                title: 'Большой транжира',
+                description: 'Потратьте 100,000 МР',
+                icon: 'shopping_cart',
+                rarity: 'rare',
+                condition: (stats) => stats.totalSpent >= 100000
+            },
+            savings_master: {
+                title: 'Мастер накоплений',
+                description: 'Накопите 1,000,000 МР',
+                icon: 'savings',
+                rarity: 'epic',
+                condition: (stats) => stats.balance >= 1000000
+            },
+            early_adopter: {
+                title: 'Ранняя пташка',
+                description: 'Зарегистрируйтесь в первый месяц работы банка',
+                icon: 'rocket_launch',
+                rarity: 'legendary',
+                condition: (stats) => stats.registrationDate < 1709251200000 // 1 марта 2024
+            },
+            social_butterfly: {
+                title: 'Душа компании',
+                description: 'Отправьте 50 сообщений в чате',
+                icon: 'chat',
+                rarity: 'rare',
+                condition: (stats) => stats.messagesSent >= 50
+            },
+            money_maker: {
+                title: 'Финансовый гений',
+                description: 'Заработайте 500,000 МР на инвестициях',
+                icon: 'trending_up',
+                rarity: 'epic',
+                condition: (stats) => stats.investmentProfit >= 500000
+            }
+        };
+
+        // Функция для инициализации достижений
+        function initAchievements(cardId) {
+            const cardRef = doc(db, 'cards', cardId);
+            onSnapshot(cardRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const cardData = snapshot.data();
+                    renderAchievements(cardId, cardData.achievements);
+                    checkAchievements(cardId, cardData);
+                }
+            });
+
+            // Обработчик для кнопки помощи
+            document.getElementById('achievements-help').addEventListener('click', () => {
+                const dialog = document.createElement('md-dialog');
+                dialog.innerHTML = `
+                    <div slot="headline">Как получать достижения</div>
+                    <div slot="content">
+                        <p>Достижения разблокируются автоматически при выполнении определенных условий:</p>
+                        <ul>
+                            <li>Совершайте транзакции</li>
+                            <li>Накапливайте средства</li>
+                            <li>Общайтесь в чате</li>
+                            <li>Инвестируйте</li>
+                        </ul>
+                        <p>Некоторые достижения очень редкие и требуют особых условий!</p>
+                    </div>
+                    <div slot="actions">
+                        <md-text-button dialog-action="close">Закрыть</md-text-button>
+                    </div>
+                `;
+                document.body.appendChild(dialog);
+                dialog.show();
+            });
+        }
+
+        // Функция для отображения достижений
+        function renderAchievements(cardId, userAchievements = {}) {
+            const container = document.querySelector('.achievements-grid');
+            container.innerHTML = '';
+
+            Object.entries(achievements).forEach(([id, achievement]) => {
+                const isUnlocked = userAchievements[id] === true;
+                
+                const card = document.createElement('md-elevated-card');
+                card.className = `achievement-card ${isUnlocked ? 'unlocked' : 'locked'}`;
+                card.innerHTML = `
+                    <div class="achievement-rarity rarity-${achievement.rarity}">
+                        ${achievement.rarity.toUpperCase()}
+                    </div>
+                    <div style="padding: 16px;">
+                        <div class="achievement-icon">
+                            <md-icon style="font-size: 32px;">${achievement.icon}</md-icon>
+                        </div>
+                        <h3 class="title-medium">${achievement.title}</h3>
+                        <p class="body-medium">${achievement.description}</p>
+                        ${isUnlocked ? 
+                            '<md-icon style="color: #4CAF50;">check_circle</md-icon> Получено' : 
+                            '<md-icon style="color: #9E9E9E;">lock</md-icon> Заблокировано'
+                        }
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Функция для проверки активных функций
+        function checkActiveFeatures(cardData) {
+            const now = Date.now();
+
+            // Проверяем Premium статус
+            if (cardData.premium?.active && cardData.premium.expiresAt > now) {
+                document.getElementById('premium-badge').style.display = 'flex';
+            }
+
+            // Проверяем повышенный кэшбэк
+            if (cardData.cashback?.active && cardData.cashback.expiresAt > now) {
+                document.getElementById('cashback-badge').style.display = 'flex';
+            }
+        }
+
+        // Добавляем скрипт для проверки состояния баннера
+        function checkHiringBanner() {
+            const settingsRef = doc(db, 'settings', 'global');
+            onSnapshot(settingsRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const settings = snapshot.data();
+                    const banner = document.getElementById('hiring-banner');
+                    banner.style.display = settings.hiringBannerEnabled ? 'flex' : 'none';
+                }
+            });
+        }
+
+        // В функции updateCardDisplay добавляем обработку дизайна и эффектов
+        function updateCardDisplay(cardData) {
+            // Получаем элемент bank-card
+            const cardElement = document.getElementById('user-card');
+            if (!cardElement) return;
+
+            // Получаем shadow root карты
+            const shadowRoot = cardElement.shadowRoot;
+            if (!shadowRoot) return;
+
+            // Находим .card внутри shadow root
+            const cardContainer = shadowRoot.querySelector('.card');
+            if (!cardContainer) return;
+
+            // Применяем дизайн карты
+            if (cardData.design) {
+                switch (cardData.design.type) {
+                    case 'neon':
+                        cardContainer.classList.add('neon-card');
+                        if (cardData.design.animation) {
+                            cardContainer.classList.add('neon-glow');
+                        }
+                        break;
+                    case 'hologram':
+                        cardContainer.classList.add('hologram-card');
+                        break;
+                    case 'matrix':
+                        cardContainer.classList.add('matrix-card');
+                        break;
+                    case 'animated':
+                        cardContainer.classList.add('animated-card');
+                        break;
+                }
+            }
+
+            // Добавляем никнейм если есть
+            if (cardData.nickname) {
+                let nicknameElement = shadowRoot.querySelector('.card-nickname');
+                if (!nicknameElement) {
+                    nicknameElement = document.createElement('div');
+                    nicknameElement.className = 'card-nickname';
+                    cardContainer.appendChild(nicknameElement);
+                }
+                nicknameElement.textContent = cardData.nickname;
+            }
+
+            // Применяем эффекты
+            if (cardData.effects && cardData.effects.active) {
+                cardContainer.classList.add(`effect-${cardData.effects.type}`);
+            }
+        }
+
+        // Функция загрузки сообщений
+        function loadMessages(messages) {
+            const messagesList = document.getElementById('messagesList');
+            const unreadCount = document.getElementById('unreadCount');
+            
+            // Считаем непрочитанные
+            const unread = Object.values(messages).filter(m => !m.read).length;
+            unreadCount.textContent = unread || '';
+            
+            // Сортируем сообщения по времени
+            const sortedMessages = Object.entries(messages)
+                .sort(([,a], [,b]) => b.timestamp - a.timestamp);
+            
+            messagesList.innerHTML = '';
+            
+            for (const [id, message] of sortedMessages) {
+                const messageElement = document.createElement('div');
+                messageElement.className = `message-item ${message.read ? '' : 'unread'}`;
+                messageElement.innerHTML = `
+                    <div class="message-header">
+                        <div class="message-date">${new Date(message.timestamp).toLocaleString()}</div>
+                    </div>
+                    <div class="message-subject">${message.subject}</div>
+                    <div class="message-body">${message.body}</div>
+                `;
+                
+                // При клике помечаем как прочитанное
+                messageElement.onclick = async () => {
+                    if (!message.read) {
+                        const cardId = localStorage.getItem('currentCardId');
+                        const messageRef = doc(db, 'cards', cardId, 'messages', id);
+                        await updateDoc(messageRef, {
+                            read: true
+                        });
+                    }
+                };
+                
+                messagesList.appendChild(messageElement);
+            }
+        }
+
+        // Исправим функцию checkAchievements
+        async function checkAchievements(cardId, cardData) {
+            const updates = {};
+            let changed = false;
+
+            const currentStats = {
+                transactions: cardData.stats?.transactions || 0,
+                totalSpent: cardData.stats?.totalSpent || 0,
+                balance: cardData.balance || 0,
+                registrationDate: cardData.createdAt || new Date(),
+                messagesSent: cardData.stats?.messagesSent || 0,
+                investmentProfit: cardData.stats?.investmentProfit || 0
+            };
+
+            Object.entries(achievements).forEach(([id, achievement]) => {
+                if (achievement.condition(currentStats)) {
+                    if (!cardData.achievements?.[id]) {
+                        updates[`achievements.${id}`] = true;
+                        changed = true;
+                    }
+                }
+            });
+
+            if (changed) {
+                const cardRef = doc(db, 'cards', cardId);
+                await updateDoc(cardRef, updates);
+                showNotification('Получено новое достижение!');
+            }
+        }
+    </script>
+</body>
+</html> 
