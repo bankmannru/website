@@ -1,194 +1,131 @@
 export class BankCard extends HTMLElement {
     constructor() {
         super();
-        this.attachShadow({ mode: 'open' });
-    }
+        const shadow = this.attachShadow({ mode: 'open' });
+        
+        shadow.innerHTML = `
+            <style>
+                .card {
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(135deg, #6b3fa0 0%, #4a2780 100%);
+                    border-radius: 16px;
+                    padding: 24px;
+                    box-sizing: border-box;
+                    color: white;
+                    font-family: 'Roboto', sans-serif;
+                    position: relative;
+                    overflow: hidden;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                }
 
-    static get observedAttributes() {
-        return ['number', 'holder', 'expires', 'theme', 'pattern', 'chip-style'];
-    }
+                .chip {
+                    width: 50px;
+                    height: 40px;
+                    background: linear-gradient(135deg, #ffd700 0%, #b8860b 100%);
+                    border-radius: 8px;
+                    margin-bottom: 40px;
+                }
 
-    connectedCallback() {
-        this.render();
-    }
+                .card-number {
+                    font-size: 24px;
+                    letter-spacing: 2px;
+                    margin-bottom: 24px;
+                    font-family: 'Courier New', monospace;
+                }
 
-    attributeChangedCallback() {
-        this.render();
-    }
+                .card-info {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-end;
+                    margin-top: auto;
+                }
 
-    render() {
-        const theme = this.getAttribute('theme') || 'default';
-        const number = this.getAttribute('number') || '000';
-        const holder = this.getAttribute('holder') || 'CARD HOLDER';
-        const expires = this.getAttribute('expires') || '12/25';
-        const pattern = this.getAttribute('pattern') || 'none';
-        const chipStyle = this.getAttribute('chip-style') || 'classic';
+                .card-holder {
+                    text-transform: uppercase;
+                    font-size: 14px;
+                }
 
-        // Добавляем стили для эффектов карты
-        const styles = `
-            .card {
-                /* существующие стили... */
-            }
+                .card-holder .label {
+                    font-size: 10px;
+                    opacity: 0.7;
+                    margin-bottom: 4px;
+                }
 
-            /* Стили для неоновой карты */
-            .neon-card {
-                border: 2px solid #0ff !important;
-                box-shadow: 0 0 10px #0ff, inset 0 0 10px #0ff !important;
-            }
+                .card-expires {
+                    text-align: right;
+                    font-size: 14px;
+                }
 
-            .neon-glow {
-                animation: neonGlow 2s ease-in-out infinite;
-            }
+                .card-expires .label {
+                    font-size: 10px;
+                    opacity: 0.7;
+                    margin-bottom: 4px;
+                }
 
-            @keyframes neonGlow {
-                0%, 100% { box-shadow: 0 0 10px #0ff, inset 0 0 10px #0ff; }
-                50% { box-shadow: 0 0 20px #0ff, inset 0 0 20px #0ff; }
-            }
-
-            /* Стили для голографической карты */
-            .hologram-card {
-                background: linear-gradient(
-                    45deg,
-                    rgba(255,255,255,0.1) 0%,
-                    rgba(255,255,255,0.3) 25%,
-                    rgba(255,255,255,0.1) 50%,
-                    rgba(255,255,255,0.3) 75%,
-                    rgba(255,255,255,0.1) 100%
-                ) !important;
-                animation: hologramShift 3s linear infinite;
-            }
-
-            @keyframes hologramShift {
-                0% { background-position: 0% 0%; }
-                100% { background-position: 200% 0%; }
-            }
-
-            /* Стили для матричной карты */
-            .matrix-card {
-                background-color: #000 !important;
-                position: relative;
-                overflow: hidden;
-            }
-
-            .matrix-card::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: linear-gradient(
-                    transparent 0%,
-                    rgba(32, 255, 77, 0.2) 50%,
-                    transparent 100%
-                );
-                animation: matrixScan 2s linear infinite;
-            }
-
-            @keyframes matrixScan {
-                0% { transform: translateY(-100%); }
-                100% { transform: translateY(100%); }
-            }
-
-            /* Стили для анимированной карты */
-            .animated-card {
-                animation: cardPulse 3s ease-in-out infinite;
-            }
-
-            @keyframes cardPulse {
-                0%, 100% { transform: scale(1); }
-                50% { transform: scale(1.02); }
-            }
-
-            /* Стили для никнейма */
-            .card-nickname {
-                position: absolute;
-                bottom: 20px;
-                right: 20px;
-                font-size: 14px;
-                color: rgba(255,255,255,0.8);
-                font-style: italic;
-                z-index: 2;
-            }
-
-            /* Стили для эффектов */
-            .effect-sparkle {
-                position: relative;
-            }
-
-            .effect-sparkle::after {
-                content: '';
-                position: absolute;
-                width: 100%;
-                height: 100%;
-                top: 0;
-                left: 0;
-                background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), 
-                                      rgba(255,255,255,0.2) 0%, 
-                                      transparent 20%);
-                pointer-events: none;
-            }
-        `;
-
-        // Создаем список классов
-        const classes = ['bank-card'];
-        if (pattern && pattern !== 'none') {
-            classes.push(`pattern-${pattern}`);
-        }
-
-        // Определяем стили для карты
-        let backgroundStyle = '';
-        if (theme === 'custom') {
-            const primaryColor = this.style.getPropertyValue('--card-primary-color');
-            const secondaryColor = this.style.getPropertyValue('--card-secondary-color');
-            if (primaryColor && secondaryColor) {
-                backgroundStyle = `background: linear-gradient(135deg, ${primaryColor}, ${secondaryColor}) !important;`;
-            }
-        }
-
-        this.shadowRoot.innerHTML = `
-            <link rel="stylesheet" href="card-styles.css">
-            <style>${styles}</style>
-            ${theme === 'custom' ? `
-                <style>
-                    .bank-card[theme="custom"] {
-                        ${backgroundStyle}
-                    }
-                </style>
-            ` : ''}
-            <div class="${classes.join(' ')}" theme="${theme}">
-                <div class="bank-logo">MANNRU BANK</div>
-                <div class="card-chip chip-${chipStyle}"></div>
-                <div class="card-nfc"></div>
-                <div class="card-number">${this.formatCardNumber(number)}</div>
-                <div class="card-details">
+                .bank-name {
+                    position: absolute;
+                    top: 24px;
+                    right: 24px;
+                    font-size: 20px;
+                    font-weight: bold;
+                    color: rgba(255, 255, 255, 0.9);
+                }
+            </style>
+            <div class="card">
+                <div class="bank-name">MANNRU BANK</div>
+                <div class="chip"></div>
+                <div class="card-number"></div>
+                <div class="card-info">
                     <div class="card-holder">
                         <div class="label">ДЕРЖАТЕЛЬ КАРТЫ</div>
-                        <div class="value">${holder}</div>
+                        <div class="value"></div>
                     </div>
                     <div class="card-expires">
                         <div class="label">СРОК ДЕЙСТВИЯ</div>
-                        <div class="value">${expires}</div>
+                        <div class="value"></div>
                     </div>
                 </div>
             </div>
         `;
+    }
 
-        // Добавляем обработчик для эффекта sparkle
-        const card = this.shadowRoot.querySelector('.bank-card');
-        if (card.classList.contains('effect-sparkle')) {
-            card.addEventListener('mousemove', (e) => {
-                const rect = e.target.getBoundingClientRect();
-                const x = ((e.clientX - rect.left) / rect.width) * 100;
-                const y = ((e.clientY - rect.top) / rect.height) * 100;
-                card.style.setProperty('--x', `${x}%`);
-                card.style.setProperty('--y', `${y}%`);
-            });
+    static get observedAttributes() {
+        return ['number', 'holder', 'expires'];
+    }
+
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (!this.shadowRoot) return;
+
+        switch (name) {
+            case 'number':
+                const numberElement = this.shadowRoot.querySelector('.card-number');
+                if (numberElement) {
+                    numberElement.textContent = this.formatCardNumber(newValue);
+                }
+                break;
+            case 'holder':
+                const holderElement = this.shadowRoot.querySelector('.card-holder .value');
+                if (holderElement) {
+                    holderElement.textContent = newValue;
+                }
+                break;
+            case 'expires':
+                const expiresElement = this.shadowRoot.querySelector('.card-expires .value');
+                if (expiresElement) {
+                    expiresElement.textContent = newValue;
+                }
+                break;
         }
     }
 
     formatCardNumber(number) {
-        return number.toString().replace(/(\d{3})(\d{3})/, '$1 $2');
+        if (!number) return '';
+        const cleaned = number.replace(/\s+/g, '');
+        const groups = cleaned.match(/.{1,3}/g) || [];
+        return groups.join(' ');
     }
 }
 

@@ -848,16 +848,140 @@
             gap: 12px;
             margin-top: 16px;
         }
+
+        /* Добавим в существующие стили */
+        .customize-content {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            padding: 16px;
+        }
+
+        .customize-section {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .customize-section h3 {
+            margin: 0;
+            color: var(--md-sys-color-on-surface);
+        }
+
+        .background-options {
+            display: flex;
+            gap: 16px;
+        }
+
+        /* Стили для разных макетов */
+        .layout-default {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .layout-compact {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .layout-wide {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* Эффекты */
+        .enable-animations * {
+            transition: all 0.3s ease;
+        }
+
+        .enable-shadows .account-header,
+        .enable-shadows .card-section,
+        .enable-shadows .messages-section {
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+
+        .enable-glass .account-header,
+        .enable-glass .card-section,
+        .enable-glass .messages-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Добавим стили для color picker */
+        .color-picker-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .color-picker-group label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--md-sys-color-on-surface);
+        }
+
+        .color-picker-group input[type="color"] {
+            -webkit-appearance: none;
+            width: 50px;
+            height: 30px;
+            border: none;
+            border-radius: 4px;
+            padding: 0;
+            cursor: pointer;
+        }
+
+        .color-picker-group input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        .color-picker-group input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 4px;
+        }
+
+        /* Обновим стили для диалога */
+        .customize-content {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            padding: 16px;
+            color: var(--md-sys-color-on-surface);
+        }
+
+        /* Добавим стили для применения цветов */
+        :root {
+            --primary-color: var(--md-sys-color-primary, #4CAF50);
+            --text-color: var(--text-color, #FFFFFF);
+            --background-color: var(--background-color, #1E1E1E);
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        md-filled-button, 
+        md-filled-tonal-button {
+            --md-sys-color-primary: var(--primary-color);
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="account-header">
             <h1 class="headline-large">Личный кабинет</h1>
-            <md-filled-button id="logout-button">
-                Выйти
-                <span class="material-symbols-outlined" slot="icon">logout</span>
-            </md-filled-button>
+            <div class="header-actions">
+                <md-filled-tonal-button id="customize-button">
+                    <md-icon slot="icon">palette</md-icon>
+                    Настроить интерфейс
+                </md-filled-tonal-button>
+                <md-filled-button id="logout-button">
+                    <span class="material-symbols-outlined" slot="icon">logout</span>
+                    Выйти
+                </md-filled-button>
+            </div>
             <div class="active-features">
                 <div id="premium-badge" style="display: none;">
                     <span class="material-symbols-outlined">stars</span>
@@ -870,7 +994,7 @@
             </div>
         </div>
 
-        <div class="card-section">
+        <div>
             <bank-card id="user-card" number="" holder="" expires=""></bank-card>
         </div>
 
@@ -979,6 +1103,62 @@
             <!-- Достижения будут добавляться сюда динамически -->
         </div>
     </div>
+
+    <!-- Добавим диалог настроек -->
+    <md-dialog id="customize-dialog">
+        <div slot="headline">Настройка интерфейса</div>
+        <div slot="content" class="customize-content">
+            <div class="customize-section">
+                <h3>Цвета</h3>
+                <div class="color-picker-group">
+                    <label>
+                        Цвет фона
+                        <input type="color" id="background-color" value="#1E1E1E">
+                    </label>
+                    <label>
+                        Цвет текста
+                        <input type="color" id="text-color" value="#FFFFFF">
+                    </label>
+                    <label>
+                        Цвет акцента
+                        <input type="color" id="accent-color" value="#4CAF50">
+                    </label>
+                </div>
+            </div>
+
+            <div class="customize-section">
+                <h3>Фон</h3>
+                <md-filled-text-field
+                    label="URL изображения фона"
+                    id="background-image">
+                </md-filled-text-field>
+                <div class="background-options">
+                    <md-checkbox id="background-blur">Размытие фона</md-checkbox>
+                    <md-checkbox id="background-fixed">Фиксированный фон</md-checkbox>
+                </div>
+            </div>
+
+            <div class="customize-section">
+                <h3>Расположение</h3>
+                <md-select id="layout-select" label="Макет страницы">
+                    <md-select-option value="default">Стандартный</md-select-option>
+                    <md-select-option value="compact">Компактный</md-select-option>
+                    <md-select-option value="wide">Широкий</md-select-option>
+                </md-select>
+            </div>
+
+            <div class="customize-section">
+                <h3>Эффекты</h3>
+                <md-checkbox id="enable-animations">Включить анимации</md-checkbox>
+                <md-checkbox id="enable-shadows">Включить тени</md-checkbox>
+                <md-checkbox id="enable-glass">Стеклянный эффект</md-checkbox>
+            </div>
+        </div>
+        <div slot="actions">
+            <md-text-button id="reset-customization">Сбросить</md-text-button>
+            <md-filled-button id="save-customization">Сохранить</md-text-button>
+        </div>
+    </md-dialog>
 
     <script type="module">
         import { 
@@ -1511,6 +1691,165 @@
                 showNotification('Получено новое достижение!');
             }
         }
+
+        // Функция для загрузки настроек
+        async function loadCustomization() {
+            const cardId = getCardIdFromUrl();
+            if (!cardId) return;
+
+            const cardRef = doc(db, 'cards', cardId);
+            const cardDoc = await getDoc(cardRef);
+            
+            if (cardDoc.exists()) {
+                const customization = cardDoc.data().customization || getDefaultCustomization();
+                applyCustomization(customization);
+                updateCustomizationDialog(customization);
+            }
+        }
+
+        // Применение настроек
+        function applyCustomization(customization) {
+            // Применяем цвета через CSS переменные
+            document.documentElement.style.setProperty('--background-color', customization.backgroundColor);
+            document.documentElement.style.setProperty('--text-color', customization.textColor);
+            document.documentElement.style.setProperty('--primary-color', customization.accentColor);
+
+            // Применяем цвета напрямую к body
+            document.body.style.backgroundColor = customization.backgroundColor;
+            document.body.style.color = customization.textColor;
+
+            // Обновляем цвет акцента для Material компонентов
+            const root = document.documentElement;
+            root.style.setProperty('--md-sys-color-primary', customization.accentColor);
+            root.style.setProperty('--md-sys-color-primary-container', customization.accentColor + '1A'); // 10% прозрачности
+
+            // Применяем фоновое изображение
+            if (customization.backgroundImage) {
+                document.body.style.backgroundImage = `url(${customization.backgroundImage})`;
+                document.body.style.backgroundSize = 'cover';
+                document.body.style.backgroundPosition = 'center';
+                document.body.style.backgroundRepeat = 'no-repeat';
+                document.body.style.backgroundAttachment = customization.backgroundFixed ? 'fixed' : 'scroll';
+            } else {
+                document.body.style.backgroundImage = 'none';
+            }
+
+            // Применяем размытие фона
+            if (customization.backgroundBlur) {
+                document.body.style.backdropFilter = 'blur(10px)';
+            } else {
+                document.body.style.backdropFilter = 'none';
+            }
+
+            // Применяем макет
+            const container = document.querySelector('.container');
+            container.className = `container layout-${customization.layout}`;
+
+            // Применяем эффекты
+            document.body.classList.toggle('enable-animations', customization.enableAnimations);
+            document.body.classList.toggle('enable-shadows', customization.enableShadows);
+            document.body.classList.toggle('enable-glass', customization.enableGlass);
+
+            // Обновляем стили для всех Material компонентов
+            const components = document.querySelectorAll('md-filled-button, md-filled-tonal-button, md-outlined-button');
+            components.forEach(component => {
+                component.style.setProperty('--md-sys-color-primary', customization.accentColor);
+            });
+        }
+
+        // Настройки по умолчанию
+        function getDefaultCustomization() {
+            return {
+                backgroundColor: '#1E1E1E',
+                textColor: '#FFFFFF',
+                accentColor: '#4CAF50',
+                backgroundImage: '',
+                backgroundBlur: false,
+                backgroundFixed: false,
+                layout: 'default',
+                enableAnimations: true,
+                enableShadows: true,
+                enableGlass: false
+            };
+        }
+
+        // Обновление диалога настроек
+        function updateCustomizationDialog(customization) {
+            document.getElementById('background-color').value = customization.backgroundColor;
+            document.getElementById('text-color').value = customization.textColor;
+            document.getElementById('accent-color').value = customization.accentColor;
+            document.getElementById('background-image').value = customization.backgroundImage;
+            document.getElementById('background-blur').checked = customization.backgroundBlur;
+            document.getElementById('background-fixed').checked = customization.backgroundFixed;
+            document.getElementById('layout-select').value = customization.layout;
+            document.getElementById('enable-animations').checked = customization.enableAnimations;
+            document.getElementById('enable-shadows').checked = customization.enableShadows;
+            document.getElementById('enable-glass').checked = customization.enableGlass;
+        }
+
+        // Сохранение настроек
+        async function saveCustomization() {
+            const cardId = getCardIdFromUrl();
+            if (!cardId) return;
+
+            const customization = {
+                backgroundColor: document.getElementById('background-color').value,
+                textColor: document.getElementById('text-color').value,
+                accentColor: document.getElementById('accent-color').value,
+                backgroundImage: document.getElementById('background-image').value,
+                backgroundBlur: document.getElementById('background-blur').checked,
+                backgroundFixed: document.getElementById('background-fixed').checked,
+                layout: document.getElementById('layout-select').value,
+                enableAnimations: document.getElementById('enable-animations').checked,
+                enableShadows: document.getElementById('enable-shadows').checked,
+                enableGlass: document.getElementById('enable-glass').checked
+            };
+
+            const cardRef = doc(db, 'cards', cardId);
+            await updateDoc(cardRef, { customization });
+            applyCustomization(customization);
+        }
+
+        // Добавляем обработчики событий
+        document.addEventListener('DOMContentLoaded', () => {
+            const customizeButton = document.getElementById('customize-button');
+            const customizeDialog = document.getElementById('customize-dialog');
+            const saveButton = document.getElementById('save-customization');
+            const resetButton = document.getElementById('reset-customization');
+
+            customizeButton.addEventListener('click', () => {
+                customizeDialog.show();
+            });
+
+            saveButton.addEventListener('click', async () => {
+                await saveCustomization();
+                customizeDialog.close();
+                showNotification('Настройки сохранены');
+            });
+
+            resetButton.addEventListener('click', async () => {
+                const defaultCustomization = getDefaultCustomization();
+                updateCustomizationDialog(defaultCustomization);
+                applyCustomization(defaultCustomization);
+                showNotification('Настройки сброшены');
+            });
+
+            // Загружаем настройки при запуске
+            loadCustomization();
+
+            // Добавляем обработчики изменений цвета
+            ['background-color', 'text-color', 'accent-color'].forEach(id => {
+                document.getElementById(id).addEventListener('input', (e) => {
+                    const customization = {
+                        backgroundColor: document.getElementById('background-color').value,
+                        textColor: document.getElementById('text-color').value,
+                        accentColor: document.getElementById('accent-color').value,
+                        // ... остальные настройки ...
+                    };
+                    applyCustomization(customization);
+                });
+            });
+        });
     </script>
 </body>
 </html> 

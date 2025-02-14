@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход - Банк Маннру</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    
+    <script type="importmap">
+        {
+            "imports": {
+                "@material/web/": "https://esm.run/@material/web/"
+            }
+        }
+    </script>
+    <script type="module">
+        import '@material/web/all.js';
+    </script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #1E1E1E;
+            color: white;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 32px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        md-filled-text-field {
+            width: 100%;
+            --md-filled-field-container-color: rgba(255, 255, 255, 0.1);
+            --md-filled-field-label-text-color: rgba(255, 255, 255, 0.7);
+            --md-filled-field-input-text-color: white;
+        }
+
+        md-filled-button {
+            width: 100%;
+            margin-top: 16px;
+        }
+
+        .error-message {
+            color: #f44336;
+            font-size: 14px;
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        .success-message {
+            color: #4CAF50;
+            font-size: 14px;
+            margin-top: 8px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>Банк Маннру</h1>
+            <p>Вход в личный кабинет</p>
+        </div>
+
+        <form id="loginForm" class="login-form">
+            <md-filled-text-field 
+                label="Номер карты" 
+                type="text" 
+                id="cardNumber"
+                required>
+            </md-filled-text-field>
+
+            <md-filled-text-field 
+                label="PIN-код" 
+                type="password" 
+                id="pinCode"
+                style="display: none;"
+                required>
+            </md-filled-text-field>
+
+            <md-filled-button type="submit">
+                Войти
+                <md-icon slot="icon">login</md-icon>
+            </md-filled-button>
+        </form>
+
+        <div id="message"></div>
+    </div>
+
+    <script type="module">
+        import { 
+            db, 
+            doc, 
+            getDoc,
+            collection,
+            query,
+            where,
+            getDocs,
+            updateDoc
+        } from './firebase-config.js';
+
+        // Проверяем URL на наличие ID карты
+        async function checkUrlForCardId() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const cardId = urlParams.get('id');
+
+            if (cardId) {
+                try {
+                    // Проверяем существование карты
+                    const cardRef = doc(db, 'cards', cardId);
+                    const cardDoc = await getDoc(cardRef);
+
+                    if (cardDoc.exists()) {
+                        // Сохраняем ID карты и перенаправляем
+                        localStorage.setItem('currentCardId', cardId);
+                        window.location.href = 'account.html';
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Ошибка при проверке карты:', error);
+                }
+            }
+            return false;
+        }
+
+        // Функция входа по номеру карты и PIN-коду
+        async function login(cardNumber, pinCode = null) {
+            try {
+                // Ищем карту по номеру
+                const cardsRef = collection(db, 'cards');
+                const q = query(cardsRef, where('number', '==', cardNumber));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    showMessage('Карта не найдена', true);
+                    return;
+                }
+
+                const cardDoc = querySnapshot.docs[0];
+                const cardData = cardDoc.data();
+
+                // Если у карты нет PIN-кода, генерируем его
+                if (!cardData.pin) {
+                    const newPin = generatePin();
+                    await updateDoc(doc(db, 'cards', cardDoc.id), {
+                        pin: newPin
+                    });
+                    
+                    showMessage(`Ваш новый PIN-код: ${newPin}. Запомните его!`, false);
+                    
+                    // Сохраняем ID карты
+                    localStorage.setItem('currentCardId', cardDoc.id);
+                    
+                    // Перенаправляем на страницу аккаунта через 5 секунд
+                    setTimeout(() => {
+                        window.location.href = 'account.html';
+                    }, 5000);
+                    return;
+                }
+
+                // Если PIN-код есть, проверяем его
+                if (pinCode === null) {
+                    // Показываем поле для ввода PIN-кода
+                    const pinField = document.getElementById('pinCode');
+                    pinField.parentElement.style.display = 'block';
+                    pinField.focus();
+                    showMessage('Введите PIN-код', false);
+                    return;
+                }
+
+                if (cardData.pin === pinCode) {
+                    localStorage.setItem('currentCardId', cardDoc.id);
+                    showMessage('Вход выполнен успешно!', false);
+                    setTimeout(() => {
+                        window.location.href = 'account.html';
+                    }, 1000);
+                } else {
+                    showMessage('Неверный PIN-код', true);
+                }
+            } catch (error) {
+                console.error('Ошибка при входе:', error);
+                showMessage('Ошибка при входе', true);
+            }
+        }
+
+        // Добавим функцию генерации PIN-кода
+        function generatePin() {
+            return Math.floor(1000 + Math.random() * 9000).toString();
+        }
+
+        function showMessage(text, isError = false) {
+            const messageElement = document.getElementById('message');
+            messageElement.className = isError ? 'error-message' : 'success-message';
+            messageElement.textContent = text;
+        }
+
+        // Обработчик формы
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const cardNumber = document.getElementById('cardNumber').value;
+            const pinField = document.getElementById('pinCode');
+            const pinCode = pinField.value;
+
+            if (!cardNumber) {
+                showMessage('Введите номер карты', true);
+                return;
+            }
+
+            // Если поле PIN-кода скрыто, проверяем только номер карты
+            if (pinField.parentElement.style.display === 'none') {
+                await login(cardNumber);
+            } else {
+                if (!pinCode) {
+                    showMessage('Введите PIN-код', true);
+                    return;
+                }
+                await login(cardNumber, pinCode);
+            }
+        });
+
+        // Изначально скрываем поле PIN-кода
+        document.addEventListener('DOMContentLoaded', async () => {
+            const hasCardId = await checkUrlForCardId();
+            if (!hasCardId) {
+                document.querySelector('.login-container').style.display = 'block';
+                // Скрываем поле PIN-кода изначально
+                document.getElementById('pinCode').parentElement.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
