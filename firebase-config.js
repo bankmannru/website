@@ -41,6 +41,7 @@ import {
     enableIndexedDbPersistence,
     CACHE_SIZE_UNLIMITED
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { getStorage } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // Firebase configuration
 export const firebaseConfig = {
@@ -58,6 +59,7 @@ const app = initializeApp(firebaseConfig);
 export const database = getDatabase(app);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const storage = getStorage(app);
 
 // Включаем оффлайн персистентность
 enableIndexedDbPersistence(db, {

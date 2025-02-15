@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mannru Drive</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
+    <script type="importmap">
+        {
+            "imports": {
+                "@material/web/": "https://esm.run/@material/web/"
+            }
+        }
+    </script>
+    <script type="module">
+        import '@material/web/all.js';
+    </script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+            background: #2D2D2D;
+            color: white;
+        }
+
+        .header {
+            background: #1E1E1E;
+            padding: 20px;
+            border-bottom: 1px solid #0078D4;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            color: white;
+        }
+
+        .header p {
+            margin: 5px 0 0 0;
+            font-size: 14px;
+            color: #888;
+        }
+
+        .files-container {
+            padding: 20px;
+        }
+
+        .folder {
+            background: #363636;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .folder-header {
+            padding: 10px 15px;
+            background: #1E1E1E;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .folder-header md-icon {
+            margin-right: 10px;
+        }
+
+        .folder-content {
+            padding: 10px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 15px;
+            background: #2D2D2D;
+            margin-bottom: 5px;
+            border-radius: 4px;
+        }
+
+        .file-item:hover {
+            background: #404040;
+        }
+
+        .file-icon {
+            margin-right: 10px;
+            color: #888;
+        }
+
+        .file-name {
+            flex-grow: 1;
+            color: #DDD;
+        }
+
+        .file-size {
+            color: #888;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .download-button {
+            background: none;
+            border: none;
+            color: #0078D4;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+        }
+
+        .download-button:hover {
+            background: rgba(0, 120, 212, 0.1);
+        }
+
+        .upload-zone {
+            border: 2px dashed #0078D4;
+            border-radius: 4px;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+            background: rgba(0, 120, 212, 0.1);
+        }
+
+        .upload-zone.dragover {
+            background: rgba(0, 120, 212, 0.2);
+            border-color: #2196F3;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 40px;
+            color: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .toast.error {
+            background: #f44336;
+        }
+
+        .toast.success {
+            background: #4CAF50;
+        }
+
+        .file-preview-page {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #1E1E1E;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: #2D2D2D;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .file-name {
+            font-size: 18px;
+            color: white;
+            font-weight: 500;
+        }
+
+        .preview-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 32px;
+            background: #1E1E1E;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .preview-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            padding: 32px;
+            background: #2D2D2D;
+            border-radius: 8px;
+        }
+
+        .placeholder-icon {
+            font-size: 64px !important;
+            color: #666;
+        }
+
+        .placeholder-text {
+            color: #888;
+            font-size: 16px;
+            text-align: center;
+            max-width: 300px;
+            word-break: break-word;
+        }
+
+        .file-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: #2D2D2D;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .file-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #888;
+        }
+
+        .file-size {
+            font-size: 14px;
+        }
+
+        md-filled-button {
+            --md-sys-color-primary: #0078D4;
+        }
+
+        md-filled-icon-button {
+            --md-sys-color-primary: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Mannru Drive</h1>
+        <p>ваш репозиторий для файлов</p>
+    </div>
+
+    <div class="files-container">
+        <div class="upload-zone" id="uploadZone">
+            <md-icon>cloud_upload</md-icon>
+            <p>Перетащите файлы сюда или нажмите для выбора</p>
+        </div>
+
+        <div id="filesGrid"></div>
+    </div>
+
+    <input type="file" id="fileInput" style="display: none" multiple>
+
+    <script>
+        const GITHUB_TOKEN = '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';
+        const GITHUB_REPO = 'mannru-disk';
+        const GITHUB_USER = 'bankmannru';
+
+        // Ждем загрузки DOM
+        document.addEventListener('DOMContentLoaded', () => {
+            // Инициализация элементов
+            const uploadZone = document.getElementById('uploadZone');
+            const fileInput = document.getElementById('fileInput');
+
+            // Обработчики событий для загрузки
+            uploadZone.onclick = () => fileInput.click();
+
+            fileInput.onchange = (e) => {
+                const files = Array.from(e.target.files);
+                files.forEach(uploadFile);
+            };
+
+            uploadZone.ondragover = (e) => {
+                e.preventDefault();
+                uploadZone.classList.add('dragover');
+            };
+
+            uploadZone.ondragleave = () => {
+                uploadZone.classList.remove('dragover');
+            };
+
+            uploadZone.ondrop = (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+                const files = Array.from(e.dataTransfer.files);
+                files.forEach(uploadFile);
+            };
+
+            // Загружаем файлы при старте
+            loadFiles();
+
+            // Добавляем проверку URL параметров при загрузке страницы
+            const urlParams = new URLSearchParams(window.location.search);
+            const fileName = urlParams.get('file');
+            const fileUrl = urlParams.get('url');
+            const fileSize = urlParams.get('size');
+
+            if (fileName && fileUrl) {
+                showFilePreview({
+                    name: fileName,
+                    download_url: fileUrl,
+                    size: fileSize
+                });
+            }
+        });
+
+        // Функции для работы с файлами
+        async function uploadFile(file) {
+            try {
+                // Создаем уведомление о начале загрузки
+                const toast = showToast(`Загрузка ${file.name}...`, false, true);
+                const progressBar = toast.querySelector('md-linear-progress');
+
+                const content = await readFileAsBase64(file, (progress) => {
+                    // Обновляем прогресс
+                    progressBar.value = progress * 50; // Первые 50% - чтение файла
+                });
+
+                const timestamp = Date.now();
+                const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+                const fileName = `files/${timestamp}_${safeName}`;
+
+                const response = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${fileName}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${GITHUB_TOKEN}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: `Upload ${fileName}`,
+                        content: content,
+                        branch: 'main'
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Ошибка загрузки');
+                }
+
+                // Обновляем прогресс до 100%
+                progressBar.value = 100;
+                setTimeout(() => {
+                    toast.remove();
+                    showToast('Файл успешно загружен');
+                }, 500);
+
+                loadFiles();
+            } catch (error) {
+                console.error('Upload error:', error);
+                showToast('Ошибка при загрузке файла: ' + error.message, true);
+            }
+        }
+
+        function readFileAsBase64(file, onProgress) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                
+                reader.onload = () => {
+                    const base64 = reader.result.split(',')[1];
+                    resolve(base64);
+                };
+                
+                reader.onprogress = (event) => {
+                    if (event.lengthComputable && onProgress) {
+                        const progress = event.loaded / event.total;
+                        onProgress(progress);
+                    }
+                };
+                
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function downloadFile(url, fileName) {
+            try {
+                const response = await fetch(url);
+                const blob = await response.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = fileName.split('_').slice(1).join('_');
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(downloadUrl);
+            } catch (error) {
+                console.error('Download error:', error);
+                showToast('Ошибка при скачивании файла', true);
+            }
+        }
+
+        // Добавим функцию определения типа файла
+        function getFileType(fileName) {
+            const extension = fileName.split('.').pop().toLowerCase();
+            const types = {
+                // Изображения
+                'jpg': 'images',
+                'jpeg': 'images',
+                'png': 'images',
+                'gif': 'images',
+                'webp': 'images',
+                'svg': 'images',
+                
+                // Документы
+                'pdf': 'documents',
+                'doc': 'documents',
+                'docx': 'documents',
+                'txt': 'documents',
+                'rtf': 'documents',
+                'odt': 'documents',
+                
+                // Архивы
+                'zip': 'archives',
+                'rar': 'archives',
+                '7z': 'archives',
+                'tar': 'archives',
+                'gz': 'archives',
+                
+                // Видео
+                'mp4': 'videos',
+                'avi': 'videos',
+                'mov': 'videos',
+                'wmv': 'videos',
+                'mkv': 'videos',
+                
+                // Аудио
+                'mp3': 'audio',
+                'wav': 'audio',
+                'ogg': 'audio',
+                'flac': 'audio',
+                'm4a': 'audio',
+                
+                // Код
+                'html': 'code',
+                'css': 'code',
+                'js': 'code',
+                'json': 'code',
+                'php': 'code',
+                'py': 'code',
+                'java': 'code',
+                'cpp': 'code',
+                'h': 'code'
+            };
+            
+            return types[extension] || 'other';
+        }
+
+        // Обновляем функцию загрузки файлов
+        async function loadFiles() {
+            const filesGrid = document.getElementById('filesGrid');
+            filesGrid.innerHTML = '<md-circular-progress></md-circular-progress>';
+
+            try {
+                // Кэшируем результаты запроса
+                const cacheKey = `${GITHUB_USER}/${GITHUB_REPO}/files`;
+                let files;
+
+                // Проверяем кэш
+                const cachedFiles = sessionStorage.getItem(cacheKey);
+                if (cachedFiles) {
+                    files = JSON.parse(cachedFiles);
+                    renderFiles(files);
+                }
+
+                // В любом случае делаем запрос для обновления данных
+                const response = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/files`, {
+                    headers: {
+                        'Authorization': `Bearer ${GITHUB_TOKEN}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                if (response.status === 404) {
+                    await createFilesFolder();
+                    filesGrid.innerHTML = '<div class="empty-message">Папка создана. Загрузите файлы.</div>';
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error('Ошибка получения списка файлов');
+                }
+
+                files = await response.json();
+                
+                // Обновляем кэш
+                sessionStorage.setItem(cacheKey, JSON.stringify(files));
+
+                // Если данные изменились, обновляем отображение
+                if (!cachedFiles || cachedFiles !== JSON.stringify(files)) {
+                    renderFiles(files);
+                }
+            } catch (error) {
+                console.error('Load files error:', error);
+                filesGrid.innerHTML = `<div class="empty-message">Ошибка: ${error.message}</div>`;
+            }
+        }
+
+        // Выносим рендеринг файлов в отдельную функцию
+        function renderFiles(files) {
+            const filesGrid = document.getElementById('filesGrid');
+            filesGrid.innerHTML = '';
+
+            // Группируем файлы по типам
+            const filesByType = {
+                images: [],
+                documents: [],
+                archives: [],
+                videos: [],
+                audio: [],
+                code: [],
+                other: []
+            };
+
+            // Используем requestAnimationFrame для плавного рендеринга
+            requestAnimationFrame(() => {
+                files.forEach(file => {
+                    if (file.name === '.gitkeep') return;
+                    const type = getFileType(file.name.split('_').slice(1).join('_'));
+                    filesByType[type].push(file);
+                });
+
+                // Создаем фрагмент для оптимизации DOM-операций
+                const fragment = document.createDocumentFragment();
+
+                Object.entries(filesByType).forEach(([type, typeFiles]) => {
+                    if (typeFiles.length === 0) return;
+
+                    const folder = document.createElement('div');
+                    folder.className = 'folder';
+                    
+                    const folderHeader = document.createElement('div');
+                    folderHeader.className = 'folder-header';
+                    folderHeader.innerHTML = `
+                        <md-icon>${getTypeIcon(type)}</md-icon>
+                        ${getTypeName(type)}
+                    `;
+                    
+                    const folderContent = document.createElement('div');
+                    folderContent.className = 'folder-content';
+
+                    // Используем Virtual Scrolling для больших списков
+                    const virtualScroller = document.createElement('div');
+                    virtualScroller.className = 'virtual-scroller';
+                    virtualScroller.style.height = `${Math.min(typeFiles.length * 50, 300)}px`;
+
+                    typeFiles.forEach(file => {
+                        const fileItem = document.createElement('div');
+                        fileItem.className = 'file-item';
+                        fileItem.innerHTML = `
+                            <md-icon class="file-icon">${getFileIcon(file.name)}</md-icon>
+                            <span class="file-name">${file.name.split('_').slice(1).join('_')}</span>
+                            <span class="file-size">${formatFileSize(file.size)}</span>
+                        `;
+                        
+                        fileItem.onclick = () => {
+                            const fileName = file.name.split('_').slice(1).join('_');
+                            window.location.href = `mannru-disk.html?file=${encodeURIComponent(fileName)}&url=${encodeURIComponent(file.download_url)}&size=${file.size}`;
+                        };
+
+                        folderContent.appendChild(fileItem);
+                    });
+
+                    folder.appendChild(folderHeader);
+                    folder.appendChild(folderContent);
+                    fragment.appendChild(folder);
+
+                    folderHeader.onclick = () => {
+                        folderContent.style.display = 
+                            folderContent.style.display === 'none' ? 'block' : 'none';
+                    };
+                });
+
+                filesGrid.appendChild(fragment);
+            });
+        }
+
+        // Функция получения иконки для типа файлов
+        function getTypeIcon(type) {
+            const icons = {
+                images: 'image',
+                documents: 'description',
+                archives: 'folder_zip',
+                videos: 'movie',
+                audio: 'audio_file',
+                code: 'code',
+                other: 'folder'
+            };
+            return icons[type];
+        }
+
+        // Функция получения названия типа
+        function getTypeName(type) {
+            const names = {
+                images: 'Изображения',
+                documents: 'Документы',
+                archives: 'Архивы',
+                videos: 'Видео',
+                audio: 'Аудио',
+                code: 'Код',
+                other: 'Другое'
+            };
+            return names[type];
+        }
+
+        // Функция получения иконки для конкретного файла
+        function getFileIcon(fileName) {
+            const extension = fileName.split('.').pop().toLowerCase();
+            const icons = {
+                // Изображения
+                jpg: 'image',
+                jpeg: 'image',
+                png: 'image',
+                gif: 'gif_box',
+                
+                // Документы
+                pdf: 'picture_as_pdf',
+                doc: 'description',
+                docx: 'description',
+                txt: 'article',
+                
+                // Архивы
+                zip: 'folder_zip',
+                rar: 'folder_zip',
+                '7z': 'folder_zip',
+                
+                // Видео
+                mp4: 'movie',
+                avi: 'movie',
+                
+                // Аудио
+                mp3: 'audio_file',
+                wav: 'audio_file',
+                
+                // Код
+                html: 'html',
+                css: 'css',
+                js: 'javascript',
+                json: 'data_object'
+            };
+            
+            return icons[extension] || 'insert_drive_file';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function showToast(message, isError = false, showProgress = false) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `
+                <div class="toast-content">
+                    <md-icon>${isError ? 'error' : 'info'}</md-icon>
+                    <span>${message}</span>
+                </div>
+                ${showProgress ? '<md-linear-progress value="0"></md-linear-progress>' : ''}
+            `;
+
+            // Добавляем стили для toast
+            const styles = `
+                .toast {
+                    position: fixed;
+                    bottom: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: ${isError ? '#f44336' : '#323232'};
+                    color: white;
+                    padding: 12px;
+                    border-radius: 8px;
+                    min-width: 300px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                    z-index: 1000;
+                    animation: toast-in 0.3s ease;
+                }
+
+                .toast-content {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    margin-bottom: ${showProgress ? '8px' : '0'};
+                }
+
+                md-linear-progress {
+                    width: 100%;
+                    --md-linear-progress-active-indicator-color: #0078D4;
+                }
+
+                @keyframes toast-in {
+                    from {
+                        transform: translate(-50%, 100%);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translate(-50%, 0);
+                        opacity: 1;
+                    }
+                }
+            `;
+
+            const styleSheet = document.createElement('style');
+            styleSheet.textContent = styles;
+            document.head.appendChild(styleSheet);
+
+            document.body.appendChild(toast);
+            return toast;
+        }
+
+        async function createFilesFolder() {
+            try {
+                const response = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/files/.gitkeep`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${GITHUB_TOKEN}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: 'Create files folder',
+                        content: 'MQ==',
+                        branch: 'main'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Не удалось создать папку');
+                }
+            } catch (error) {
+                console.error('Error creating folder:', error);
+            }
+        }
+
+        // Обновляем функцию showFilePreview
+        async function showFilePreview(file) {
+            // Очищаем содержимое страницы
+            document.body.innerHTML = `
+                <div class="file-preview-page">
+                    <div class="preview-header">
+                        <md-filled-icon-button class="back-button" onclick="window.location.href='mannru-disk.html'">
+                            <md-icon>arrow_back</md-icon>
+                        </md-filled-icon-button>
+                        <span class="file-name">${file.name}</span>
+                    </div>
+                    <div class="preview-container">
+                        ${isImageFile(file.name) ? 
+                            `<img src="${file.download_url}" alt="${file.name}" class="preview-image">` :
+                            `<div class="preview-placeholder">
+                                <md-icon class="placeholder-icon">${getFileIcon(file.name)}</md-icon>
+                                <span class="placeholder-text">${file.name}</span>
+                            </div>`
+                        }
+                    </div>
+                    <div class="file-info">
+                        <div class="file-meta">
+                            <md-icon>description</md-icon>
+                            <span class="file-size">${formatFileSize(file.size)}</span>
+                        </div>
+                        <md-filled-button class="download-button" onclick="downloadFile('${file.download_url}', '${file.name}')">
+                            <md-icon slot="icon">download</md-icon>
+                            Скачать
+                        </md-filled-button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Функция проверки, является ли файл изображением
+        function isImageFile(fileName) {
+            const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            const extension = fileName.split('.').pop().toLowerCase();
+            return imageExtensions.includes(extension);
+        }
+
+        // Делаем функции глобальными
+        window.downloadFile = downloadFile;
+        window.uploadFile = uploadFile;
+    </script>
+</body>
+</html>
